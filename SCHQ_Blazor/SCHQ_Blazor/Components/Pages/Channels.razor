@@ -1,0 +1,68 @@
+﻿@page "/"
+@using Google.Protobuf.WellKnownTypes
+@using Grpc.Net.Client
+@using static SCHQ_Protos.SCHQ_Relations
+@attribute [StreamRendering]
+@inject IConfiguration Config;
+@inject NavigationManager Navigation
+
+<PageTitle>Channel List</PageTitle>
+
+<h1>Channel List</h1>
+
+<p>A list of all available channels</p>
+
+@if (channels == null) {
+  <p><em>Loading...</em></p>
+} else if (channels.Length == 0) {
+  <p><em>No channels found</em></p>
+} else {
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Channel Name</th>
+        <th>Secured</th>
+        <th>Permissions</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var channel in channels) {
+        <tr>
+          <td>@channel.Name</td>
+          <td>@(channel.HasPassword ? "🔒" : "🔓")</td>
+          <td>@channel.Permissions</td>
+          <td><button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => NavigateToChannelRelations(channel.Name)">Relations</button> <button type="button" class="btn btn-danger btn-sm" @onclick="async () => NavigateToDeleteChannel(channel.Name)">Delete</button></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@code {
+  private ChannelInfo[]? channels;
+
+  protected async override Task OnInitializedAsync() {
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+      ChannelsReply reply = await gRPC_Client.GetChannelsAsync(new());
+      channels = [.. reply?.Channels];
+    }
+  }
+
+  private void NavigateToDeleteChannel(string channel) {
+    Navigation.NavigateTo($"deletechannel?channel={channel}");
+  }
+
+  private void NavigateToChannelRelations(string channel) {
+    Navigation.NavigateTo($"channelrelations?channel={channel}");
+  }
+}

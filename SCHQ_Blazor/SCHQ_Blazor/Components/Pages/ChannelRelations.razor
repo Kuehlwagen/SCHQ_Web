@@ -1,0 +1,74 @@
+﻿@page "/channelrelations"
+@using Google.Protobuf.WellKnownTypes
+@using Grpc.Net.Client
+@using static SCHQ_Protos.SCHQ_Relations
+@attribute [StreamRendering]
+@inject IConfiguration Config;
+@inject NavigationManager Navigation
+
+<PageTitle>Channel Relations</PageTitle>
+
+<h1>Channel Relations</h1>
+
+@if (relations == null) {
+  <p><em>Loading...</em></p>
+} else if (relations.Length == 0) {
+  <p><em>No relations found (channel secured?)</em></p>
+} else {
+  <p>A list of all relations for channel <b>@Channel</b></p>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Relation</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var relation in relations) {
+        string trRelationClass = relation.Relation switch {
+          RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
+          RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
+          RelationValue.Bogey => "p-3 mb-2 bg-warning text-dark",
+          RelationValue.Bandit => "p-3 mb-2 bg-danger text-white",
+          _ => "p-3 mb-2 bg-transparent text-dark"
+        };
+        <tr class="@trRelationClass">
+          <td>@(relation.Type == RelationType.Handle ? "👤" : "🌐") @relation.Name</td>
+          <td>@relation.Relation</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+<p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Back</button> <button type="button" class="btn btn-outline-primary btn-sm" @onclick="Refresh">Refresh</button></p>
+
+@code {
+  [SupplyParameterFromQuery]
+  public string? Channel { get; set; }
+
+  private RelationInfo[]? relations;
+
+  protected async override Task OnInitializedAsync() {
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel });
+      relations = [.. reply?.Relations?.Where(r => r.Relation > RelationValue.NotAssigned)];
+    }
+  }
+
+  private void Refresh() {
+    Navigation.Refresh(true);
+  }
+
+  private void Back() {
+    Navigation.NavigateTo("/");
+  }
+}
