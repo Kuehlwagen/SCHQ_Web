@@ -10,34 +10,34 @@
 
 <h1>Channel List</h1>
 
-<p>A list of all available channels</p>
-
 @if (channels == null) {
   <p><em>Loading...</em></p>
 } else if (channels.Length == 0) {
   <p><em>No channels found</em></p>
 } else {
+  <p>A list of all available channels</p>
   <table class="table">
     <thead>
       <tr>
-        <th>Channel Name</th>
+        <th>Name</th>
         <th>Secured</th>
         <th>Permissions</th>
-        <th>Actions</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
       @foreach (var channel in channels) {
         <tr>
-          <td>@channel.Name</td>
+          <td><a href="" @onclick="() => ChannelRelations(channel.Name)">@channel.Name</a></td>
           <td>@(channel.HasPassword ? "🔒" : "🔓")</td>
           <td>@channel.Permissions</td>
-          <td><button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => NavigateToChannelRelations(channel.Name)">Relations</button> <button type="button" class="btn btn-danger btn-sm" @onclick="async () => NavigateToDeleteChannel(channel.Name)">Delete</button></td>
+          <td><button type="button" class="btn btn-danger btn-sm" @onclick="async () => DeleteChannel(channel.Name)">Delete</button></td>
         </tr>
       }
     </tbody>
   </table>
 }
+<button type="button" class="btn btn-outline-primary btn-sm" @onclick="Refresh">Refresh</button>
 
 @code {
   private ChannelInfo[]? channels;
@@ -58,11 +58,15 @@
     }
   }
 
-  private void NavigateToDeleteChannel(string channel) {
+  private void DeleteChannel(string channel) {
     Navigation.NavigateTo($"deletechannel?channel={channel}");
   }
 
-  private void NavigateToChannelRelations(string channel) {
+  private void ChannelRelations(string channel) {
     Navigation.NavigateTo($"channelrelations?channel={channel}");
+  }
+
+  private void Refresh() {
+    Navigation.Refresh(true);
   }
 }
