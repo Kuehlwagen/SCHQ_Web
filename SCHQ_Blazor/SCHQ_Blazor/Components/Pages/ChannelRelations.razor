@@ -3,7 +3,8 @@
 @using Grpc.Net.Client
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering]
-@inject IConfiguration Config;
+@inject IJSRuntime JsRuntime
+@inject IConfiguration Config
 @inject NavigationManager Navigation
 
 <PageTitle>Channel Relations</PageTitle>
@@ -20,7 +21,7 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Relation</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -34,7 +35,7 @@
         };
         <tr class="@trRelationClass">
           <td>@(relation.Type == RelationType.Handle ? "👤" : "🌐") @relation.Name</td>
-          <td>@relation.Relation</td>
+          <td><button type="button" class="btn btn-dark btn-sm" @onclick="() => Rsi(relation.Type, relation.Name)">RSI Link</button></td>
         </tr>
       }
     </tbody>
@@ -62,6 +63,10 @@
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel });
       relations = [.. reply?.Relations?.Where(r => r.Relation > RelationValue.NotAssigned)];
     }
+  }
+
+  private async void Rsi(RelationType type, string name) {
+    await JsRuntime.InvokeVoidAsync("open", $"https://robertsspaceindustries.com/{(type == RelationType.Handle ? "citizens" : "orgs")}/{name}", "_blank");
   }
 
   private void Refresh() {
