@@ -1,4 +1,4 @@
-﻿@page "/channelrelations"
+﻿@page "/relations"
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
 @using static SCHQ_Protos.SCHQ_Relations
@@ -7,9 +7,9 @@
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 
-<PageTitle>Channel Relations</PageTitle>
+<PageTitle>SCHQ Web > Relations</PageTitle>
 
-<h1>Channel Relations</h1>
+<h1>Relations</h1>
 
 @if (relations == null) {
   <p><em>Loading...</em></p>

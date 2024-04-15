@@ -6,9 +6,9 @@
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 
-<PageTitle>Channel List</PageTitle>
+<PageTitle>SCHQ Web > Channels</PageTitle>
 
-<h1>Channel List</h1>
+<h1>Channels</h1>
 
 @if (channels == null) {
   <p><em>Loading...</em></p>
@@ -28,7 +28,7 @@
     <tbody>
       @foreach (var channel in channels) {
         <tr>
-          <td><a href="" @onclick="() => ChannelRelations(channel.Name)">@channel.Name</a></td>
+          <td><a href="" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
           <td>@(channel.HasPassword ? "🔒" : "🔓")</td>
           <td>@channel.Permissions</td>
           <td><button type="button" class="btn btn-danger btn-sm" @onclick="async () => DeleteChannel(channel.Name)">Delete</button></td>
@@ -62,8 +62,8 @@
     Navigation.NavigateTo($"deletechannel?channel={channel}");
   }
 
-  private void ChannelRelations(string channel) {
-    Navigation.NavigateTo($"channelrelations?channel={channel}");
+  private void Relations(string channel) {
+    Navigation.NavigateTo($"relations?channel={channel}");
   }
 
   private void Refresh() {
