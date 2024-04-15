@@ -13,7 +13,7 @@
 
 <p><b>Name:</b><br /><input type="text" placeholder="Name" @bind-value=Name /></p>
 <p><b>Password:</b><br /><input type="password" placeholder="Password" @bind-value=Password /></p>
-<p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Back</button> <button type="button" class="btn btn-primary btn-sm" @onclick="Add">Add Channel</button></p>
+<p><button type="button" class="btn btn-primary btn-sm" @onclick="Add">Add Channel</button></p>
 
 @code {
   [SupplyParameterFromQuery]
@@ -39,9 +39,5 @@
         await JsRuntime.InvokeVoidAsync("alert", "Channel not created");
       }
     }
-  }
-
-  private void Back() {
-    Navigation.NavigateTo("/");
   }
 }
