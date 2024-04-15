@@ -19,6 +19,11 @@
   <p>A list of all relations for channel <b>@Channel</b></p>
   <div>
     <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
+    <input type="checkbox" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" /> Not assigned
+    <input type="checkbox" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" /> Friendly
+    <input type="checkbox" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" /> Neutral
+    <input type="checkbox" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" /> Bogey
+    <input type="checkbox" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" /> Bandit
   </div>
   <table class="table table-striped">
     <thead>
@@ -43,6 +48,11 @@
   [SupplyParameterFromQuery]
   public string? Channel { get; set; }
   public string? Filter { get; set; }
+  public bool? FilterNotAssigned { get; set; }
+  public bool? FilterFriendly { get; set; } = true;
+  public bool? FilterNeutral { get; set; } = true;
+  public bool? FilterBogey { get; set; } = true;
+  public bool? FilterBandit { get; set; } = true;
 
   private RelationInfo[]? relations;
 
@@ -62,14 +72,17 @@
     }
   }
 
-  public bool IsVisible(RelationInfo relation) {
-    if (string.IsNullOrWhiteSpace(Filter))
-      return true;
-
-    if (relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))
-      return true;
-
-    return false;
+  public bool IsVisible(RelationInfo relation)
+  {
+    bool? v = relation.Relation switch {
+      RelationValue.NotAssigned => FilterNotAssigned,
+      RelationValue.Friendly => FilterFriendly,
+      RelationValue.Neutral => FilterNeutral,
+      RelationValue.Bogey => FilterBogey,
+      RelationValue.Bandit => FilterBandit,
+      _ => false
+    } ?? false;
+    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase)) && v.Value;
   }
 
   public string GetRelationClass(RelationInfo relation) {
