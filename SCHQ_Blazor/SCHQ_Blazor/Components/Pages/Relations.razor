@@ -43,7 +43,7 @@
               <button type="button" disabled="@(relation.Relation == RelationValue.Neutral)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Bogey)" class="btn btn-warning btn-sm text-dark" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Bandit)" class="btn btn-danger btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.NotAssigned)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">🗙</button>
+              <button type="button" disabled="@(relation.Relation == RelationValue.NotAssigned)" class="btn btn-dark btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">🗙</button>
             </div>
           </td>
         </tr>
@@ -124,6 +124,7 @@
 
   public string GetRelationClass(RelationInfo relation) {
     return relation.Relation switch {
+      RelationValue.NotAssigned => "p-3 mb-2 bg-dark text-white",
       RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
       RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
       RelationValue.Bogey => "p-3 mb-2 bg-warning text-dark",
