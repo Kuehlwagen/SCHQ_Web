@@ -29,14 +29,7 @@
     </thead>
     <tbody>
       @foreach (var relation in relations.Where(r => IsVisible(r))) {
-        string trRelationClass = relation.Relation switch {
-          RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
-          RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
-          RelationValue.Bogey => "p-3 mb-2 bg-warning text-dark",
-          RelationValue.Bandit => "p-3 mb-2 bg-danger text-white",
-          _ => "p-3 mb-2 bg-transparent text-dark"
-        };
-        <tr class="@trRelationClass">
+        <tr class="@GetRelationClass(relation)">
           <td>@(relation.Type == RelationType.Handle ? "👤" : "🌐") @relation.Name</td>
           <td><button type="button" class="btn btn-dark btn-sm" @onclick="() => Rsi(relation.Type, relation.Name)">RSI Link</button></td>
         </tr>
@@ -77,6 +70,16 @@
       return true;
 
     return false;
+  }
+
+  public string GetRelationClass(RelationInfo relation) {
+    return relation.Relation switch {
+      RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
+      RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
+      RelationValue.Bogey => "p-3 mb-2 bg-warning text-dark",
+      RelationValue.Bandit => "p-3 mb-2 bg-danger text-white",
+      _ => "p-3 mb-2 bg-transparent text-dark"
+    };
   }
 
   private async void Rsi(RelationType type, string name) {
