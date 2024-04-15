@@ -29,21 +29,31 @@
   <table class="table table-striped">
     <thead>
       <tr>
+        <th scope="col" width="1%">Type</th>
         <th scope="col">Name</th>
-        <th scope="col">Action</th>
+        <th scope="col" width="1%">Action</th>
       </tr>
     </thead>
     <tbody>
       @foreach (var relation in relations.Where(r => IsVisible(r))) {
-        <tr class="@GetRelationClass(relation)">
-          <td>@(relation.Type == RelationType.Handle ? "👤" : "🌐") @relation.Name</td>
-          <td><button type="button" class="btn btn-dark btn-sm" @onclick="() => Rsi(relation.Type, relation.Name)">RSI Link</button></td>
+        <tr>
+          <td class="@GetRelationClass(relation)">@(relation.Type == RelationType.Handle ? "👤" : "🌐")</td>
+          <td><a href="" @onclick="() => Rsi(relation.Type, relation.Name)">@relation.Name</a></td>
+          <td>
+            <div class="btn-group" role="group">
+              <button type="button" disabled="@(relation.Relation == RelationValue.Friendly)" class="btn btn-success btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
+              <button type="button" disabled="@(relation.Relation == RelationValue.Neutral)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
+              <button type="button" disabled="@(relation.Relation == RelationValue.Bogey)" class="btn btn-warning btn-sm text-dark" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
+              <button type="button" disabled="@(relation.Relation == RelationValue.Bandit)" class="btn btn-danger btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
+              <button type="button" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">🗙</button>
+            </div>
+          </td>
         </tr>
       }
     </tbody>
   </table>
 }
-<p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Back</button> <button type="button" class="btn btn-outline-primary btn-sm" @onclick="Refresh">Refresh</button></p>
+<p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Channels</button></p>
 
 @code {
   [SupplyParameterFromQuery]
@@ -74,6 +84,33 @@
     }
   }
 
+  private async void SetRelation(RelationInfo relation, RelationValue value) {
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+      SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
+        Channel = Channel,
+        Relation = new() {
+          Type = relation.Type,
+          Name = relation.Name,
+          Relation = value
+        }
+      });
+      if (reply.Success && relations != null) {
+        relations.First(r => r.Type == relation.Type && r.Name == relation.Name).Relation = value;
+        StateHasChanged();
+      }
+
+    }
+  }
+
   public bool IsVisible(RelationInfo relation)
   {
     return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase)) &&
@@ -100,10 +137,6 @@
 
   private async void Rsi(RelationType type, string name) {
     await JsRuntime.InvokeVoidAsync("open", $"https://robertsspaceindustries.com/{(type == RelationType.Handle ? "citizens" : "orgs")}/{name}", "_blank");
-  }
-
-  private void Refresh() {
-    Navigation.Refresh(true);
   }
 
   private void Back() {

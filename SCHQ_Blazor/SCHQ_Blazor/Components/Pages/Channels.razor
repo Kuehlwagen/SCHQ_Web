@@ -23,9 +23,9 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Secured</th>
-        <th>Permissions</th>
-        <th>Action</th>
+        <th width="1%">Secured</th>
+        <th width="1%">Permissions</th>
+        <th width="1%">Action</th>
       </tr>
     </thead>
     <tbody>
@@ -40,7 +40,6 @@
     </tbody>
   </table>
 }
-<button type="button" class="btn btn-outline-primary btn-sm" @onclick="Refresh">Refresh</button>
 
 @code {
   private ChannelInfo[]? channels;
@@ -78,9 +77,5 @@
 
   private void Relations(string channel) {
     Navigation.NavigateTo($"relations?channel={channel}");
-  }
-
-  private void Refresh() {
-    Navigation.Refresh(true);
   }
 }
