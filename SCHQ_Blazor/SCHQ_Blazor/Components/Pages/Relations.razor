@@ -3,9 +3,7 @@
 @using Grpc.Net.Client
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
-@inject IJSRuntime JsRuntime
 @inject IConfiguration Config
-@inject NavigationManager Navigation
 
 <PageTitle>SCHQ Web > Relations</PageTitle>
 
@@ -38,7 +36,7 @@
       @foreach (var relation in relations.Where(r => IsVisible(r))) {
         <tr>
           <td class="@GetRelationClass(relation)">@(relation.Type == RelationType.Handle ? "👤" : "🌐")</td>
-          <td><a href="" @onclick="() => Rsi(relation.Type, relation.Name)">@relation.Name</a></td>
+          <td>@relation.Name</td>
           <td>
             <div class="btn-group" role="group">
               <button type="button" disabled="@(relation.Relation == RelationValue.Friendly)" class="btn btn-success btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
@@ -53,7 +51,6 @@
     </tbody>
   </table>
 }
-<p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Channels</button></p>
 
 @code {
   [SupplyParameterFromQuery]
@@ -70,7 +67,7 @@
 
   protected async override Task OnInitializedAsync() {
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
+    if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Channel)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
           HttpHandler = new SocketsHttpHandler() {
             PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
@@ -133,13 +130,5 @@
       RelationValue.Bandit => "p-3 mb-2 bg-danger text-white",
       _ => "p-3 mb-2 bg-transparent text-dark"
     };
-  }
-
-  private async void Rsi(RelationType type, string name) {
-    await JsRuntime.InvokeVoidAsync("open", $"https://robertsspaceindustries.com/{(type == RelationType.Handle ? "citizens" : "orgs")}/{name}", "_blank");
-  }
-
-  private void Back() {
-    Navigation.NavigateTo("/");
   }
 }
