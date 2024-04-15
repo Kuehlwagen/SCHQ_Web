@@ -24,6 +24,7 @@
     <input type="checkbox" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" /> Neutral
     <input type="checkbox" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" /> Bogey
     <input type="checkbox" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" /> Bandit
+    <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
   </div>
   <table class="table table-striped">
     <thead>
@@ -53,6 +54,7 @@
   public bool? FilterNeutral { get; set; } = true;
   public bool? FilterBogey { get; set; } = true;
   public bool? FilterBandit { get; set; } = true;
+  public bool? FilterOrganization { get; set; } = true;
 
   private RelationInfo[]? relations;
 
@@ -74,15 +76,16 @@
 
   public bool IsVisible(RelationInfo relation)
   {
-    bool? v = relation.Relation switch {
+    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase)) &&
+    (relation.Relation switch {
       RelationValue.NotAssigned => FilterNotAssigned,
       RelationValue.Friendly => FilterFriendly,
       RelationValue.Neutral => FilterNeutral,
       RelationValue.Bogey => FilterBogey,
       RelationValue.Bandit => FilterBandit,
       _ => false
-    } ?? false;
-    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase)) && v.Value;
+    } ?? false) &&
+    (relation.Type == RelationType.Handle || (FilterOrganization.HasValue && FilterOrganization.Value));
   }
 
   public string GetRelationClass(RelationInfo relation) {
