@@ -15,13 +15,15 @@
   <p><em>No relations found (channel secured?)</em></p>
 } else {
   <p>A list of all relations for channel <b>@Channel</b></p>
+  <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
   <div>
-    <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
-    <input type="checkbox" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" /> Not assigned
     <input type="checkbox" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" /> Friendly
     <input type="checkbox" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" /> Neutral
     <input type="checkbox" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" /> Bogey
     <input type="checkbox" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" /> Bandit
+  </div>
+  <div>
+    <input type="checkbox" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" /> Not assigned
     <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
   </div>
   <table class="table table-striped">
@@ -43,7 +45,7 @@
               <button type="button" disabled="@(relation.Relation == RelationValue.Neutral)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Bogey)" class="btn btn-warning btn-sm text-dark" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Bandit)" class="btn btn-danger btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.NotAssigned)" class="btn btn-dark btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">🗙</button>
+              <button type="button" disabled="@(relation.Relation == RelationValue.NotAssigned)" class="btn btn-dark btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">NA</button>
             </div>
           </td>
         </tr>
