@@ -29,10 +29,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var channel in channels) {
-        if (!IsVisible(channel)) {
-          continue;
-        }
+      @foreach (var channel in channels.Where(c => IsVisible(c))) {
         <tr>
           <td><a href="" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
           <td>@(channel.HasPassword ? "🔒" : "🔓")</td>

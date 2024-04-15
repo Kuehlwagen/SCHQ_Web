@@ -28,10 +28,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var relation in relations) {
-        if (!IsVisible(relation)) {
-          continue;
-        }
+      @foreach (var relation in relations.Where(r => IsVisible(r))) {
         string trRelationClass = relation.Relation switch {
           RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
           RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
