@@ -1,0 +1,47 @@
+﻿@page "/addchannel"
+@using Google.Protobuf.WellKnownTypes
+@using Grpc.Net.Client
+@using static SCHQ_Protos.SCHQ_Relations
+@attribute [StreamRendering(false)]
+@inject IJSRuntime JsRuntime
+@inject IConfiguration Config
+@inject NavigationManager Navigation
+
+<PageTitle>SCHQ Web > Add Channel</PageTitle>
+
+<h1>Add Channel</h1>
+
+<p><b>Name:</b><br /><input type="text" placeholder="Name" @bind-value=Name /></p>
+<p><b>Password:</b><br /><input type="password" placeholder="Password" @bind-value=Password /></p>
+<p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Back</button> <button type="button" class="btn btn-primary btn-sm" @onclick="Add">Add Channel</button></p>
+
+@code {
+  [SupplyParameterFromQuery]
+  public string? Name { get; set; }
+  private string? Password { get; set; }
+
+  private async void Add() {
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Name)) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+      SuccessReply reply = await gRPC_Client.CreateChannelAsync(new() { Channel = Name, Password = Password ?? string.Empty });
+      if (reply.Success) {
+        Navigation.NavigateTo("/", true);
+      }
+      else {
+        await JsRuntime.InvokeVoidAsync("alert", "Channel not created");
+      }
+    }
+  }
+
+  private void Back() {
+    Navigation.NavigateTo("/");
+  }
+}
