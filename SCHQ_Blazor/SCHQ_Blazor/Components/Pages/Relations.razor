@@ -17,15 +17,21 @@
   <p><em>No relations found (channel secured?)</em></p>
 } else {
   <p>A list of all relations for channel <b>@Channel</b></p>
-  <table class="table">
+  <div>
+    <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
+  </div>
+  <table class="table table-striped">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Action</th>
+        <th scope="col">Name</th>
+        <th scope="col">Action</th>
       </tr>
     </thead>
     <tbody>
       @foreach (var relation in relations) {
+        if (!IsVisible(relation)) {
+          continue;
+        }
         string trRelationClass = relation.Relation switch {
           RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
           RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
@@ -46,6 +52,7 @@
 @code {
   [SupplyParameterFromQuery]
   public string? Channel { get; set; }
+  public string? Filter { get; set; }
 
   private RelationInfo[]? relations;
 
@@ -61,8 +68,18 @@
           }
         }));
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel });
-      relations = [.. reply?.Relations?.Where(r => r.Relation > RelationValue.NotAssigned)];
+      relations = [.. reply?.Relations];
     }
+  }
+
+  public bool IsVisible(RelationInfo relation) {
+    if (string.IsNullOrWhiteSpace(Filter))
+      return true;
+
+    if (relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))
+      return true;
+
+    return false;
   }
 
   private async void Rsi(RelationType type, string name) {

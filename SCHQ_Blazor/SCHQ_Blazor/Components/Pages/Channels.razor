@@ -16,7 +16,10 @@
   <p><em>No channels found</em></p>
 } else {
   <p>A list of all available channels</p>
-  <table class="table">
+  <div>
+    <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
+  </div>
+  <table class="table table-striped" >
     <thead>
       <tr>
         <th>Name</th>
@@ -27,6 +30,9 @@
     </thead>
     <tbody>
       @foreach (var channel in channels) {
+        if (!IsVisible(channel)) {
+          continue;
+        }
         <tr>
           <td><a href="" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
           <td>@(channel.HasPassword ? "🔒" : "🔓")</td>
@@ -41,6 +47,7 @@
 
 @code {
   private ChannelInfo[]? channels;
+  public string? Filter { get; set; }
 
   protected async override Task OnInitializedAsync() {
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
@@ -56,6 +63,16 @@
       ChannelsReply reply = await gRPC_Client.GetChannelsAsync(new());
       channels = [.. reply?.Channels];
     }
+  }
+
+  public bool IsVisible(ChannelInfo channel) {
+    if (string.IsNullOrWhiteSpace(Filter))
+      return true;
+
+    if (channel.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))
+      return true;
+
+    return false;
   }
 
   private void DeleteChannel(string channel) {
