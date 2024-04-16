@@ -14,6 +14,7 @@
   <p><em>Loading...</em></p>
 } else if (relations.Length == 0) {
   <p><em>No relations found</em></p>
+  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword /></p>
   <p>
     <div>
       <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
@@ -37,6 +38,7 @@
       <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
     </div>
   </p>
+  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword /></p>
   <p>
     <div>
       <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
@@ -76,6 +78,7 @@
 @code {
   [SupplyParameterFromQuery]
   public string? Channel { get; set; }
+  private string? ChannelPassword { get; set; }
   public string? Filter { get; set; }
   public bool? FilterNotAssigned { get; set; }
   public bool? FilterFriendly { get; set; } = true;
@@ -113,7 +116,7 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel });
+      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations];
     }
   }
@@ -167,7 +170,7 @@
                 EnableMultipleHttp2Connections = true
               }
             }));
-          using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel }, cancellationToken: CTS.Token);
+          using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
           try {
             await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
               if (relations?.Any(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) ?? false) {
@@ -178,6 +181,8 @@
               StateHasChanged();
             }
           } catch { }
+          SyncActive = false;
+          StateHasChanged();
         }
       } catch { }
     }
