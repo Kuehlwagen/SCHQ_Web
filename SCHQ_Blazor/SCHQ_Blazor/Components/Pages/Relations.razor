@@ -14,7 +14,12 @@
   <p><em>Loading...</em></p>
 } else if (relations.Length == 0) {
   <p><em>No relations found</em></p>
-  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword /></p>
+  <p>
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
+      <label for="floatingInputGroupChannelPassword">Channel Password</label>
+    </div>
+  </p>
   <p>
     <div>
       <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
@@ -27,19 +32,11 @@
 } else {
   <p>A list of all relations for channel <b>@Channel</b></p>
   <p>
-    <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
-    <div>
-      <input type="checkbox" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" /> Friendly
-      <input type="checkbox" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" /> Neutral
-      <input type="checkbox" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" /> Bogey
-      <input type="checkbox" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" /> Bandit
-    </div>
-    <div>
-      <input type="checkbox" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" /> Not assigned
-      <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
+      <label for="floatingInputGroupChannelPassword">Channel Password</label>
     </div>
   </p>
-  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword disabled="@(SyncActive)" /></p>
   <p>
     <div>
       <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
@@ -49,6 +46,30 @@
       </button>
     </div>
   </p>
+  <div class="input-group">
+    <div class="form-floating">
+      <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
+      <label for="floatingInputGroupFilter">Filter</label>
+    </div>
+    <div class="input-group-text bg-success">
+      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)">
+    </div>
+    <div class="input-group-text bg-secondary">
+      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)">
+    </div>
+    <div class="input-group-text bg-warning">
+      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)">
+    </div>
+    <div class="input-group-text bg-danger">
+      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)">
+    </div>
+    <div class="input-group-text bg-dark">
+      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)">
+    </div>
+    <div class="input-group-text bg-info">
+      <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)">
+    </div>
+  </div>
   <table class="table table-striped">
     <thead>
       <tr>
@@ -74,7 +95,7 @@
             <div class="btn-group" role="group">
               <button type="button" disabled="@(relation.Relation == RelationValue.Friendly)" class="btn btn-success btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Neutral)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.Bogey)" class="btn btn-warning btn-sm text-dark" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
+              <button type="button" disabled="@(relation.Relation == RelationValue.Bogey)" class="btn btn-warning btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Bandit)" class="btn btn-danger btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.NotAssigned)" class="btn btn-dark btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">NA</button>
             </div>

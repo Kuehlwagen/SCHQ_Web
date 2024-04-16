@@ -16,12 +16,12 @@
   <p><em>No channels found</em></p>
 } else {
   <p>A list of all available channels</p>
+  <p><button class="btn btn-primary" type="button" @onclick="GetChannels">Reload Channels</button></p>
   <p>
     <div>
       <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
     </div>
   </p>
-  <p><button class="btn btn-primary" type="button" @onclick="GetChannels">Reload Channels</button></p>
   <table class="table table-striped" >
     <thead>
       <tr>
@@ -34,10 +34,10 @@
     <tbody>
       @foreach (var channel in channels.Where(c => IsVisible(c))) {
         <tr>
-          <td><a href="" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
-          <td>@(channel.HasPassword ? "🔒" : "🔓")</td>
-          <td>@channel.Permissions</td>
-          <td><button type="button" class="btn btn-danger btn-sm" @onclick="async () => DeleteChannel(channel.Name)">Delete</button></td>
+          <td class="align-middle"><a href="" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
+          <td class="align-middle">@(channel.HasPassword ? "🔒" : "🔓")</td>
+          <td class="align-middle">@channel.Permissions</td>
+          <td class="align-middle"><button type="button" class="btn btn-danger btn-sm" @onclick="async () => DeleteChannel(channel.Name)">Delete</button></td>
         </tr>
       }
     </tbody>
