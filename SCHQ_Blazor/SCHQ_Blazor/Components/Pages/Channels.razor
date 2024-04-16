@@ -16,9 +16,12 @@
   <p><em>No channels found</em></p>
 } else {
   <p>A list of all available channels</p>
-  <div>
-    <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
-  </div>
+  <p>
+    <div>
+      <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
+    </div>
+  </p>
+  <p><button class="btn btn-primary" type="button" @onclick="GetChannels">Reload Channels</button></p>
   <table class="table table-striped" >
     <thead>
       <tr>
@@ -46,6 +49,10 @@
   public string? Filter { get; set; }
 
   protected async override Task OnInitializedAsync() {
+    await GetChannels();
+  }
+
+  private async Task GetChannels() {
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {

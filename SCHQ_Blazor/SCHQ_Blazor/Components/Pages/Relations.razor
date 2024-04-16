@@ -17,6 +17,7 @@
   <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword /></p>
   <p>
     <div>
+      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
       <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
         <span role="status">@SyncButtonText</span>
@@ -41,6 +42,7 @@
   <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword /></p>
   <p>
     <div>
+      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
       <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
         <span role="status">@SyncButtonText</span>
