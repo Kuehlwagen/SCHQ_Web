@@ -39,7 +39,7 @@
       <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
     </div>
   </p>
-  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword /></p>
+  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=ChannelPassword disabled="@(SyncActive)" /></p>
   <p>
     <div>
       <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
