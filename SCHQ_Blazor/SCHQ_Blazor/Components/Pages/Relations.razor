@@ -1,5 +1,6 @@
 ﻿@page "/relations"
 @using Google.Protobuf.WellKnownTypes
+@using Grpc.Core
 @using Grpc.Net.Client
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
@@ -12,20 +13,38 @@
 @if (relations == null) {
   <p><em>Loading...</em></p>
 } else if (relations.Length == 0) {
-  <p><em>No relations found (channel secured?)</em></p>
+  <p><em>No relations found</em></p>
+  <p>
+    <div>
+      <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
+        <span role="status">@SyncButtonText</span>
+      </button>
+    </div>
+  </p>
 } else {
   <p>A list of all relations for channel <b>@Channel</b></p>
-  <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
-  <div>
-    <input type="checkbox" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" /> Friendly
-    <input type="checkbox" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" /> Neutral
-    <input type="checkbox" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" /> Bogey
-    <input type="checkbox" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" /> Bandit
-  </div>
-  <div>
-    <input type="checkbox" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" /> Not assigned
-    <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
-  </div>
+  <p>
+    <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
+    <div>
+      <input type="checkbox" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" /> Friendly
+      <input type="checkbox" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" /> Neutral
+      <input type="checkbox" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" /> Bogey
+      <input type="checkbox" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" /> Bandit
+    </div>
+    <div>
+      <input type="checkbox" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" /> Not assigned
+      <input type="checkbox" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" /> Organization
+    </div>
+  </p>
+  <p>
+    <div>
+      <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
+        <span role="status">@SyncButtonText</span>
+      </button>
+    </div>
+  </p>
   <table class="table table-striped">
     <thead>
       <tr>
@@ -64,10 +83,26 @@
   public bool? FilterBogey { get; set; } = true;
   public bool? FilterBandit { get; set; } = true;
   public bool? FilterOrganization { get; set; } = true;
+  public bool SyncActive { get; set; } = false;
+  public string SyncButtonText {
+    get {
+      return SyncActive ? "Stop Sync" : "Start Sync";
+    }
+  }
+  public string SyncButtonClass {
+    get {
+      return SyncActive ? "btn btn-danger" : "btn btn-primary";
+    }
+  }
 
   private RelationInfo[]? relations;
+  private CancellationTokenSource? CTS;
 
   protected async override Task OnInitializedAsync() {
+    await GetRelations();
+  }
+
+  private async Task GetRelations() {
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Channel)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
@@ -87,13 +122,13 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
+        }
+      }));
       SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
         Channel = Channel,
         Relation = new() {
@@ -107,6 +142,44 @@
         StateHasChanged();
       }
 
+    }
+  }
+
+  private async void SyncRelations() {
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null) {
+      try {
+        if (SyncActive) {
+          if (CTS != null && !CTS.IsCancellationRequested) {
+            CTS.Cancel(true);
+          }
+          SyncActive = false;
+        } else {
+          SyncActive = true;
+          CTS = new();
+          await GetRelations();
+          StateHasChanged();
+          SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+              HttpHandler = new SocketsHttpHandler() {
+                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+                KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+                EnableMultipleHttp2Connections = true
+              }
+            }));
+          using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel }, cancellationToken: CTS.Token);
+          try {
+            await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
+              if (relations?.Any(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) ?? false) {
+                relations.First(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name).Relation = rel.Relation.Relation;
+              } else {
+                relations = [.. relations?.Concat([rel.Relation]).OrderByDescending(r => r.Type).ThenBy(r => r.Name)];
+              }
+              StateHasChanged();
+            }
+          } catch { }
+        }
+      } catch { }
     }
   }
 
