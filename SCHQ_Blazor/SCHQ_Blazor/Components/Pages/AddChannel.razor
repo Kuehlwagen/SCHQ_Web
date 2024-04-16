@@ -10,15 +10,31 @@
 <PageTitle>SCHQ Web</PageTitle>
 
 <h1>Add Channel</h1>
-
-<p><b>Name:</b><br /><input type="text" placeholder="Name" @bind-value=Name /></p>
-<p><b>Password:</b><br /><input type="password" placeholder="Password" @bind-value=Password /></p>
-<p><button type="button" class="btn btn-primary btn-sm" @onclick="Add">Add Channel</button></p>
+<p><b>Name:</b><br /><input class="form-control" type="text" placeholder="Name" @bind="Name" @bind:event="oninput" /></p>
+<p><b>Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=Password /></p>
+<p>
+  <b>Permissions:</b><br />
+  <select class="form-select" @bind=Permissions>
+    <option value="None" selected>None</option>
+    <option value="Read">Read</option>
+    <option value="Write">Write</option>
+  </select>
+</p>
+<p><button type="button" class="btn btn-primary btn-sm" @onclick="Add" disabled="@ButtonIsDisabled">Add Channel</button></p>
 
 @code {
+  private string? _name;
   [SupplyParameterFromQuery]
-  public string? Name { get; set; }
+  public string? Name {
+    get { return _name; }
+    set {
+      _name = value;
+      ButtonIsDisabled = string.IsNullOrWhiteSpace(_name);
+    }
+  }
   private string? Password { get; set; }
+  private string? Permissions { get; set; }
+  private bool ButtonIsDisabled { get; set; } = true;
 
   private async void Add() {
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
@@ -31,7 +47,10 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      SuccessReply reply = await gRPC_Client.CreateChannelAsync(new() { Channel = Name, Password = Password ?? string.Empty });
+      SuccessReply reply = await gRPC_Client.CreateChannelAsync(new() {
+        Channel = Name,
+        Password = Password ?? string.Empty,
+        Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None });
       if (reply.Success) {
         Navigation.NavigateTo("/", true);
       }
