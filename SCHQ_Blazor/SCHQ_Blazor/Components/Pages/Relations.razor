@@ -60,9 +60,17 @@
     <tbody>
       @foreach (var relation in relations.Where(r => IsVisible(r))) {
         <tr>
-          <td class="@GetRelationClass(relation)">@(relation.Type == RelationType.Handle ? "👤" : "🌐")</td>
-          <td>@relation.Name</td>
-          <td>
+          <td class="@GetRelationClass(relation)">
+            <svg class="bi" width="16" height="16" fill="currentColor">
+              @if (relation.Type == RelationType.Handle) {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+              } else {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+              }
+            </svg>
+          </td>
+          <td class="align-middle">@relation.Name</td>
+          <td class="align-middle">
             <div class="btn-group" role="group">
               <button type="button" disabled="@(relation.Relation == RelationValue.Friendly)" class="btn btn-success btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
               <button type="button" disabled="@(relation.Relation == RelationValue.Neutral)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
