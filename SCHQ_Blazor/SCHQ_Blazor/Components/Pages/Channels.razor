@@ -16,10 +16,17 @@
   <p><em>No channels found</em></p>
 } else {
   <p>All available channels</p>
-  <p><button class="btn btn-primary" type="button" @onclick="GetChannels">Reload Channels</button></p>
   <p>
-    <div>
-      <input class="form-control" type="text" placeholder="Filter..." @bind="Filter" @bind:event="oninput" />
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="text" class="form-control" id="floatingInputGroupChannelFilter" placeholder="Filter" @bind=Filter @bind:event="oninput">
+        <label for="floatingInputGroupChannelFilter">Filter</label>
+      </div>
+      <button class="btn btn-primary" type="button" @onclick="GetChannels">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+        </svg>
+      </button>
     </div>
   </p>
   <table class="table table-striped" >

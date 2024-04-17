@@ -10,15 +10,33 @@
 <PageTitle>SCHQ Web</PageTitle>
 
 <h1>Add Channel</h1>
-<p><b>Name:</b><br /><input class="form-control" type="text" placeholder="Name" @bind="Name" @bind:event="oninput" /></p>
-<p><b>Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=Password /></p>
 <p>
-  <b>Permissions:</b><br />
-  <select class="form-select" @bind=Permissions>
-    <option value="None" selected>None</option>
-    <option value="Read">Read</option>
-    <option value="Write">Write</option>
-  </select>
+  <div class="input-group">
+    <div class="form-floating">
+      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="Name" @bind-value=Name>
+      <label for="floatingInputGroupChannel">Name</label>
+    </div>
+  </div>
+</p>
+<p>
+  <div class="input-group">
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingInputGroupPassword" placeholder="Password" @bind-value=Password>
+      <label for="floatingInputGroupPassword">Password</label>
+    </div>
+  </div>
+</p>
+<p>
+  <div class="input-group">
+    <div class="form-floating">
+      <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
+        <option value="None" selected>None</option>
+        <option value="Read">Read</option>
+        <option value="Write">Write</option>
+      </select>
+      <label for="floatingInputGroupPermissions">Permissions</label>
+    </div>
+  </div>
 </p>
 <p><button type="button" class="btn btn-primary btn-sm" @onclick="Add" disabled="@ButtonIsDisabled">Add Channel</button></p>
 
