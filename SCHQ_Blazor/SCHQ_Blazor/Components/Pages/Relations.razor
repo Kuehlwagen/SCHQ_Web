@@ -11,38 +11,46 @@
 <h1>Relations</h1>
 
 @if (relations == null) {
-  <p><em>Loading...</em></p>
+  <p><em>Loading relations  for channel <b>@Channel</b>...</em></p>
 } else if (relations.Length == 0) {
-  <p><em>No relations found</em></p>
+  <p><em>No relations found for channel <b>@Channel</b></em></p>
   <p>
-    <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
-      <label for="floatingInputGroupChannelPassword">Channel Password</label>
-    </div>
-  </p>
-  <p>
-    <div>
-      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
-      <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
+        <label for="floatingInputGroupChannelPassword">Channel Password</label>
+      </div>
+      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+        </svg>
+      </button>
+      <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
-        <span role="status">@SyncButtonText</span>
+        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@SyncActive">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
+        </svg>
       </button>
     </div>
   </p>
 } else {
-  <p>A list of all relations for channel <b>@Channel</b></p>
+  <p>All relations for channel <b>@Channel</b></p>
   <p>
-    <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
-      <label for="floatingInputGroupChannelPassword">Channel Password</label>
-    </div>
-  </p>
-  <p>
-    <div>
-      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">Reload Relations</button>
-      <button class="@SyncButtonClass" type="button" @onclick="SyncRelations">
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
+        <label for="floatingInputGroupChannelPassword">Channel Password</label>
+      </div>
+      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+        </svg>
+      </button>
+      <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
-        <span role="status">@SyncButtonText</span>
+        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@SyncActive">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
+        </svg>
       </button>
     </div>
   </p>
@@ -51,22 +59,22 @@
       <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
       <label for="floatingInputGroupFilter">Filter</label>
     </div>
-    <div class="input-group-text bg-success">
+    <div class="input-group-text bg-success p-2">
       <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)">
     </div>
-    <div class="input-group-text bg-secondary">
+    <div class="input-group-text bg-secondary p-2">
       <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)">
     </div>
-    <div class="input-group-text bg-warning">
+    <div class="input-group-text bg-warning p-2">
       <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)">
     </div>
-    <div class="input-group-text bg-danger">
+    <div class="input-group-text bg-danger p-2">
       <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)">
     </div>
-    <div class="input-group-text bg-dark">
+    <div class="input-group-text bg-dark p-2">
       <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)">
     </div>
-    <div class="input-group-text bg-info">
+    <div class="input-group-text bg-info p-2">
       <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)">
     </div>
   </div>
@@ -93,11 +101,21 @@
           <td class="align-middle">@relation.Name</td>
           <td class="align-middle">
             <div class="btn-group" role="group">
-              <button type="button" disabled="@(relation.Relation == RelationValue.Friendly)" class="btn btn-success btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.Neutral)" class="btn btn-secondary btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.Bogey)" class="btn btn-warning btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.Bandit)" class="btn btn-danger btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
-              <button type="button" disabled="@(relation.Relation == RelationValue.NotAssigned)" class="btn btn-dark btn-sm text-white" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">NA</button>
+              @if (relation.Relation != RelationValue.Friendly) {
+                <button type="button" class="btn btn-success btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
+              }
+              @if (relation.Relation != RelationValue.Neutral) {
+                <button type="button" class="btn btn-secondary btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
+              }
+              @if (relation.Relation != RelationValue.Bogey) {
+                <button type="button" class="btn btn-warning btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
+              }
+              @if (relation.Relation != RelationValue.Bandit) {
+                <button type="button" class="btn btn-danger btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
+              }
+              @if (relation.Relation != RelationValue.NotAssigned) {
+                <button type="button" class="btn btn-dark btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">NA</button>
+              }
             </div>
           </td>
         </tr>
@@ -118,11 +136,6 @@
   public bool? FilterBandit { get; set; } = true;
   public bool? FilterOrganization { get; set; } = true;
   public bool SyncActive { get; set; } = false;
-  public string SyncButtonText {
-    get {
-      return SyncActive ? "Stop Sync" : "Start Sync";
-    }
-  }
   public string SyncButtonClass {
     get {
       return SyncActive ? "btn btn-danger" : "btn btn-primary";
