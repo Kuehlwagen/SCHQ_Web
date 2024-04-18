@@ -36,6 +36,9 @@ public static partial class HandleQuery {
   private static CancellationTokenSource? CancelToken;
 
   public static async Task<HandleInfo> GetHandleInfo(string handle) {
+    if (CancelToken != null && !CancelToken.IsCancellationRequested) {
+      CancelToken.Cancel();
+    }
     CancelToken = new();
     HandleInfo rtnVal = new() {
       Profile = new() {

@@ -17,13 +17,14 @@
       "destination": "wwwroot/lib/bootstrap-icons/",
       "files": [
         "bootstrap-icons.svg",
-        "icons/download.svg",
-        "icons/arrow-repeat.svg",
         "font/fonts/bootstrap-icons.woff",
         "font/fonts/bootstrap-icons.woff2",
         "font/bootstrap-icons.min.css",
+        "icons/arrow-repeat.svg",
+        "icons/download.svg",
         "icons/globe.svg",
-        "icons/person.svg"
+        "icons/person.svg",
+        "icons/search.svg"
       ]
     }
   ]

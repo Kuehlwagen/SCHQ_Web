@@ -2,9 +2,13 @@
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Core
 @using Grpc.Net.Client
+@using SCHQ_Blazor.Classes
+@using System.Net
+@using System.Globalization
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
+@inject NavigationManager Navigation
 
 <PageTitle>SCHQ Web</PageTitle>
 
@@ -33,27 +37,7 @@
       </button>
     </div>
   </p>
-  <p>
-    <div class="input-group">
-      <div class="form-floating">
-        <select class="form-select" @bind=AddType id="floatingInputGroupType">
-          <option value="0" selected>Handle</option>
-          <option value="1">Org</option>
-        </select>
-        <label for="floatingInputGroupType">Type</label>
-      </div>
-      <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupAddHandle" placeholder="Name" @bind=AddName @bind:event="oninput">
-        <label for="floatingInputGroupAddHandle">Name</label>
-      </div>
-      <button type="button" class="btn btn-success btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Friendly)" disabled="@(string.IsNullOrWhiteSpace(AddName))">FR</button>
-      <button type="button" class="btn btn-secondary btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Neutral)" disabled="@(string.IsNullOrWhiteSpace(AddName))">NE</button>
-      <button type="button" class="btn btn-warning btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bogey)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BO</button>
-      <button type="button" class="btn btn-danger btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bandit)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BA</button>
-    </div>
-  </p>
 } else {
-  @* <p>All relations for channel <b>@Channel</b></p> *@
   <p>
     <div class="input-group">
       <div class="form-floating">
@@ -76,20 +60,41 @@
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <select class="form-select" @bind=AddType id="floatingInputGroupType">
-          <option value="0" selected>Handle</option>
-          <option value="1">Org</option>
-        </select>
-        <label for="floatingInputGroupType">Type</label>
+        <input type="text" class="form-control" id="floatingInputGroupName" placeholder="Handle" @bind=QueryHandle @bind:event="oninput" disabled="@QueryHandleActive" @onkeydown="@Enter">
+        <label for="floatingInputGroupName">Handle</label>
       </div>
-      <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupAddHandle" placeholder="Name" @bind=AddName @bind:event="oninput">
-        <label for="floatingInputGroupAddHandle">Name</label>
+      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryHandleActive || string.IsNullOrWhiteSpace(QueryHandle))">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryHandleActive)" />
+        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryHandleActive">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
+        </svg>
+      </button>
+    </div>
+    <div class="alert alert-danger" role="alert" hidden="@(QueryHandleError == null)">
+      <i>@QueryHandleError</i>
+    </div>
+    <div class="card flex-row" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
+      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img" width="110" height="110" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+      <div class="card-body m-1 p-1">
+        <div class="card-text small">
+          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
+          <div><b>CM: @QueryHandleInfo?.Profile?.CommunityMonicker</b></div>
+          <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy", CultureInfo.InvariantCulture) (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
+          <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
+          <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
+        </div>
       </div>
-      <button type="button" class="btn btn-success btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Friendly)" disabled="@(string.IsNullOrWhiteSpace(AddName))">FR</button>
-      <button type="button" class="btn btn-secondary btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Neutral)" disabled="@(string.IsNullOrWhiteSpace(AddName))">NE</button>
-      <button type="button" class="btn btn-warning btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bogey)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BO</button>
-      <button type="button" class="btn btn-danger btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bandit)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BA</button>
+    </div>
+    <div class="card flex-row" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
+      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="110" height="110" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+      <div class="card-body m-1 p-1">
+        <div class="card-text small">
+          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
+          <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
+          <div>Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
+          <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
+        </div>
+      </div>
     </div>
   </p>
   <div class="input-group">
@@ -136,7 +141,13 @@
               }
             </svg>
           </td>
-          <td class="align-middle">@relation.Name</td>
+          <td class="align-middle">
+            @if (relation.Type == RelationType.Handle) {
+              <a href="javascript:void(0);" @onclick="() => { QueryHandle = relation.Name; Query(); }">@relation.Name</a>
+            } else {
+              @relation.Name
+            }
+          </td>
           <td class="align-middle">
             <div class="btn-group" role="group">
               @if (relation.Relation != RelationValue.Friendly) {
@@ -179,8 +190,10 @@
       return SyncActive ? "btn btn-success" : "btn btn-danger";
     }
   }
-  public string? AddName { get; set; }
-  public string? AddType { get; set; }
+  public string? QueryHandle { get; set; } = string.Empty;
+  public bool QueryHandleActive { get; set; }
+  public HandleInfo? QueryHandleInfo { get; set; }
+  public string? QueryHandleError { get; set; }
 
   private RelationInfo[]? relations;
   private CancellationTokenSource? CTS;
@@ -237,11 +250,10 @@
 
   private void SetRelation(RelationValue value) {
     SetRelation(new RelationInfo() {
-      Type = (RelationType)int.Parse(AddType ?? "0"),
-      Name = AddName,
+      Type = RelationType.Handle,
+      Name = QueryHandle,
       Relation = value
     }, value);
-    AddName = string.Empty;
     StateHasChanged();
   }
 
@@ -308,5 +320,28 @@
       RelationValue.Bandit => "p-3 mb-2 bg-danger text-white",
       _ => "p-3 mb-2 bg-transparent text-dark"
     };
+  }
+
+  public async void Query() {
+    QueryHandleActive = true;
+    QueryHandleInfo = null;
+    if (QueryHandle != null) {
+      QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryHandle);
+      if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+        QueryHandleError = null;
+        QueryHandle = QueryHandleInfo?.Profile?.Handle;
+      } else {
+        QueryHandleError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? "Handle not found..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? "An error occured...";
+        QueryHandleInfo = null;
+      }
+    }
+    QueryHandleActive = false;
+    StateHasChanged();
+  }
+
+  public void Enter(KeyboardEventArgs e) {
+    if (e.Code == "Enter" || e.Code == "NumpadEnter") {
+      Query();
+    }
   }
 }
