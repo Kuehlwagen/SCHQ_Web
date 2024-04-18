@@ -190,7 +190,17 @@
       return SyncActive ? "btn btn-success" : "btn btn-danger";
     }
   }
-  public string? QueryHandle { get; set; } = string.Empty;
+  private string? _queryHandle = string.Empty;
+  public string? QueryHandle {
+    get {
+      return _queryHandle;
+    } set {
+      _queryHandle = value;
+      if (string.IsNullOrWhiteSpace(_queryHandle)) {
+        QueryHandleInfo = null;
+      }
+    }
+  }
   public bool QueryHandleActive { get; set; }
   public HandleInfo? QueryHandleInfo { get; set; }
   public string? QueryHandleError { get; set; }
