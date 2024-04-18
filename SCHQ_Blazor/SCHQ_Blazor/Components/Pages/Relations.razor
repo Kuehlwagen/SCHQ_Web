@@ -54,6 +54,25 @@
       </button>
     </div>
   </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <select class="form-select" @bind=AddType id="floatingInputGroupType">
+          <option value="0" selected>Handle</option>
+          <option value="1">Org</option>
+        </select>
+        <label for="floatingInputGroupType">Type</label>
+      </div>
+      <div class="form-floating">
+        <input type="text" class="form-control" id="floatingInputGroupAddHandle" placeholder="Name" @bind=AddName @bind:event="oninput">
+        <label for="floatingInputGroupAddHandle">Name</label>
+      </div>
+      <button type="button" class="btn btn-success btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Friendly)" disabled="@(string.IsNullOrWhiteSpace(AddName))">FR</button>
+      <button type="button" class="btn btn-secondary btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Neutral)" disabled="@(string.IsNullOrWhiteSpace(AddName))">NE</button>
+      <button type="button" class="btn btn-warning btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bogey)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BO</button>
+      <button type="button" class="btn btn-danger btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bandit)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BA</button>
+    </div>
+  </p>
   <div class="input-group">
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
@@ -141,6 +160,8 @@
       return SyncActive ? "btn btn-success" : "btn btn-danger";
     }
   }
+  public string? AddName { get; set; }
+  public string? AddType { get; set; }
 
   private RelationInfo[]? relations;
   private CancellationTokenSource? CTS;
@@ -185,11 +206,23 @@
         }
       });
       if (reply.Success && relations != null) {
-        relations.First(r => r.Type == relation.Type && r.Name == relation.Name).Relation = value;
+        if (relations.Any(r => r.Type == relation.Type && r.Name == relation.Name)) {
+          relations.First(r => r.Type == relation.Type && r.Name == relation.Name).Relation = value;
+        } else {
+          relations = [.. relations.Concat([relation]).OrderByDescending(r => r.Type).ThenBy(r => r.Name)];
+        }
         StateHasChanged();
       }
-
     }
+  }
+
+  private void SetRelation(RelationValue value) {
+    SetRelation(new RelationInfo() {
+      Type = (RelationType)int.Parse(AddType ?? "0"),
+      Name = AddName,
+      Relation = value
+    }, value);
+    AddName = string.Empty;
   }
 
   private async void SyncRelations() {
