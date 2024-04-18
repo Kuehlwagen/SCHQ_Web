@@ -69,6 +69,11 @@
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
         </svg>
       </button>
+      <button type="button" class="btn btn-danger" @onclick="() => { QueryHandle = string.Empty; }" disabled="@(QueryHandleActive || string.IsNullOrWhiteSpace(QueryHandle))">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+        </svg>
+      </button>
     </div>
     <div class="alert alert-danger" role="alert" hidden="@(QueryHandleError == null)">
       <i>@QueryHandleError</i>
