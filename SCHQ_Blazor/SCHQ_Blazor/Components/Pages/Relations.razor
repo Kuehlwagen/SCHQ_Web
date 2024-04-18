@@ -12,7 +12,7 @@
 
 <PageTitle>SCHQ Web</PageTitle>
 
-<h1>Relations</h1>
+<h1 id="top">Relations</h1>
 
 @if (relations == null) {
   <p><em>Loading relations  for channel <b>@Channel</b>...</em></p>
@@ -58,7 +58,7 @@
     </div>
   </p>
   <p>
-    <div class="input-group">
+    <div class="input-group" id="QueryHandle">
       <div class="form-floating">
         <input type="text" class="form-control" id="floatingInputGroupName" placeholder="Handle" @bind=QueryHandle @bind:event="oninput" disabled="@QueryHandleActive" @onkeydown="@Enter">
         <label for="floatingInputGroupName">Handle</label>
@@ -74,7 +74,7 @@
       <i>@QueryHandleError</i>
     </div>
     <div class="card flex-row" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img" width="110" height="110" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       <div class="card-body m-1 p-1">
         <div class="card-text small">
           <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
@@ -86,7 +86,7 @@
       </div>
     </div>
     <div class="card flex-row" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
-      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="110" height="110" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
       <div class="card-body m-1 p-1">
         <div class="card-text small">
           <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
@@ -334,6 +334,7 @@
 
   public async void Query() {
     QueryHandleActive = true;
+    Navigation.NavigateTo($"{Navigation.Uri}#top");
     QueryHandleInfo = null;
     if (QueryHandle != null) {
       QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryHandle);
