@@ -33,13 +33,32 @@
       </button>
     </div>
   </p>
-} else {
-  <p>All relations for channel <b>@Channel</b></p>
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
-        <label for="floatingInputGroupChannelPassword">Channel Password</label>
+        <select class="form-select" @bind=AddType id="floatingInputGroupType">
+          <option value="0" selected>Handle</option>
+          <option value="1">Org</option>
+        </select>
+        <label for="floatingInputGroupType">Type</label>
+      </div>
+      <div class="form-floating">
+        <input type="text" class="form-control" id="floatingInputGroupAddHandle" placeholder="Name" @bind=AddName @bind:event="oninput">
+        <label for="floatingInputGroupAddHandle">Name</label>
+      </div>
+      <button type="button" class="btn btn-success btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Friendly)" disabled="@(string.IsNullOrWhiteSpace(AddName))">FR</button>
+      <button type="button" class="btn btn-secondary btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Neutral)" disabled="@(string.IsNullOrWhiteSpace(AddName))">NE</button>
+      <button type="button" class="btn btn-warning btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bogey)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BO</button>
+      <button type="button" class="btn btn-danger btn-sm text-white p-2" @onclick="() => SetRelation(RelationValue.Bandit)" disabled="@(string.IsNullOrWhiteSpace(AddName))">BA</button>
+    </div>
+  </p>
+} else {
+  @* <p>All relations for channel <b>@Channel</b></p> *@
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
+        <label for="floatingInputGroupChannelPassword">@(Channel) Channel Password</label>
       </div>
       <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">
         <svg class="bi" width="16" height="16" fill="currentColor">
@@ -182,7 +201,7 @@
           }
         }));
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
-      relations = [.. reply?.Relations];
+      relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
     }
   }
 
@@ -209,7 +228,7 @@
         if (relations.Any(r => r.Type == relation.Type && r.Name == relation.Name)) {
           relations.First(r => r.Type == relation.Type && r.Name == relation.Name).Relation = value;
         } else {
-          relations = [.. relations.Concat([relation]).OrderByDescending(r => r.Type).ThenBy(r => r.Name)];
+          relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
         }
         StateHasChanged();
       }
@@ -223,6 +242,7 @@
       Relation = value
     }, value);
     AddName = string.Empty;
+    StateHasChanged();
   }
 
   private async void SyncRelations() {
@@ -253,7 +273,7 @@
               if (relations?.Any(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) ?? false) {
                 relations.First(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name).Relation = rel.Relation.Relation;
               } else {
-                relations = [.. relations?.Concat([rel.Relation]).OrderByDescending(r => r.Type).ThenBy(r => r.Name)];
+                relations = [.. relations?.Concat([rel.Relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
               }
               StateHasChanged();
             }
