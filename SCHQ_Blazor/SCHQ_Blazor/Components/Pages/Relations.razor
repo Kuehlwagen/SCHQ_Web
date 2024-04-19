@@ -121,7 +121,7 @@
       </div>
     }
   </p>
-  <div class="input-group" hidden="@(relations == null || relations.Length == 0)">
+  <div class="input-group" hidden="@(relations.Length == 0)">
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
       <label for="floatingInputGroupFilter">Filter</label>
