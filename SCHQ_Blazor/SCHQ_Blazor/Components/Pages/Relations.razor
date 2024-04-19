@@ -99,6 +99,7 @@
             <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
             <div>Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
             <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
+            <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
         </div>
       } else {
@@ -117,6 +118,7 @@
             <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
             <div><b>SID: @aff.Sid</b></div>
             <div>Rank: @aff.RankName</div>
+            <div>@($"Affiliation / {aff.Members:n0} Member{(aff.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
         </div>
       </div>
