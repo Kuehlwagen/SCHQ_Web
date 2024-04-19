@@ -16,112 +16,6 @@
 
 @if (relations == null) {
   <p><em>Loading relations  for channel <b>@Channel</b>...</em></p>
-} else if (relations.Length == 0) {
-  <p><em>No relations found for channel <b>@Channel</b></em></p>
-  <p>
-    <div class="input-group">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
-        <label for="floatingInputGroupChannelPassword">Channel Password</label>
-      </div>
-      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">
-        <svg class="bi" width="16" height="16" fill="currentColor">
-          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
-        </svg>
-      </button>
-      <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
-        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@SyncActive">
-          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
-        </svg>
-      </button>
-    </div>
-  </p>
-  <p>
-    <div class="input-group mb-1" id="QueryHandle">
-      <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupName" placeholder="Handle" @bind=QueryHandle @bind:event="oninput" disabled="@QueryHandleActive" @onkeydown="@Enter">
-        <label for="floatingInputGroupName">Handle</label>
-      </div>
-      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryHandleActive || string.IsNullOrWhiteSpace(QueryHandle))">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryHandleActive)" />
-        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryHandleActive">
-          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
-        </svg>
-      </button>
-      <button type="button" class="btn btn-danger" @onclick="() => { QueryHandle = string.Empty; }" disabled="@(QueryHandleActive || string.IsNullOrWhiteSpace(QueryHandle))">
-        <svg class="bi" width="16" height="16" fill="currentColor">
-          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-        </svg>
-      </button>
-    </div>
-    <div class="alert alert-danger" role="alert" hidden="@(QueryHandleError == null)">
-      <i>@QueryHandleError</i>
-    </div>
-    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
-      <div class="card-body m-1 p-1">
-        <div class="card-text small">
-          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
-          <div><b>CM: @QueryHandleInfo?.Profile?.CommunityMonicker</b></div>
-          <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy", CultureInfo.InvariantCulture) (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
-          <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
-          <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
-        </div>
-      </div>
-      <div class="btn-group-vertical" role="group">
-        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)">FR</button>
-        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)">NE</button>
-        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)">BO</button>
-        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)">BA</button>
-      </div>
-    </div>
-    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
-      @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
-        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
-        <div class="card-body m-1 p-1">
-          <div class="card-text small">
-            <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
-            <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
-            <div>Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
-            <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
-            <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
-          </div>
-        </div>
-        <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)">BA</button>
-        </div>
-      } else {
-        <div class="card-body m-1 p-1 bg-danger text-white">
-          <div class="card-text small">
-            REDACTED
-          </div>
-        </div>
-      }
-    </div>
-    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []).Where(a => !a.Redacted)) {
-      <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-        <a href="@aff.Url" target="_blank"><img class="card-img" width="120" height="120" src="@aff.AvatarUrl" /></a>
-        <div class="card-body m-1 p-1">
-          <div class="card-text small">
-            <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
-            <div><b>SID: @aff.Sid</b></div>
-            <div>Rank: @aff.RankName</div>
-            <div>@($"Affiliation / {aff.Members:n0} Member{(aff.Members > 1 ? "s" : string.Empty)}")</div>
-          </div>
-        </div>
-        <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)">BA</button>
-        </div>
-      </div>
-    }
-  </p>
 } else {
   <p>
     <div class="input-group">
@@ -227,7 +121,7 @@
       </div>
     }
   </p>
-  <div class="input-group">
+  <div class="input-group" hidden="@(relations == null || relations.Length == 0)">
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
       <label for="floatingInputGroupFilter">Filter</label>
@@ -260,7 +154,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var relation in relations.Where(r => IsVisible(r))) {
+      @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
         <tr>
           <td class="@GetRelationClass(relation)">
             <svg class="bi" width="16" height="16" fill="currentColor">
@@ -312,7 +206,8 @@
   public string? QueryHandle {
     get {
       return _queryHandle;
-    } set {
+    }
+    set {
       _queryHandle = value;
       if (string.IsNullOrWhiteSpace(_queryHandle)) {
         QueryHandleInfo = null;
@@ -350,21 +245,21 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
       SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
-        Channel = Channel,
-        Relation = new() {
-          Type = relation.Type,
-          Name = relation.Name,
-          Relation = value
-        }
-      });
+          Channel = Channel,
+          Relation = new() {
+            Type = relation.Type,
+            Name = relation.Name,
+            Relation = value
+          }
+        });
       if (reply.Success && relations != null) {
         if (relations.Any(r => r.Type == relation.Type && r.Name == relation.Name)) {
           relations.First(r => r.Type == relation.Type && r.Name == relation.Name).Relation = value;
@@ -378,10 +273,10 @@
 
   private void SetRelation(string? name, RelationValue value, RelationType type = RelationType.Handle) {
     SetRelation(new RelationInfo() {
-      Type = type,
-      Name = name,
-      Relation = value
-    }, value);
+        Type = type,
+        Name = name,
+        Relation = value
+      }, value);
     StateHasChanged();
   }
 
@@ -425,8 +320,7 @@
     }
   }
 
-  public bool IsVisible(RelationInfo relation)
-  {
+  public bool IsVisible(RelationInfo relation) {
     return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase)) &&
     (relation.Relation switch {
       RelationValue.NotAssigned => FilterNotAssigned,
