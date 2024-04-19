@@ -58,7 +58,7 @@
     </div>
   </p>
   <p>
-    <div class="input-group" id="QueryHandle">
+    <div class="input-group mb-1" id="QueryHandle">
       <div class="form-floating">
         <input type="text" class="form-control" id="floatingInputGroupName" placeholder="Handle" @bind=QueryHandle @bind:event="oninput" disabled="@QueryHandleActive" @onkeydown="@Enter">
         <label for="floatingInputGroupName">Handle</label>
@@ -78,7 +78,7 @@
     <div class="alert alert-danger" role="alert" hidden="@(QueryHandleError == null)">
       <i>@QueryHandleError</i>
     </div>
-    <div class="card flex-row" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
+    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
       <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       <div class="card-body m-1 p-1">
         <div class="card-text small">
@@ -90,17 +90,37 @@
         </div>
       </div>
     </div>
-    <div class="card flex-row" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
-      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
-      <div class="card-body m-1 p-1">
-        <div class="card-text small">
-          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
-          <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
-          <div>Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
-          <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
+    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
+      @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
+        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+        <div class="card-body m-1 p-1">
+          <div class="card-text small">
+            <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
+            <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
+            <div>Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
+            <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
+          </div>
+        </div>
+      } else {
+        <div class="card-body m-1 p-1 bg-danger text-white">
+          <div class="card-text small">
+            REDACTED
+          </div>
+        </div>
+      }
+    </div>
+    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []).Where(a => !a.Redacted)) {
+      <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
+        <a href="@aff.Url" target="_blank"><img class="card-img" width="120" height="120" src="@aff.AvatarUrl" /></a>
+        <div class="card-body m-1 p-1">
+          <div class="card-text small">
+            <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
+            <div><b>SID: @aff.Sid</b></div>
+            <div>Rank: @aff.RankName</div>
+          </div>
         </div>
       </div>
-    </div>
+    }
   </p>
   <div class="input-group">
     <div class="form-floating">

@@ -74,6 +74,8 @@ public static partial class HandleQuery {
         MatchCollection mcAvatar = RgxAvatar.Matches(rtnVal.HttpResponse.Source);
         if (mcAvatar.Count == 1) {
           rtnVal.Profile.AvatarUrl = CorrectUrl(mcAvatar[0].Groups[1].Value);
+        } else {
+          rtnVal.Profile.AvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
         }
 
         // Display Title
