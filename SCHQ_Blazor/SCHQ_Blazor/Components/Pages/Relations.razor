@@ -89,6 +89,12 @@
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
         </div>
       </div>
+      <div class="btn-group-vertical" role="group">
+        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)">FR</button>
+        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)">NE</button>
+        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)">BO</button>
+        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)">BA</button>
+      </div>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
@@ -101,6 +107,12 @@
             <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
             <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
+        </div>
+        <div class="btn-group-vertical" role="group">
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)">BA</button>
         </div>
       } else {
         <div class="card-body m-1 p-1 bg-danger text-white">
@@ -120,6 +132,12 @@
             <div>Rank: @aff.RankName</div>
             <div>@($"Affiliation / {aff.Members:n0} Member{(aff.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
+        </div>
+        <div class="btn-group-vertical" role="group">
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)">BA</button>
         </div>
       </div>
     }
@@ -175,24 +193,12 @@
               @relation.Name
             }
           </td>
-          <td class="align-middle">
-            <div class="btn-group" role="group">
-              @if (relation.Relation != RelationValue.Friendly) {
-                <button type="button" class="btn btn-success btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Friendly)">FR</button>
-              }
-              @if (relation.Relation != RelationValue.Neutral) {
-                <button type="button" class="btn btn-secondary btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Neutral)">NE</button>
-              }
-              @if (relation.Relation != RelationValue.Bogey) {
-                <button type="button" class="btn btn-warning btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Bogey)">BO</button>
-              }
-              @if (relation.Relation != RelationValue.Bandit) {
-                <button type="button" class="btn btn-danger btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.Bandit)">BA</button>
-              }
-              @if (relation.Relation != RelationValue.NotAssigned) {
-                <button type="button" class="btn btn-dark btn-sm text-white p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)">NA</button>
-              }
-            </div>
+          <td class="align-middle text-end">
+            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" hidden="@(relation.Relation == RelationValue.NotAssigned)">
+              <svg class="bi" width="8" height="8" fill="currentColor">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+              </svg>
+            </button>
           </td>
         </tr>
       }
@@ -285,10 +291,10 @@
     }
   }
 
-  private void SetRelation(RelationValue value) {
+  private void SetRelation(string? name, RelationValue value, RelationType type = RelationType.Handle) {
     SetRelation(new RelationInfo() {
-      Type = RelationType.Handle,
-      Name = QueryHandle,
+      Type = type,
+      Name = name,
       Relation = value
     }, value);
     StateHasChanged();
