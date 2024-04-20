@@ -20,7 +20,7 @@
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) Channel Password" @bind-value=ChannelPassword disabled="@(SyncActive)">
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) Channel Password" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
         <label for="floatingInputGroupChannelPassword">@(Channel) Channel Password</label>
       </div>
       <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">
@@ -254,6 +254,7 @@
         }));
       SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
           Channel = Channel,
+          Password = ChannelPassword,
           Relation = new() {
             Type = relation.Type,
             Name = relation.Name,
