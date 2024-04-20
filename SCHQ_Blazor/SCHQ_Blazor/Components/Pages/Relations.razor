@@ -68,11 +68,14 @@
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
         </div>
       </div>
+      @{
+        RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandle)?.Relation ?? RelationValue.NotAssigned;
+      }
       <div class="btn-group-vertical" role="group">
-        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)">FR</button>
-        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)">NE</button>
-        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)">BO</button>
-        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)">BA</button>
+        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)" disabled="@(relHandle == RelationValue.Friendly)">FR</button>
+        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)" disabled="@(relHandle == RelationValue.Neutral)">NE</button>
+        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)" disabled="@(relHandle == RelationValue.Bogey)">BO</button>
+        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)" disabled="@(relHandle == RelationValue.Bandit)">BA</button>
       </div>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
@@ -87,11 +90,12 @@
             <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
         </div>
+        RelationValue relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid)?.Relation ?? RelationValue.NotAssigned;
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relOrg == RelationValue.Friendly)">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relOrg == RelationValue.Neutral)">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bogey)">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bandit)">BA</button>
         </div>
       } else {
         <div class="card-body m-1 p-1 bg-danger text-white">
@@ -112,16 +116,19 @@
             <div>@($"Affiliation / {aff.Members:n0} Member{(aff.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
         </div>
+        @{
+          RelationValue relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid)?.Relation ?? RelationValue.NotAssigned;
+        }
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relAff == RelationValue.Friendly)">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relAff == RelationValue.Neutral)">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relAff == RelationValue.Bogey)">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relAff == RelationValue.Bandit)">BA</button>
         </div>
       </div>
     }
   </p>
-  <div class="input-group" hidden="@(relations.Length == 0)">
+  <div class="input-group" hidden="@(relations?.Length == 0)">
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
       <label for="floatingInputGroupFilter">Filter</label>
