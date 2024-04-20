@@ -254,7 +254,7 @@
         }));
       SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
           Channel = Channel,
-          Password = ChannelPassword,
+          Password = ChannelPassword ?? string.Empty,
           Relation = new() {
             Type = relation.Type,
             Name = relation.Name,
