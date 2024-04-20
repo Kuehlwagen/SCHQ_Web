@@ -59,6 +59,10 @@
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
       <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+      @{
+        RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandle)?.Relation ?? RelationValue.NotAssigned;
+      }
+      <div class="w-auto @(GetRelationClassColors(relHandle))">&nbsp;</div>
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
           <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
@@ -68,9 +72,6 @@
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
         </div>
       </div>
-      @{
-        RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandle)?.Relation ?? RelationValue.NotAssigned;
-      }
       <div class="btn-group-vertical" role="group">
         <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)" disabled="@(relHandle == RelationValue.Friendly)">FR</button>
         <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)" disabled="@(relHandle == RelationValue.Neutral)">NE</button>
@@ -81,6 +82,8 @@
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
         <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+        RelationValue relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid)?.Relation ?? RelationValue.NotAssigned;
+        <div class="w-auto @(GetRelationClassColors(relOrg))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
@@ -90,7 +93,6 @@
             <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
         </div>
-        RelationValue relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid)?.Relation ?? RelationValue.NotAssigned;
         <div class="btn-group-vertical" role="group">
           <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relOrg == RelationValue.Friendly)">FR</button>
           <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relOrg == RelationValue.Neutral)">NE</button>
@@ -108,6 +110,10 @@
     @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []).Where(a => !a.Redacted)) {
       <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
         <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@aff.AvatarUrl" /></a>
+        @{
+          RelationValue relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid)?.Relation ?? RelationValue.NotAssigned;
+        }
+        <div class="w-auto @(GetRelationClassColors(relAff))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
@@ -116,9 +122,6 @@
             <div>@($"Affiliation / {aff.Members:n0} Member{(aff.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
         </div>
-        @{
-          RelationValue relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid)?.Relation ?? RelationValue.NotAssigned;
-        }
         <div class="btn-group-vertical" role="group">
           <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relAff == RelationValue.Friendly)">FR</button>
           <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relAff == RelationValue.Neutral)">NE</button>
@@ -163,7 +166,7 @@
     <tbody>
       @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
         <tr>
-          <td class="@GetRelationClass(relation)">
+          <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))">
             <svg class="bi" width="16" height="16" fill="currentColor">
               @if (relation.Type == RelationType.Handle) {
                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
@@ -342,14 +345,14 @@
     (relation.Type == RelationType.Handle || (FilterOrganization.HasValue && FilterOrganization.Value));
   }
 
-  public string GetRelationClass(RelationInfo relation) {
-    return relation.Relation switch {
-      RelationValue.NotAssigned => "p-3 mb-2 bg-dark text-white",
-      RelationValue.Friendly => "p-3 mb-2 bg-success text-white",
-      RelationValue.Neutral => "p-3 mb-2 bg-secondary text-white",
-      RelationValue.Bogey => "p-3 mb-2 bg-warning text-white",
-      RelationValue.Bandit => "p-3 mb-2 bg-danger text-white",
-      _ => "p-3 mb-2 bg-transparent text-dark"
+  public string GetRelationClassColors(RelationValue relation) {
+    return relation switch {
+      RelationValue.NotAssigned => "bg-dark text-white",
+      RelationValue.Friendly => "bg-success text-white",
+      RelationValue.Neutral => "bg-secondary text-white",
+      RelationValue.Bogey => "bg-warning text-white",
+      RelationValue.Bandit => "bg-danger text-white",
+      _ => "bg-transparent text-dark"
     };
   }
 
