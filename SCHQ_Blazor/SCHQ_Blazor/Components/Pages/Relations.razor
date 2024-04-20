@@ -58,7 +58,7 @@
       <i>@QueryHandleError</i>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       <div class="card-body m-1 p-1">
         <div class="card-text small">
           <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
@@ -80,7 +80,7 @@
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
-        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
         <div class="card-body m-1 p-1">
           <div class="card-text small">
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
@@ -107,7 +107,7 @@
     </div>
     @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []).Where(a => !a.Redacted)) {
       <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-        <a href="@aff.Url" target="_blank"><img class="card-img" width="120" height="120" src="@aff.AvatarUrl" /></a>
+        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="max-width:120px" width="120" height="120" src="@aff.AvatarUrl" /></a>
         <div class="card-body m-1 p-1">
           <div class="card-text small">
             <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
