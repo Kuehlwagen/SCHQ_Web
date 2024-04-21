@@ -5,6 +5,7 @@
 @using SCHQ_Blazor.Classes
 @using System.Net
 @using System.Globalization
+@using System.Text.Json
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
@@ -193,6 +194,9 @@
       }
     </tbody>
   </table>
+  <p>
+    <InputFile OnChange="UploadHandles" />
+  </p>
 }
 
 @code {
@@ -264,14 +268,14 @@
           }
         }));
       SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
-          Channel = Channel,
-          Password = ChannelPassword ?? string.Empty,
-          Relation = new() {
-            Type = relation.Type,
-            Name = relation.Name,
-            Relation = value
-          }
-        });
+        Channel = Channel,
+        Password = ChannelPassword ?? string.Empty,
+        Relation = new() {
+          Type = relation.Type,
+          Name = relation.Name,
+          Relation = value
+        }
+      });
       if (reply.Success && relations != null) {
         if (relations.Any(r => r.Type == relation.Type && r.Name == relation.Name)) {
           relations.First(r => r.Type == relation.Type && r.Name == relation.Name).Relation = value;
@@ -378,5 +382,26 @@
     if (e.Code == "Enter" || e.Code == "NumpadEnter") {
       Query();
     }
+  }
+
+  private async Task UploadHandles(InputFileChangeEventArgs e) {
+    // application/json
+    // text/csv
+    try
+    {
+      if (e.File?.ContentType == "application/json")
+      {
+        string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
+        if (reader?.Length > 0) {
+          RelationInfo[]? relations = JsonSerializer.Deserialize<RelationInfo[]>(reader);
+          foreach (RelationInfo relation in relations ?? []) {
+            if (relation.Relation == RelationValue.NotAssigned) {
+              relation.Relation = RelationValue.Neutral;
+            }
+            SetRelation(relation, relation.Relation);
+          }
+        }
+      }
+    } catch { }
   }
 }
