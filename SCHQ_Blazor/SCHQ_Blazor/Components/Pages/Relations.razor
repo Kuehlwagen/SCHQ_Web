@@ -263,13 +263,13 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Channel)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
+        }
+      }));
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
     }
@@ -279,13 +279,13 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
+        }
+      }));
       SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
         Channel = Channel,
         Password = ChannelPassword ?? string.Empty,
@@ -330,13 +330,13 @@
           await GetRelations();
           StateHasChanged();
           SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-              HttpHandler = new SocketsHttpHandler() {
-                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-                KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-                EnableMultipleHttp2Connections = true
-              }
-            }));
+            HttpHandler = new SocketsHttpHandler() {
+              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+              EnableMultipleHttp2Connections = true
+            }
+          }));
           using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
           try {
             await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {

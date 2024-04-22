@@ -15,8 +15,13 @@
   <p>No channel name provided</p>
 } else {
   <p>Delete channel <b>@Channel</b></p>
-  <p><b>Channel Password:</b><br /><input class="form-control" type="password" placeholder="Password" @bind-value=Password /></p>
-  <p><button type="button" class="btn btn-outline-primary btn-sm" @onclick="Back">Back</button> <button type="button" class="btn btn-danger btn-sm" @onclick="Delete">Delete Channel</button></p>
+  <p>
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=Password>
+      <label for="floatingInputGroupChannelPassword">Channel Password</label>
+    </div>
+  </p>
+  <p><button type="button" class="btn btn-outline-primary" @onclick="Back">Back</button> <button type="button" class="btn btn-danger" @onclick="Delete">Delete Channel</button></p>
 }
 
 @code {
@@ -30,13 +35,13 @@
       string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
       if (gRPC_Url != null) {
         SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-            HttpHandler = new SocketsHttpHandler() {
-              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-              EnableMultipleHttp2Connections = true
-            }
-          }));
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
         SuccessReply reply = await gRPC_Client.DeleteChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
         if (reply.Success) {
           Navigation.NavigateTo("/", true);

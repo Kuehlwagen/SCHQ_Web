@@ -1,10 +1,12 @@
 ﻿@page "/"
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
+@using System.Text.Json
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>SCHQ Web</PageTitle>
 
@@ -43,7 +45,20 @@
           <td class="align-middle"><a href="" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
           <td class="align-middle">@(channel.HasPassword ? "🔒" : "🔓")</td>
           <td class="align-middle">@channel.Permissions</td>
-          <td class="align-middle"><button type="button" class="btn btn-danger btn-sm" @onclick="async () => DeleteChannel(channel.Name)">Delete</button></td>
+          <td class="align-middle text-end">
+            <div class="btn-group">
+              <button type="button" class="btn btn-primary btn-sm p-2" @onclick="async () => DownloadRelations(channel.Name)">
+                <svg class="bi" width="14" height="14" fill="currentColor">
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+                </svg>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm p-2" @onclick="async () => DeleteChannel(channel.Name)">
+                <svg class="bi" width="14" height="14" fill="currentColor">
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                </svg>
+              </button>
+            </div>
+          </td>
         </tr>
       }
     </tbody>
@@ -62,13 +77,13 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
+        }
+      }));
       ChannelsReply reply = await gRPC_Client.GetChannelsAsync(new());
       channels = [.. reply?.Channels];
     }
@@ -82,6 +97,10 @@
       return true;
 
     return false;
+  }
+
+  private void DownloadRelations(string channel) {
+    Navigation.NavigateTo($"downloadrelations?channel={channel}");
   }
 
   private void DeleteChannel(string channel) {
