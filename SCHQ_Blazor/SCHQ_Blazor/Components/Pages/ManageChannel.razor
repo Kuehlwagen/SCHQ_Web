@@ -149,7 +149,7 @@
               foreach (RelationInfo relation in relations?.Where(r => !string.IsNullOrWhiteSpace(r.Name)) ?? []) {
                 SetRelation(relation, relation.Relation);
               }
-              Navigation.NavigateTo("/relations?channel={Channel}");
+              Navigation.NavigateTo($"/relations?channel={Channel}");
             } else {
               ErrorText = "File is empty";
             }
@@ -173,7 +173,7 @@
                   }
                   SetRelation(relation, relation.Relation);
                 }
-                Navigation.NavigateTo("/relations?channel={Channel}");
+                Navigation.NavigateTo($"/relations?channel={Channel}");
               }
             } else {
               ErrorText = "File is empty";
