@@ -80,7 +80,7 @@
             });
             using var streamRef = new DotNetStreamReference(relationsStream);
             streamRef.Stream.Position = 0;
-            await JsRuntime.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyy.MM.dd_HH:mm:ss}.json", streamRef);
+            await JsRuntime.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
         } catch {}
       }
     }
