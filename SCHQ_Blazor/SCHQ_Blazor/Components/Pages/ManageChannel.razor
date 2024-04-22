@@ -1,0 +1,214 @@
+﻿@page "/managechannel"
+@using Google.Protobuf.WellKnownTypes
+@using Grpc.Net.Client
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using static SCHQ_Protos.SCHQ_Relations
+@attribute [StreamRendering(false)]
+@inject IJSRuntime JsRuntime
+@inject IConfiguration Config
+@inject NavigationManager Navigation
+
+<script>
+  window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+    const arrayBuffer = await contentStreamReference.arrayBuffer();
+    const blob = new Blob([arrayBuffer]);
+    const url = URL.createObjectURL(blob);
+    const anchorElement = document.createElement('a');
+    anchorElement.href = url;
+    anchorElement.download = fileName ?? '';
+    anchorElement.click();
+    anchorElement.remove();
+    URL.revokeObjectURL(url);
+  }
+</script>
+
+<PageTitle>SCHQ Web</PageTitle>
+
+<h1>Manage Channel</h1>
+
+@if (string.IsNullOrWhiteSpace(Channel)) {
+  <p>No channel name provided</p>
+} else {
+  <p>Manage channel <b>@Channel</b></p>
+  <p>
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=Password>
+      <label for="floatingInputGroupChannelPassword">Channel Password</label>
+    </div>
+  </p>
+  <p>
+    <div class="btn-group">
+      <button type="button" class="btn btn-outline-primary" @onclick="Back" disabled="@IsBusy">Back</button>
+      <button type="button" class="btn btn-primary" @onclick="Download" disabled="@IsBusy">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+        </svg>
+      </button>
+      <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2")" for="input-file" disabled="@IsBusy">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
+        </svg>
+      </label>
+      <button type="button" class="btn btn-danger" @onclick="Delete">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+        </svg>
+      </button>
+    </div>
+  </p>
+  <InputFile OnChange="@Upload" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
+}
+
+@code {
+  [SupplyParameterFromQuery]
+  public string? Channel { get; set; }
+  private string? Password;
+  private bool IsBusy { get; set; }
+  private string? ErrorText { get; set; }
+
+  private async void Delete() {
+    bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"Do you really want to delete gRPC channel [{Channel}]?");
+    if (confirmed) {
+      string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+      if (gRPC_Url != null) {
+        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+        SuccessReply reply = await gRPC_Client.DeleteChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
+        if (reply.Success) {
+          Navigation.NavigateTo("/", true);
+        } else {
+          await JsRuntime.InvokeVoidAsync("alert", "Channel not deleted (wrong password?)");
+        }
+      }
+    }
+  }
+
+  private async Task Download() {
+    IsBusy = true;
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
+          Channel = Channel,
+          Password = Password ?? string.Empty
+        });
+      if (reply?.Relations != null) {
+        try {
+          using MemoryStream relationsStream = new();
+          JsonSerializer.Serialize<RelationInfo[]>(relationsStream, reply.Relations.ToArray() ?? [],
+            new JsonSerializerOptions() {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+                WriteIndented = true
+              });
+          using var streamRef = new DotNetStreamReference(relationsStream);
+          streamRef.Stream.Position = 0;
+          await JsRuntime.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
+        } catch { }
+      }
+    }
+    IsBusy = false;
+  }
+
+  private async Task Upload(InputFileChangeEventArgs e) {
+    StateHasChanged();
+    try {
+      switch (e.File?.ContentType) {
+        case "application/json": {
+            string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
+            if (reader?.Length > 0) {
+              RelationInfo[]? relations = JsonSerializer.Deserialize<RelationInfo[]>(reader);
+              foreach (RelationInfo relation in relations?.Where(r => !string.IsNullOrWhiteSpace(r.Name)) ?? []) {
+                SetRelation(relation, relation.Relation);
+              }
+            } else {
+              ErrorText = "File is empty";
+            }
+            break;
+          }
+        case "text/csv": {
+            string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
+            if (reader?.Length > 0) {
+              string[] fields;
+              foreach (string line in reader.Split(Environment.NewLine)) {
+                fields = line.Split(';');
+                if (!string.IsNullOrWhiteSpace(fields[0])) {
+                  RelationInfo relation = new() {
+                      Name = fields[0]
+                    };
+                  if (fields.Length > 1 && int.TryParse(fields[1], out int relVal)) {
+                    relation.Relation = (RelationValue)relVal;
+                  }
+                  if (fields.Length > 2 && int.TryParse(fields[2], out int relType)) {
+                    relation.Type = (RelationType)relType;
+                  }
+                  SetRelation(relation, relation.Relation);
+                }
+              }
+            } else {
+              ErrorText = "File is empty";
+            }
+            break;
+          }
+        default:
+          ErrorText = $"File type [{e.File?.ContentType}] not supported";
+          break;
+      }
+    } catch (Exception ex) {
+      ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
+    }
+  }
+
+
+  private async void SetRelation(RelationInfo relation, RelationValue value) {
+    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
+    if (gRPC_Url != null) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+      SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
+          Channel = Channel,
+          Password = Password ?? string.Empty,
+          Relation = new() {
+            Type = relation.Type,
+            Name = relation.Name,
+            Relation = value
+          }
+        });
+      if (!reply.Success) {
+
+      }
+    }
+  }
+
+  private void SetRelation(string? name, RelationValue value, RelationType type = RelationType.Handle) {
+    SetRelation(new RelationInfo() {
+        Type = type,
+        Name = name,
+        Relation = value
+      }, value);
+    StateHasChanged();
+  }
+
+  private void Back() {
+    Navigation.NavigateTo("/");
+  }
+}

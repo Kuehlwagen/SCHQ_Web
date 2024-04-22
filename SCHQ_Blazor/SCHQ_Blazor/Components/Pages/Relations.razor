@@ -58,11 +58,6 @@
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
         </svg>
       </button>
-      <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(QueryNameActive ? "#61A1FE" : "#0B5ED7")" for="input-file" disabled="@QueryNameActive">
-        <svg class="bi" width="16" height="16" fill="currentColor">
-          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
-        </svg>
-      </label>
       <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
@@ -208,7 +203,6 @@
       }
     </tbody>
   </table>
-  <InputFile OnChange="@UploadHandles" accept="text/csv,application/json" id="input-file" disabled="@QueryNameActive" multiple hidden />
 }
 
 @code {
@@ -424,55 +418,6 @@
   public void Enter(KeyboardEventArgs e) {
     if (e.Code == "Enter" || e.Code == "NumpadEnter") {
       Query();
-    }
-  }
-
-  private async Task UploadHandles(InputFileChangeEventArgs e) {
-    StateHasChanged();
-    try {
-      switch (e.File?.ContentType) {
-        case "application/json": {
-            string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
-            if (reader?.Length > 0) {
-              RelationInfo[]? relations = JsonSerializer.Deserialize<RelationInfo[]>(reader);
-              foreach (RelationInfo relation in relations?.Where(r => !string.IsNullOrWhiteSpace(r.Name)) ?? []) {
-                SetRelation(relation, relation.Relation);
-              }
-            } else {
-              QueryNameError = "File is empty";
-            }
-            break;
-          }
-        case "text/csv": {
-            string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
-            if (reader?.Length > 0) {
-              string[] fields;
-              foreach(string line in reader.Split(Environment.NewLine)) {
-                fields = line.Split(';');
-                if (!string.IsNullOrWhiteSpace(fields[0])) {
-                  RelationInfo relation = new() {
-                    Name = fields[0]
-                  };
-                  if (fields.Length > 1 && int.TryParse(fields[1], out int relVal)) {
-                    relation.Relation = (RelationValue)relVal;
-                  }
-                  if (fields.Length > 2 && int.TryParse(fields[2], out int relType)) {
-                    relation.Type = (RelationType)relType;
-                  }
-                  SetRelation(relation, relation.Relation);
-                }
-              }
-            } else {
-              QueryNameError = "File is empty";
-            }
-            break;
-          }
-        default:
-          QueryNameError = $"File type [{e.File?.ContentType}] not supported";
-          break;
-      }
-    } catch (Exception ex) {
-      QueryNameError = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
     }
   }
 }
