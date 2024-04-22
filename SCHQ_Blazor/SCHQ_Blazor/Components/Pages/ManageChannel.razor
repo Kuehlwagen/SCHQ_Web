@@ -147,7 +147,11 @@
             if (reader?.Length > 0) {
               RelationInfo[]? relations = JsonSerializer.Deserialize<RelationInfo[]>(reader);
               foreach (RelationInfo relation in relations?.Where(r => !string.IsNullOrWhiteSpace(r.Name)) ?? []) {
-                SetRelation(relation, relation.Relation);
+                if (!await SetRelation(relation, relation.Relation)) {
+                  ErrorText = "Error updating relations";
+                  StateHasChanged();
+                  return;
+                }
               }
               Navigation.NavigateTo($"/relations?channel={Channel}");
             } else {
@@ -171,7 +175,11 @@
                   if (fields.Length > 2 && int.TryParse(fields[2], out int relType)) {
                     relation.Type = (RelationType)relType;
                   }
-                  SetRelation(relation, relation.Relation);
+                  if (!await SetRelation(relation, relation.Relation)) {
+                    ErrorText = "Error updating relations";
+                    StateHasChanged();
+                    return;
+                  }
                 }
                 Navigation.NavigateTo($"/relations?channel={Channel}");
               }
@@ -191,7 +199,9 @@
   }
 
 
-  private async void SetRelation(RelationInfo relation, RelationValue value) {
+  private async Task<bool> SetRelation(RelationInfo relation, RelationValue value) {
+    bool success = false;
+
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
@@ -202,7 +212,7 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      await gRPC_Client.SetRelationAsync(new() {
+      SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
           Channel = Channel,
           Password = Password ?? string.Empty,
           Relation = new() {
@@ -211,6 +221,9 @@
             Relation = value
           }
         });
+        success = reply.Success;
     }
+
+    return success;
   }
 }
