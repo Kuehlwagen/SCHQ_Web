@@ -394,10 +394,7 @@
         string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
         if (reader?.Length > 0) {
           RelationInfo[]? relations = JsonSerializer.Deserialize<RelationInfo[]>(reader);
-          foreach (RelationInfo relation in relations ?? []) {
-            if (relation.Relation == RelationValue.NotAssigned) {
-              relation.Relation = RelationValue.Neutral;
-            }
+          foreach (RelationInfo relation in relations?.Where(r => !string.IsNullOrWhiteSpace(r.Name)) ?? []) {
             SetRelation(relation, relation.Relation);
           }
         }
