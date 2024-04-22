@@ -16,6 +16,7 @@ public static partial class HandleQuery {
   private static readonly Regex RgxMainOrganization = RgxMainOrganizationMethod();
   private static readonly Regex RgxOrganizationStars = RgxOrganizationStarsMethod();
   private static readonly Regex RgxOrganization = RgxOrganizationMethod();
+  private static readonly Regex RgxOrganizationOnly = RgxOrganizationOnlyMethod();
 
   [GeneratedRegex("<strong class=\"value\">(.+)</strong>", RegexOptions.Multiline | RegexOptions.Compiled)]
   private static partial Regex RgxIdCmHandleEnlistedFluencyMethod();
@@ -31,6 +32,8 @@ public static partial class HandleQuery {
   private static partial Regex RgxOrganizationStarsMethod();
   [GeneratedRegex("<a href=\"\\/orgs\\/(.+)\"><img src=\"(.+)\" \\/><\\/a>\\s+<span class=\"members\">(\\d+) members<\\/span>[\\W\\w]+class=\"value\\s[\\w\\d]*\">(.+)<\\/a>[\\W\\w]+Organization rank<\\/span>\\s+<strong class=\"value\\s[\\w\\d]*\">(.+)<\\/strong>", RegexOptions.Multiline | RegexOptions.Compiled)]
   private static partial Regex RgxOrganizationMethod();
+  [GeneratedRegex("<div class=\\\"logo noshadow\\\">\\s+<img src=\\\"(.+)\\\" \\/>\\s+<span class=\\\"count\\\">(\\d+)[\\w\\W]+<h1>(.+) \\/ <span class=\\\"symbol\\\">(.+)<\\/span>[\\w\\W]+<li class=\\\"commitment\\\">(.+)<\\/li>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>")]
+  private static partial Regex RgxOrganizationOnlyMethod();
   #endregion
 
   private static CancellationTokenSource? CancelToken;
@@ -175,6 +178,31 @@ public static partial class HandleQuery {
     return reply;
   }
 
+  public static async Task<OrganizationOnlyInfo> GetOrganizationInfo(string sid) {
+    OrganizationOnlyInfo reply = new() {
+      HttpResponse = await GetRSISource($"https://robertsspaceindustries.com/orgs/{sid}", CancelToken, true)
+    };
+
+    if (reply.HttpResponse.StatusCode.HasValue && reply.HttpResponse.StatusCode == HttpStatusCode.OK && reply.HttpResponse.Source != null) {
+      Match mOrg = RgxOrganizationOnly.Match(reply.HttpResponse.Source);
+      if (mOrg?.Groups?.Count == 8) {
+        reply.Organization = new() {
+          AvatarUrl = CorrectUrl(mOrg.Groups[1].Value),
+          Members = Convert.ToInt32(mOrg.Groups[2].Value),
+          Name = mOrg.Groups[3].Value,
+          Url = $"https://robertsspaceindustries.com/orgs/{mOrg.Groups[4].Value}",
+          Sid = mOrg.Groups[4].Value,
+          Commitment = mOrg.Groups[5].Value,
+          PrimaryActivity = mOrg.Groups[6].Value,
+          SecondaryActivity = mOrg.Groups[7].Value,
+          Redacted = false
+        };
+      }
+    }
+
+    return reply;
+  }
+
   private static string CorrectText(string text) {
     return HttpUtility.HtmlDecode(text);
   }
@@ -201,28 +229,21 @@ public static partial class HandleQuery {
     return rtnVal;
   }
 
-  private static async Task<HttpInfo> GetRSISource(string url, CancellationTokenSource? cancellationToken, bool isCommunityHub = false) {
+  private static async Task<HttpInfo> GetRSISource(string url, CancellationTokenSource? cancellationToken, bool isOrganization = false) {
     HttpInfo rtnVal = await GetSource(url, cancellationToken);
 
     if (rtnVal.StatusCode == HttpStatusCode.OK && rtnVal.Source != null) {
-      if (!isCommunityHub) {
-        int index = rtnVal.Source.IndexOf("<div class=\"page-wrapper\">");
-        if (index >= 0) {
-          rtnVal.Source = rtnVal.Source[index..];
-        }
+      int index = rtnVal.Source.IndexOf("<div class=\"page-wrapper\">");
+      if (index >= 0) {
+        rtnVal.Source = rtnVal.Source[index..];
+      }
+      if (!isOrganization) {
         index = rtnVal.Source.IndexOf("<script type=\"text/plain\" data-cookieconsent=\"statistics\">");
-        if (index >= 0) {
-          rtnVal.Source = rtnVal.Source[..index];
-        }
       } else {
-        int index = rtnVal.Source.IndexOf("{\"props\":");
-        if (index >= 0) {
-          rtnVal.Source = rtnVal.Source[index..];
-        }
-        index = rtnVal.Source.IndexOf("</script></body></html>");
-        if (index >= 0) {
-          rtnVal.Source = rtnVal.Source[..index];
-        }
+        index = rtnVal.Source.IndexOf("<div class=\"content join-us clearfix\">");
+      }
+      if (index >= 0) {
+        rtnVal.Source = rtnVal.Source[..index];
       }
     }
 
@@ -291,6 +312,14 @@ public class OrganizationInfo {
   public string? PrimaryActivity { get; set; }
   public string? SecondaryActivity { get; set; }
   public string? Commitment { get; set; }
+
+}
+
+public class OrganizationOnlyInfo {
+
+  [JsonIgnore]
+  public HttpInfo? HttpResponse { get; set; }
+  public OrganizationInfo? Organization { get; set; }
 
 }
 #endregion

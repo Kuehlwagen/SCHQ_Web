@@ -24,7 +24,7 @@
         <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) Channel Password" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
         <label for="floatingInputGroupChannelPassword">@(Channel) Channel Password</label>
       </div>
-      <button class="btn btn-primary" type="button" @onclick="GetRelations" disabled="@SyncActive">
+      <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
         </svg>
@@ -38,30 +38,39 @@
     </div>
   </p>
   <p>
-    <div class="input-group mb-1" id="QueryHandle">
+    <div class="input-group mb-1" id="QueryName">
+      <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          @if (QueryNameType == RelationType.Handle) {
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+          } else {
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+          }
+        </svg>
+      </button>
       <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupName" placeholder="Handle" @bind=QueryHandle @bind:event="oninput" disabled="@QueryHandleActive" @onkeydown="@Enter">
-        <label for="floatingInputGroupName">Handle</label>
+        <input type="text" class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@Enter">
+        <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
       </div>
-      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryHandleActive || string.IsNullOrWhiteSpace(QueryHandle))">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryHandleActive)" />
-        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryHandleActive">
+      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
+        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
         </svg>
       </button>
-      <button type="button" class="btn btn-danger" @onclick="() => { QueryHandle = string.Empty; }" disabled="@(QueryHandleActive || string.IsNullOrWhiteSpace(QueryHandle))">
+      <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
         </svg>
       </button>
     </div>
-    <div class="alert alert-danger" role="alert" hidden="@(QueryHandleError == null)">
-      <i>@QueryHandleError</i>
+    <div class="alert alert-danger" role="alert" hidden="@(QueryNameError == null)">
+      <i>@QueryNameError</i>
     </div>
-    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
+    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
       <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       @{
-        RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandle)?.Relation ?? RelationValue.NotAssigned;
+        RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryName)?.Relation ?? RelationValue.NotAssigned;
       }
       <div class="w-auto @(GetRelationClassColors(relHandle))">&nbsp;</div>
       <div class="card-body m-1 p-1">
@@ -80,7 +89,7 @@
         <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)" disabled="@(relHandle == RelationValue.Bandit)">BA</button>
       </div>
     </div>
-    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo?.Organizations?.MainOrganization == null)">
+    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
         <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
         RelationValue relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid)?.Relation ?? RelationValue.NotAssigned;
@@ -89,7 +98,7 @@
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
             <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
-            <div>Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
+            <div hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
             <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
             <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
           </div>
@@ -178,9 +187,9 @@
           </td>
           <td class="align-middle">
             @if (relation.Type == RelationType.Handle) {
-              <a href="javascript:void(0);" @onclick="() => { QueryHandle = relation.Name; Query(); }">@relation.Name</a>
+              <a href="javascript:void(0);" @onclick="() => { QueryNameType = RelationType.Handle; QueryName = relation.Name; Query(); }">@relation.Name</a>
             } else {
-              @relation.Name
+              <a href="javascript:void(0);" @onclick="() => { QueryNameType = RelationType.Organization; QueryName = relation.Name; Query(); }">@relation.Name</a>
             }
           </td>
           <td class="align-middle text-end">
@@ -217,7 +226,7 @@
     }
   }
   private string? _queryHandle = string.Empty;
-  public string? QueryHandle {
+  public string? QueryName {
     get {
       return _queryHandle;
     }
@@ -225,13 +234,19 @@
       _queryHandle = value;
       if (string.IsNullOrWhiteSpace(_queryHandle)) {
         QueryHandleInfo = null;
-        QueryHandleError = null;
+        QueryNameError = null;
       }
     }
   }
-  public bool QueryHandleActive { get; set; }
+  public bool QueryNameActive { get; set; }
   public HandleInfo? QueryHandleInfo { get; set; }
-  public string? QueryHandleError { get; set; }
+  public string? QueryNameError { get; set; }
+  public RelationType QueryNameType { get; set; }
+  public string QueryNamePlaceholder {
+    get {
+      return QueryNameType == RelationType.Handle ? "Handle" : "SID";
+    }
+  }
 
   private RelationInfo[]? relations;
   private CancellationTokenSource? CTS;
@@ -361,20 +376,44 @@
   }
 
   public async void Query() {
-    QueryHandleActive = true;
+    QueryNameActive = true;
     Navigation.NavigateTo($"{Navigation.Uri}#top");
     QueryHandleInfo = null;
-    if (QueryHandle != null) {
-      QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryHandle);
-      if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-        QueryHandleError = null;
-        QueryHandle = QueryHandleInfo?.Profile?.Handle;
+    if (QueryName != null) {
+      if (QueryNameType == RelationType.Handle) {
+        QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
       } else {
-        QueryHandleError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? "Handle not found..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? "An error occured...";
+        OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
+        if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+          QueryHandleInfo = new() {
+            Organizations = new() {
+              MainOrganization = orgInf.Organization
+            },
+            HttpResponse = new() {
+              StatusCode = HttpStatusCode.OK,
+              ErrorText = string.Empty,
+              Source = string.Empty
+            }
+          };
+        } else {
+          QueryHandleInfo = new() {
+            HttpResponse = orgInf?.HttpResponse
+          };
+        }
+      }
+      if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+        QueryNameError = null;
+        if (QueryNameType == RelationType.Handle) {
+          QueryName = QueryHandleInfo?.Profile?.Handle;
+        } else {
+          QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
+        }
+      } else {
+        QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? "Handle not found..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? "An error occured...";
         QueryHandleInfo = null;
       }
     }
-    QueryHandleActive = false;
+    QueryNameActive = false;
     StateHasChanged();
   }
 
