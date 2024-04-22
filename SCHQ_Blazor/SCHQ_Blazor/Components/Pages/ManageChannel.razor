@@ -59,6 +59,9 @@
       </button>
     </div>
   </p>
+  <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
+    <i>@ErrorText</i>
+  </div>
   <InputFile OnChange="@Upload" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
 }
 
@@ -70,6 +73,7 @@
   private string? ErrorText { get; set; }
 
   private async void Delete() {
+    ErrorText = null;
     bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"Do you really want to delete gRPC channel [{Channel}]?");
     if (confirmed) {
       string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
@@ -86,14 +90,17 @@
         if (reply.Success) {
           Navigation.NavigateTo("/", true);
         } else {
-          await JsRuntime.InvokeVoidAsync("alert", "Channel not deleted (wrong password?)");
+          ErrorText = "Channel not deleted (wrong password?)";
+          StateHasChanged();
         }
       }
     }
   }
 
   private async Task Download() {
+    ErrorText = null;
     IsBusy = true;
+    StateHasChanged();
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
@@ -108,7 +115,7 @@
           Channel = Channel,
           Password = Password ?? string.Empty
         });
-      if (reply?.Relations != null) {
+      if (reply?.Relations?.Count > 0) {
         try {
           using MemoryStream relationsStream = new();
           JsonSerializer.Serialize<RelationInfo[]>(relationsStream, reply.Relations.ToArray() ?? [],
@@ -119,13 +126,19 @@
           using var streamRef = new DotNetStreamReference(relationsStream);
           streamRef.Stream.Position = 0;
           await JsRuntime.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
-        } catch { }
+        } catch (Exception ex) {
+          ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
+        }
+      } else {
+        ErrorText = "No relations found";
       }
     }
     IsBusy = false;
+    StateHasChanged();
   }
 
   private async Task Upload(InputFileChangeEventArgs e) {
+    ErrorText = null;
     StateHasChanged();
     try {
       switch (e.File?.ContentType) {
@@ -172,6 +185,7 @@
     } catch (Exception ex) {
       ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
     }
+    StateHasChanged();
   }
 
 
@@ -186,7 +200,7 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
+      await gRPC_Client.SetRelationAsync(new() {
           Channel = Channel,
           Password = Password ?? string.Empty,
           Relation = new() {
@@ -195,18 +209,6 @@
             Relation = value
           }
         });
-      if (!reply.Success) {
-
-      }
     }
-  }
-
-  private void SetRelation(string? name, RelationValue value, RelationType type = RelationType.Handle) {
-    SetRelation(new RelationInfo() {
-        Type = type,
-        Name = name,
-        Relation = value
-      }, value);
-    StateHasChanged();
   }
 }
