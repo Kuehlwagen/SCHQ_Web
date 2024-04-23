@@ -1,4 +1,5 @@
 ﻿@page "/managechannel"
+@using Google.Protobuf.Collections
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
 @using System.Text.Json
@@ -77,14 +78,15 @@
     if (confirmed) {
       string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
       if (gRPC_Url != null) {
-        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
+        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
+          new() {
+            HttpHandler = new SocketsHttpHandler() {
+              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+              EnableMultipleHttp2Connections = true
+            }
+          }));
         SuccessReply reply = await gRPC_Client.DeleteChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
         if (reply.Success) {
           Navigation.NavigateTo("/", true);
@@ -102,7 +104,8 @@
     StateHasChanged();
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
+        new() {
           HttpHandler = new SocketsHttpHandler() {
             PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
             KeepAlivePingDelay = TimeSpan.FromSeconds(60),
@@ -144,15 +147,14 @@
         case "application/json": {
             string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
             if (reader?.Length > 0) {
-              RelationInfo[]? relations = JsonSerializer.Deserialize<RelationInfo[]>(reader);
-              foreach (RelationInfo relation in relations?.Where(r => !string.IsNullOrWhiteSpace(r.Name)) ?? []) {
-                if (!await SetRelation(relation, relation.Relation)) {
-                  ErrorText = "Error updating relations";
-                  StateHasChanged();
-                  return;
+              List<RelationInfo> relations = JsonSerializer.Deserialize<RelationInfo[]>(reader)?.Where(r => !string.IsNullOrWhiteSpace(r.Name)).ToList() ?? [];
+              if (relations?.Count > 0) {
+                if (await SetRelations(relations)) {
+                  Navigation.NavigateTo($"/relations?channel={Channel}");
                 }
+              } else {
+                ErrorText = "No relations found";
               }
-              Navigation.NavigateTo($"/relations?channel={Channel}");
             } else {
               ErrorText = "File is empty";
             }
@@ -162,25 +164,29 @@
             string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
             if (reader?.Length > 0) {
               string[] fields;
+              List<RelationInfo> relations = [];
+              RelationInfo relation;
               foreach (string line in reader.Split(Environment.NewLine)) {
                 fields = line.Split(';');
                 if (!string.IsNullOrWhiteSpace(fields[0])) {
-                  RelationInfo relation = new() {
-                      Name = fields[0]
-                    };
+                  relation = new() {
+                    Name = fields[0]
+                  };
                   if (fields.Length > 1 && int.TryParse(fields[1], out int relVal)) {
                     relation.Relation = (RelationValue)relVal;
                   }
                   if (fields.Length > 2 && int.TryParse(fields[2], out int relType)) {
                     relation.Type = (RelationType)relType;
                   }
-                  if (!await SetRelation(relation, relation.Relation)) {
-                    ErrorText = "Error updating relations";
-                    StateHasChanged();
-                    return;
-                  }
+                  relations.Add(relation);
                 }
-                Navigation.NavigateTo($"/relations?channel={Channel}");
+              }
+              if (relations.Count > 0) {
+                if (await SetRelations(relations)) {
+                  Navigation.NavigateTo($"/relations?channel={Channel}");
+                }
+              } else {
+                ErrorText = "No relations found";
               }
             } else {
               ErrorText = "File is empty";
@@ -197,13 +203,13 @@
     StateHasChanged();
   }
 
-
-  private async Task<bool> SetRelation(RelationInfo relation, RelationValue value) {
+  private async Task<bool> SetRelations(List<RelationInfo> relations) {
     bool success = false;
 
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
+        new() {
           HttpHandler = new SocketsHttpHandler() {
             PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
             KeepAlivePingDelay = TimeSpan.FromSeconds(60),
@@ -211,16 +217,16 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      SuccessReply reply = await gRPC_Client.SetRelationAsync(new() {
-          Channel = Channel,
-          Password = Password ?? string.Empty,
-          Relation = new() {
-            Type = relation.Type,
-            Name = relation.Name,
-            Relation = value
-          }
-        });
-        success = reply.Success;
+      SetRelationsRequest request = new() {
+        Channel = Channel,
+        Password = Password ?? string.Empty,
+      };
+      request.Relations.AddRange(relations);
+      SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);
+      success = reply.Success;
+      if (!success) {
+        ErrorText = reply.Info ?? "Unknown error";
+      }
     }
 
     return success;

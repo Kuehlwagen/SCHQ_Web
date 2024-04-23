@@ -323,14 +323,15 @@
           CTS = new();
           await GetRelations();
           StateHasChanged();
-          SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-            HttpHandler = new SocketsHttpHandler() {
-              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-              EnableMultipleHttp2Connections = true
-            }
-          }));
+          SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
+            new() {
+              HttpHandler = new SocketsHttpHandler() {
+                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+                KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+                EnableMultipleHttp2Connections = true
+              }
+            }));
           using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
           try {
             await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
