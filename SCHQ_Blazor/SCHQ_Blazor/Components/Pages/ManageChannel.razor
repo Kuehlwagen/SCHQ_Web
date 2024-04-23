@@ -30,11 +30,10 @@
 @if (string.IsNullOrWhiteSpace(Channel)) {
   <p>No channel name provided</p>
 } else {
-  <p>Manage channel <b>@Channel</b></p>
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="Channel Password" @bind-value=Password>
-      <label for="floatingInputGroupChannelPassword">Channel Password</label>
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel Channel Password" @bind-value=Password>
+      <label for="floatingInputGroupChannelPassword">@Channel Channel Password</label>
     </div>
   </p>
   <p>
