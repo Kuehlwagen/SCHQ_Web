@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SCHQ_Blazor", "SCHQ_Blazor\SCHQ_Blazor\SCHQ_Blazor.csproj", "{E9EB8296-4027-4DE2-A26A-588952726D02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SCHQ_Blazor", "SCHQ_Blazor\SCHQ_Blazor.csproj", "{E9EB8296-4027-4DE2-A26A-588952726D02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
