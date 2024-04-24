@@ -1,10 +1,10 @@
 # SCHQ_Web
 
-## Benutzung
-
 Web-Interface für den Star Citizen Handle Query Server (SCHQ Server)
 
 ![Relations Data](/Screenshots/SCHQ_Web_Relations_Data.png?raw=true "Relations Data")
+
+## Benutzung
 
 ### Kanäle
 
@@ -152,6 +152,10 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
 ## Installation
 
 SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
+
+### Voraussetzungen
+Für die Ausführung wird ein laufender SCHQ_Server vorausgesetzt, auf den zugegriffen werden kann.
+https://github.com/Kuehlwagen/Star-Citizen-Handle-Query
 
 ### Konfigurationswerte
 
