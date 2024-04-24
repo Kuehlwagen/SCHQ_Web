@@ -36,6 +36,14 @@ public static partial class HandleQuery {
   private static partial Regex RgxOrganizationOnlyMethod();
   #endregion
 
+  #region Enumerations
+  public enum RsiSourceType {
+    Default,
+    Organization,
+    CommunityHub
+  }
+  #endregion
+
   private static CancellationTokenSource? CancelToken;
 
   public static async Task<HandleInfo> GetHandleInfo(string handle) {
@@ -180,7 +188,7 @@ public static partial class HandleQuery {
 
   public static async Task<OrganizationOnlyInfo> GetOrganizationInfo(string sid) {
     OrganizationOnlyInfo reply = new() {
-      HttpResponse = await GetRSISource($"https://robertsspaceindustries.com/orgs/{sid}", CancelToken, true)
+      HttpResponse = await GetRSISource($"https://robertsspaceindustries.com/orgs/{sid}", CancelToken, RsiSourceType.Organization)
     };
 
     if (reply.HttpResponse.StatusCode.HasValue && reply.HttpResponse.StatusCode == HttpStatusCode.OK && reply.HttpResponse.Source != null) {
@@ -201,6 +209,11 @@ public static partial class HandleQuery {
     }
 
     return reply;
+  }
+
+  public static async Task<bool> CheckCommunityHubIsLive(string handle) {
+    HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/community-hub/user/{handle}", CancelToken, RsiSourceType.CommunityHub);
+    return httpInfo?.StatusCode == HttpStatusCode.OK && httpInfo.Source != null && httpInfo.Source.Contains("\"live\":true");
   }
 
   private static string CorrectText(string text) {
@@ -229,18 +242,32 @@ public static partial class HandleQuery {
     return rtnVal;
   }
 
-  private static async Task<HttpInfo> GetRSISource(string url, CancellationTokenSource? cancellationToken, bool isOrganization = false) {
+  private static async Task<HttpInfo> GetRSISource(string url, CancellationTokenSource? cancellationToken, RsiSourceType sourceType = RsiSourceType.Default) {
     HttpInfo rtnVal = await GetSource(url, cancellationToken);
-
     if (rtnVal.StatusCode == HttpStatusCode.OK && rtnVal.Source != null) {
-      int index = rtnVal.Source.IndexOf("<div class=\"page-wrapper\">");
+      int index = -1;
+      switch (sourceType) {
+        case RsiSourceType.Default:
+        case RsiSourceType.Organization:
+          index = rtnVal.Source.IndexOf("<div class=\"page-wrapper\">");
+          break;
+        case RsiSourceType.CommunityHub:
+          index = rtnVal.Source.IndexOf("{\"props\":");
+          break;
+      }
       if (index >= 0) {
         rtnVal.Source = rtnVal.Source[index..];
       }
-      if (!isOrganization) {
-        index = rtnVal.Source.IndexOf("<script type=\"text/plain\" data-cookieconsent=\"statistics\">");
-      } else {
-        index = rtnVal.Source.IndexOf("<div class=\"content join-us clearfix\">");
+      switch (sourceType) {
+        case RsiSourceType.Default:
+          index = rtnVal.Source.IndexOf("<script type=\"text/plain\" data-cookieconsent=\"statistics\">");
+          break;
+        case RsiSourceType.Organization:
+          index = rtnVal.Source.IndexOf("<div class=\"content join-us clearfix\">");
+          break;
+        case RsiSourceType.CommunityHub:
+          index = rtnVal.Source.IndexOf("</script></body></html>");
+          break;
       }
       if (index >= 0) {
         rtnVal.Source = rtnVal.Source[..index];
@@ -263,8 +290,8 @@ public class HandleInfo {
   public HttpInfo? HttpResponse { get; set; }
   public HandleProfileInfo? Profile { get; set; }
   public OrganizationsInfo? Organizations { get; set; }
-  public string? Comment { get; set; }
-  public RelationValue Relation { get; set; }
+  [JsonIgnore]
+  public bool IsLive { get; set; }
 
 }
 
