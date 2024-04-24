@@ -13,7 +13,7 @@
 <p>
   <div class="input-group">
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="Name" @bind-value=Name>
+      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="Name" @bind=Name @bind:event="oninput">
       <label for="floatingInputGroupChannel">Name</label>
     </div>
   </div>
