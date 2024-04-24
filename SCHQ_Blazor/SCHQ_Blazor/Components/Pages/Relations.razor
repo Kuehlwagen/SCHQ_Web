@@ -408,7 +408,7 @@
           QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
         }
       } else {
-        QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? "Handle not found..." : "Organization not found" : QueryHandleInfo?.HttpResponse?.ErrorText ?? "An error occured...";
+        QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? "Handle not found..." : "Organization not found..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? "An error occured...";
         QueryHandleInfo = null;
       }
     }
