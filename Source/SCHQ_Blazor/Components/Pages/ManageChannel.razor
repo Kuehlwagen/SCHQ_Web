@@ -87,7 +87,7 @@
               EnableMultipleHttp2Connections = true
             }
           }));
-        SuccessReply reply = await gRPC_Client.DeleteChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
+        SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
         if (reply.Success) {
           Navigation.NavigateTo("/", true);
         } else {

@@ -65,7 +65,7 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      SuccessReply reply = await gRPC_Client.CreateChannelAsync(new() {
+      SuccessReply reply = await gRPC_Client.AddChannelAsync(new() {
         Channel = Name,
         Password = Password ?? string.Empty,
         Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None });
