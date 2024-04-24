@@ -1,17 +1,17 @@
 # SCHQ_Web
 
-## Benutzung
-
 Web-Interface für den Star Citizen Handle Query Server (SCHQ Server)
 
 ![Relations Data](/Screenshots/SCHQ_Web_Relations_Data.png?raw=true "Relations Data")
+
+## Benutzung
 
 ### Kanäle
 
 Hier werden die konfigurierten Kanäle aufgelistet.
 
 <details>
-  <summary>Screenshot</summary>
+  <summary>Screenshot ein-/ausblenden</summary>
 
   ![Channels](/Screenshots/SCHQ_Web_Channels.png?raw=true "Channels")
 </details>
@@ -31,7 +31,7 @@ Hier werden die konfigurierten Kanäle aufgelistet.
 Hier kann ein neuer Kanal erstellt werden.
 
 <details>
-  <summary>Screenshot</summary>
+  <summary>Screenshot ein-/ausblenden</summary>
 
   ![Add Channel](/Screenshots/SCHQ_Web_Add_Channel.png?raw=true "Add Channel")
 </details>
@@ -49,7 +49,7 @@ Hier kann ein neuer Kanal erstellt werden.
 Hier kann der Kanal verwaltet werden.
 
 <details>
-  <summary>Screenshot</summary>
+  <summary>Screenshot ein-/ausblenden</summary>
 
   ![Manage Channel](/Screenshots/SCHQ_Web_Manage_Channel.png?raw=true "Manage Channel")
 </details>
@@ -112,7 +112,7 @@ KRT;1;1
 Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
 
 <details>
-  <summary>Screenshot</summary>
+  <summary>Screenshot ein-/ausblenden</summary>
 
   ![Relations](/Screenshots/SCHQ_Web_Relations.png?raw=true "Relations")
 </details>
@@ -152,6 +152,11 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
 ## Installation
 
 SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
+
+### Voraussetzungen
+Für die Ausführung wird ein laufender SCHQ_Server vorausgesetzt, auf den zugegriffen werden kann.
+
+Siehe: https://github.com/Kuehlwagen/Star-Citizen-Handle-Query
 
 ### Konfigurationswerte
 
