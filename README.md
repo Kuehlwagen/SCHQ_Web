@@ -146,14 +146,14 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
   - Rechts neben dem Avatar wird, sofern eine Beziehung festgelegt wurde, die Beziehung farblich dargestellt
     - `Grün`: Friendly
     - `Grau`: Neutral
-    - `Orange`: Bogey
+    - `Gelb`: Bogey
     - `Rot`: Bandit
   - Durch einen Klick auf eine der Beziehung-Schaltflächen am rechten Rand des Suchergebnisses kann die Beziehung festgelegt werden.
 - __Filter:__
   - __Texteingabe:__ Während der Eingabe wird die Beziehungsliste gefiltert. Es werden Beziehungen angezeigt, welche den eingegebenen Text im Namen enthalten.
   - __Grün:__ Wenn angehakt, werden freundliche Beziehungen berücksichtigt (Friendly)
   - __Grau:__ Wenn angehakt, werden neutrale Beziehungen berücksichtigt (Neutral)
-  - __Orange:__ Wenn angehakt, werden unbekannte Beziehungen berücksichtigt (Bogey)
+  - __Gelb:__ Wenn angehakt, werden unbekannte Beziehungen berücksichtigt (Bogey)
   - __Rot:__ Wenn angehakt, werden feindliche Beziehungen berücksichtigt (Bandit)
   - __Hellblau:__ Wenn angehakt, werden Organisationen berücksichtigt
 - __Beziehungsliste:__
