@@ -4,6 +4,20 @@ Web-Interface für den Star Citizen Handle Query Server (SCHQ Server)
 
 ![Relations Data](/Screenshots/SCHQ_Web_Relations_Data.png?raw=true "Relations Data")
 
+## Verwandte Projekte
+
+### SCHQ_Server
+
+Der gRPC-Server wird für die Verwendung des Web-Interfaces vorausgesetzt.
+
+Repository-URL: https://github.com/Kuehlwagen/SCHQ_Server
+
+### Star Citizen Handle Query
+
+Das Tool `Star Citizen Handle Query` verwendet den `SCHQ_Server`, um Beziehungen Benutzer übergreifend zu synchronisieren.
+
+Repository-URL: https://github.com/Kuehlwagen/Star-Citizen-Handle-Query
+
 ## Benutzung
 
 ### Kanäle
