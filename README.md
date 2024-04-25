@@ -170,7 +170,7 @@ SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
 ### Voraussetzungen
 Für die Ausführung wird ein laufender SCHQ_Server vorausgesetzt, auf den zugegriffen werden kann.
 
-Siehe: https://github.com/Kuehlwagen/Star-Citizen-Handle-Query
+Siehe: https://github.com/Kuehlwagen/SCHQ_Server
 
 ### Konfigurationswerte
 
