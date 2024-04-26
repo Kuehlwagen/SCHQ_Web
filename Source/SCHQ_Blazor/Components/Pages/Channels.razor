@@ -6,21 +6,22 @@
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject IStringLocalizer<Resource> Localizer
 
 <PageTitle>SCHQ Web</PageTitle>
 
-<h1>Channels</h1>
+<h1>@Localizer["Channels"]</h1>
 
 @if (channels == null) {
-  <p><em>Loading...</em></p>
+  <p><em>@Localizer["Loading"]...</em></p>
 } else if (channels.Length == 0) {
-  <p><em>No channels found</em></p>
+  <p><em>@Localizer["No channels found"]</em></p>
 } else {
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupChannelFilter" placeholder="Filter" @bind=Filter @bind:event="oninput">
-        <label for="floatingInputGroupChannelFilter">Filter</label>
+        <input type="text" class="form-control" id="floatingInputGroupChannelFilter" placeholder="@Localizer["Filter"]" @bind=Filter @bind:event="oninput">
+        <label for="floatingInputGroupChannelFilter">@Localizer["Filter"]</label>
       </div>
       <button class="btn btn-primary" type="button" @onclick="GetChannels">
         <svg class="bi" width="16" height="16" fill="currentColor">
@@ -32,10 +33,10 @@
   <table class="table table-striped" >
     <thead>
       <tr>
-        <th>Name</th>
-        <th width="1%">Secured</th>
-        <th width="1%">Permissions</th>
-        <th width="1%">Action</th>
+        <th>@Localizer["Name"]</th>
+        <th width="1%">@Localizer["Secured"]</th>
+        <th width="1%">@Localizer["Permissions"]</th>
+        <th width="1%">@Localizer["Action"]</th>
       </tr>
     </thead>
     <tbody>
@@ -51,7 +52,14 @@
               }
             </svg>
           </td>
-          <td class="align-middle">@channel.Permissions</td>
+          <td class="align-middle">@(
+            channel.Permissions switch {
+              ChannelPermissions.None => Localizer["None"],
+              ChannelPermissions.Read => Localizer["Read"],
+              ChannelPermissions.Write => Localizer["Write"],
+              _ => string.Empty
+            }
+        )</td>
           <td class="align-middle text-end">
             <div class="btn-group">
               <button type="button" class="btn btn-primary btn-sm p-2" @onclick="async () => ManageChannel(channel.Name)">

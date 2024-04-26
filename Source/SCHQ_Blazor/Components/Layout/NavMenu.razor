@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject IStringLocalizer<Resource> Localizer
+
+<div class="top-row ps-3 navbar navbar-dark">
   <div class="container-fluid">
     <a class="navbar-brand" href="">SCHQ Web</a>
   </div>
@@ -8,15 +10,20 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
   <nav class="flex-column">
+
+    <div class="nav-item px-3">
+      <CultureSelector />
+    </div>
+
     <div class="nav-item px-3">
       <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Channels
+        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> @Localizer["Channels"]
       </NavLink>
     </div>
 
     <div class="nav-item px-3">
       <NavLink class="nav-link" href="addchannel">
-        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Channel
+        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> @Localizer["Add Channel"]
       </NavLink>
     </div>
   </nav>

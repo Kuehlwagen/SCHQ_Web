@@ -10,19 +10,20 @@
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
 @inject NavigationManager Navigation
+@inject IStringLocalizer<Resource> Localizer
 
 <PageTitle>SCHQ Web</PageTitle>
 
-<h1 id="top">Relations</h1>
+<h1 id="top">@Localizer["Relations"]</h1>
 
 @if (relations == null) {
-  <p><em>Loading relations  for channel <b>@Channel</b>...</em></p>
+  <p><em>@Localizer["Loading relations for channel"] <b>@Channel</b>...</em></p>
 } else {
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) Channel Password" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
-        <label for="floatingInputGroupChannelPassword">@(Channel) Channel Password</label>
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) @Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
+        <label for="floatingInputGroupChannelPassword">@(Channel) @Localizer["Channel Password"]</label>
       </div>
       <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive">
         <svg class="bi" width="16" height="16" fill="currentColor">
@@ -104,10 +105,10 @@
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
-            <div><b>SID: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
-            <div hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">Rank: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
-            <div>Activity: @string.Join(", ", [QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity, QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity])</div>
-            <div>@($"{QueryHandleInfo?.Organizations?.MainOrganization?.Commitment} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} Member{(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? "s" : string.Empty)}")</div>
+            <div><b>@Localizer["SID"]: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
+            <div hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">@Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
+            <div>@Localizer["Activity"]: @string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
+            <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
@@ -134,9 +135,9 @@
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
-            <div><b>SID: @aff.Sid</b></div>
-            <div>Rank: @aff.RankName</div>
-            <div>@($"Affiliation / {aff.Members:n0} Member{(aff.Members > 1 ? "s" : string.Empty)}")</div>
+            <div><b>@Localizer["SID"]: @aff.Sid</b></div>
+            <div>@Localizer["Rank"]: @aff.RankName</div>
+            <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
@@ -150,8 +151,8 @@
   </p>
   <div class="input-group" hidden="@(relations?.Length == 0)">
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="Filter" @bind="Filter" @bind:event="oninput">
-      <label for="floatingInputGroupFilter">Filter</label>
+      <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="@Localizer["Filter"]" @bind="Filter" @bind:event="oninput">
+      <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
     </div>
     <div class="input-group-text bg-success p-2">
       <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)">
@@ -175,9 +176,9 @@
   <table class="table table-striped">
     <thead>
       <tr>
-        <th scope="col" width="1%">Type</th>
-        <th scope="col">Name</th>
-        <th scope="col" width="1%">Action</th>
+        <th scope="col" width="1%">@Localizer["Type"]</th>
+        <th scope="col">@Localizer["Name"]</th>
+        <th scope="col" width="1%">@Localizer["Action"]</th>
       </tr>
     </thead>
     <tbody>
@@ -217,7 +218,7 @@
   public string? Channel { get; set; }
   private string? ChannelPassword { get; set; }
   public string? Filter { get; set; }
-  public bool? FilterNotAssigned { get; set; }
+  public bool? FilterNotAssigned { get; set; } = false;
   public bool? FilterFriendly { get; set; } = true;
   public bool? FilterNeutral { get; set; } = true;
   public bool? FilterBogey { get; set; } = true;
@@ -249,7 +250,7 @@
   public RelationType QueryNameType { get; set; }
   public string QueryNamePlaceholder {
     get {
-      return QueryNameType == RelationType.Handle ? "Handle" : "SID";
+      return QueryNameType == RelationType.Handle ? @Localizer["Handle"] : @Localizer["SID"];
     }
   }
 
@@ -258,6 +259,10 @@
 
   protected async override Task OnInitializedAsync() {
     await GetRelations();
+  }
+
+  private string? GetLocalizer(string? text) {
+    return Localizer[text ?? string.Empty];
   }
 
   private async Task GetRelations() {

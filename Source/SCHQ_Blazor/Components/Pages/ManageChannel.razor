@@ -9,6 +9,7 @@
 @inject IJSRuntime JsRuntime
 @inject IConfiguration Config
 @inject NavigationManager Navigation
+@inject IStringLocalizer<Resource> Localizer
 
 <script>
   window.downloadFileFromStream = async (fileName, contentStreamReference) => {
@@ -26,15 +27,15 @@
 
 <PageTitle>SCHQ Web</PageTitle>
 
-<h1>Manage Channel</h1>
+<h1>@Localizer["Manage Channel"]</h1>
 
 @if (string.IsNullOrWhiteSpace(Channel)) {
   <p>No channel name provided</p>
 } else {
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel Channel Password" @bind-value=Password>
-      <label for="floatingInputGroupChannelPassword">@Channel Channel Password</label>
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel @Localizer["Channel Password"]" @bind-value=Password>
+      <label for="floatingInputGroupChannelPassword">@Channel @Localizer["Channel Password"]</label>
     </div>
   </p>
   <p>
@@ -43,19 +44,19 @@
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
         </svg>
-        Relations
+        @Localizer["Relations"]
       </button>
       <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2");" for="input-file" disabled="@IsBusy">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
         </svg>&nbsp;
-        Relations
+        @Localizer["Relations"]
       </label>
       <button type="button" class="btn btn-danger" @onclick="Delete">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
         </svg>
-        Channel
+        @Localizer["Channel"]
       </button>
     </div>
   </p>

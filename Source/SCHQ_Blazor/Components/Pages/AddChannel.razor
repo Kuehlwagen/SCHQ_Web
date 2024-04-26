@@ -5,23 +5,24 @@
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
 @inject NavigationManager Navigation
+@inject IStringLocalizer<Resource> Localizer
 
 <PageTitle>SCHQ Web</PageTitle>
 
-<h1>Add Channel</h1>
+<h1>@Localizer["Add Channel"]</h1>
 <p>
   <div class="input-group">
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="Channel Name" @bind=Name @bind:event="oninput">
-      <label for="floatingInputGroupChannel">Channel Name</label>
+      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="@Localizer["Channel Name"]" @bind=Name @bind:event="oninput">
+      <label for="floatingInputGroupChannel">@Localizer["Channel Name"]</label>
     </div>
   </div>
 </p>
 <p>
   <div class="input-group">
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupPassword" placeholder="Channel Password" @bind-value=Password>
-      <label for="floatingInputGroupPassword">Channel Password</label>
+      <input type="password" class="form-control" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind-value=Password>
+      <label for="floatingInputGroupPassword">@Localizer["Channel Password"]</label>
     </div>
   </div>
 </p>
@@ -29,15 +30,15 @@
   <div class="input-group">
     <div class="form-floating">
       <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
-        <option value="None" selected>None</option>
-        <option value="Read">Read</option>
-        <option value="Write">Write</option>
+        <option value="None" selected>@Localizer["None"]</option>
+        <option value="Read">@Localizer["Read"]</option>
+        <option value="Write">@Localizer["Write"]</option>
       </select>
-      <label for="floatingInputGroupPermissions">Channel Permissions</label>
+      <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]</label>
     </div>
   </div>
 </p>
-<p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">Add Channel</button></p>
+<p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">@Localizer["Add Channel"]</button></p>
 <p>
   <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
     <i>@ErrorText</i>
