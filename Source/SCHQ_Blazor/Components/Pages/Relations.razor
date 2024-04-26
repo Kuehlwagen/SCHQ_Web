@@ -69,7 +69,7 @@
       <i>@QueryNameError</i>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
-      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       @{
         RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryName)?.Relation ?? RelationValue.NotAssigned;
       }
@@ -99,14 +99,19 @@
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
-        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
         RelationValue relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid)?.Relation ?? RelationValue.NotAssigned;
         <div class="w-auto @(GetRelationClassColors(relOrg))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
             <div><b>@Localizer["SID"]: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
-            <div hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">@Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
+            <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
+              @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
+              @for(int i = 0; i < 5; i++) {
+                <img width="20" height="20" src="images/rank_star_@(i < QueryHandleInfo?.Organizations?.MainOrganization?.RankStars ? "active" : "inactive").png" />
+              }
+            </div>
             <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
           </div>
@@ -127,7 +132,7 @@
     </div>
     @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []).Where(a => !a.Redacted)) {
       <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:120px; max-width:120px" width="120" height="120" src="@aff.AvatarUrl" /></a>
+        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
         @{
           RelationValue relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid)?.Relation ?? RelationValue.NotAssigned;
         }
@@ -136,7 +141,12 @@
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
             <div><b>@Localizer["SID"]: @aff.Sid</b></div>
-            <div>@Localizer["Rank"]: @aff.RankName</div>
+            <div>
+              @Localizer["Rank"]: @aff.RankName<br />
+              @for (int i = 0; i < 5; i++) {
+                <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
+              }
+            </div>
             <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
           </div>
         </div>
