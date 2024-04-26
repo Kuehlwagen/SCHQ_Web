@@ -107,7 +107,7 @@
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
             <div><b>@Localizer["SID"]: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
             <div hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">@Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName</div>
-            <div>@Localizer["Activity"]: @string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
+            <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
           </div>
         </div>
@@ -420,7 +420,7 @@
           QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
         }
       } else {
-        QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? "Handle not found..." : "Organization not found..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? "An error occured...";
+        QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
         QueryHandleInfo = null;
       }
     }

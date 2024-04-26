@@ -120,14 +120,14 @@
   <data name="Action" xml:space="preserve">
     <value>Aktion</value>
   </data>
-  <data name="Activity" xml:space="preserve">
-    <value>Aktivität</value>
-  </data>
   <data name="Add Channel" xml:space="preserve">
     <value>Kanal hinzufügen</value>
   </data>
   <data name="Affiliation" xml:space="preserve">
     <value>Affiliation</value>
+  </data>
+  <data name="An error occured" xml:space="preserve">
+    <value>Ein Fehler ist aufgetreten</value>
   </data>
   <data name="Bounty Hunting" xml:space="preserve">
     <value>Kopfgeldjagd</value>
@@ -165,6 +165,9 @@
   <data name="Handle" xml:space="preserve">
     <value>Handle</value>
   </data>
+  <data name="Handle not found" xml:space="preserve">
+    <value>Handle nicht gefunden</value>
+  </data>
   <data name="Hardcore" xml:space="preserve">
     <value>Hardcore</value>
   </data>
@@ -197,6 +200,9 @@
   </data>
   <data name="None" xml:space="preserve">
     <value>Keine</value>
+  </data>
+  <data name="Organization not found" xml:space="preserve">
+    <value>Organisation nicht gefunden</value>
   </data>
   <data name="Permissions" xml:space="preserve">
     <value>Berechtigung</value>
