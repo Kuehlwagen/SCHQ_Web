@@ -60,7 +60,11 @@ public static partial class HandleQuery {
     };
 
     if (!string.IsNullOrWhiteSpace(handle)) {
-      rtnVal.HttpResponse = await GetRSISource(rtnVal.Profile.Url, CancelToken);
+      Task<HttpInfo> handleTask = GetRSISource(rtnVal.Profile.Url);
+      Task<OrganizationsInfo> orgTask = GetOrganizationsInfo(rtnVal.Profile.Handle);
+      Task<bool> isLiveTask = CheckCommunityHubIsLive(rtnVal.Profile.Handle);
+      await Task.WhenAll([handleTask, orgTask, isLiveTask]);
+      rtnVal.HttpResponse = handleTask.Result;
       if (rtnVal.HttpResponse.StatusCode == HttpStatusCode.OK && rtnVal.HttpResponse.Source != null) {
 
         // UEE Citizen Record, Community Monicker, Handle, Enlisted, Fluency
@@ -98,7 +102,10 @@ public static partial class HandleQuery {
         }
 
         // Organizations
-        rtnVal.Organizations = await GetOrganizationsInfo(handle);
+        rtnVal.Organizations = orgTask.Result;
+
+        // Handle live
+        rtnVal.IsLive = isLiveTask.Result;
 
       } else {
         rtnVal.HttpResponse.StatusCode = rtnVal.HttpResponse.StatusCode != null ? rtnVal.HttpResponse.StatusCode : HttpStatusCode.InternalServerError;
@@ -119,7 +126,7 @@ public static partial class HandleQuery {
   private static async Task<OrganizationsInfo> GetOrganizationsInfo(string handle) {
     OrganizationsInfo reply = new();
 
-    HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/citizens/{handle}/organizations", CancelToken);
+    HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/citizens/{handle}/organizations");
     if (httpInfo.StatusCode.HasValue && httpInfo.StatusCode == HttpStatusCode.OK && httpInfo.Source != null) {
 
       string[] organizations = httpInfo.Source.Split("<div class=\"title\">");
@@ -188,7 +195,7 @@ public static partial class HandleQuery {
 
   public static async Task<OrganizationOnlyInfo> GetOrganizationInfo(string sid) {
     OrganizationOnlyInfo reply = new() {
-      HttpResponse = await GetRSISource($"https://robertsspaceindustries.com/orgs/{sid}", CancelToken, RsiSourceType.Organization)
+      HttpResponse = await GetRSISource($"https://robertsspaceindustries.com/orgs/{sid}", RsiSourceType.Organization)
     };
 
     if (reply.HttpResponse.StatusCode.HasValue && reply.HttpResponse.StatusCode == HttpStatusCode.OK && reply.HttpResponse.Source != null) {
@@ -211,8 +218,8 @@ public static partial class HandleQuery {
     return reply;
   }
 
-  public static async Task<bool> CheckCommunityHubIsLive(string handle) {
-    HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/community-hub/user/{handle}", CancelToken, RsiSourceType.CommunityHub);
+  private static async Task<bool> CheckCommunityHubIsLive(string handle) {
+    HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/community-hub/user/{handle}", RsiSourceType.CommunityHub);
     return httpInfo?.StatusCode == HttpStatusCode.OK && httpInfo.Source != null && httpInfo.Source.Contains("\"live\":true");
   }
 
@@ -220,14 +227,14 @@ public static partial class HandleQuery {
     return HttpUtility.HtmlDecode(text);
   }
 
-  private static async Task<HttpInfo> GetSource(string url, CancellationTokenSource? cancellationToken) {
+  private static async Task<HttpInfo> GetSource(string url) {
     HttpInfo rtnVal = new();
 
     using HttpClient client = new() {
       Timeout = TimeSpan.FromSeconds(10)
     };
     try {
-      rtnVal.Source = await client.GetStringAsync(url, cancellationToken?.Token ?? new()).ConfigureAwait(false);
+      rtnVal.Source = await client.GetStringAsync(url, CancelToken?.Token ?? new()).ConfigureAwait(false);
       rtnVal.StatusCode = HttpStatusCode.OK;
     } catch (HttpRequestException ex) {
       rtnVal.Source = string.Empty;
@@ -242,8 +249,8 @@ public static partial class HandleQuery {
     return rtnVal;
   }
 
-  private static async Task<HttpInfo> GetRSISource(string url, CancellationTokenSource? cancellationToken, RsiSourceType sourceType = RsiSourceType.Default) {
-    HttpInfo rtnVal = await GetSource(url, cancellationToken);
+  private static async Task<HttpInfo> GetRSISource(string url, RsiSourceType sourceType = RsiSourceType.Default) {
+    HttpInfo rtnVal = await GetSource(url);
     if (rtnVal.StatusCode == HttpStatusCode.OK && rtnVal.Source != null) {
       int index = -1;
       switch (sourceType) {
