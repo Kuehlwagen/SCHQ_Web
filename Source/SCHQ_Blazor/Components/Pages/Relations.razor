@@ -85,7 +85,7 @@
             </a>
           </div>
           <div><b>CM: @QueryHandleInfo?.Profile?.CommunityMonicker</b></div>
-          <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy", CultureInfo.InvariantCulture) (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
+          <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
         </div>
