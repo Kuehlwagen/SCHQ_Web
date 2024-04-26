@@ -3,7 +3,6 @@
 @using Grpc.Net.Client
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
-@inject IJSRuntime JsRuntime
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 
@@ -39,6 +38,11 @@
   </div>
 </p>
 <p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">Add Channel</button></p>
+<p>
+  <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
+    <i>@ErrorText</i>
+  </div>
+</p>
 
 @code {
   private string? _name;
@@ -53,8 +57,11 @@
   private string? Password { get; set; }
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
+  private string? ErrorText { get; set; }
 
   private async void Add() {
+    ErrorText = null;
+    StateHasChanged();
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Name)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
@@ -73,7 +80,8 @@
         Navigation.NavigateTo("/", true);
       }
       else {
-        await JsRuntime.InvokeVoidAsync("alert", "Channel not created");
+        ErrorText = reply.Info;
+        StateHasChanged();
       }
     }
   }
