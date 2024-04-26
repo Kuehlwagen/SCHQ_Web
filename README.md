@@ -28,13 +28,9 @@ In der Auswahlliste kann die bevorzugte Sprache ausgewählt werden. Es stehen fo
 
 ### Kanäle
 
+![Channels](/Screenshots/SCHQ_Web_Channels.png?raw=true "Channels")
+
 Hier werden die konfigurierten Kanäle aufgelistet.
-
-<details>
-  <summary>Screenshot ein-/ausblenden</summary>
-
-  ![Channels](/Screenshots/SCHQ_Web_Channels.png?raw=true "Channels")
-</details>
 
 - __Filter:__
   - __Texteingabe:__ Während der Eingabe wird die Kanalliste gefiltert. Es werden Kanäle angezeigt, welche den eingegebenen Text im Namen enthalten.
@@ -48,13 +44,9 @@ Hier werden die konfigurierten Kanäle aufgelistet.
 
 ### Kanal hinzufügen
 
+![Add Channel](/Screenshots/SCHQ_Web_Add_Channel.png?raw=true "Add Channel")
+
 Hier kann ein neuer Kanal erstellt werden.
-
-<details>
-  <summary>Screenshot ein-/ausblenden</summary>
-
-  ![Add Channel](/Screenshots/SCHQ_Web_Add_Channel.png?raw=true "Add Channel")
-</details>
 
 - __Kanalname:__ Name des Kanals
 - __Kanalpasswort:__ Passwort des Kanals
@@ -66,13 +58,9 @@ Hier kann ein neuer Kanal erstellt werden.
 
 ### Kanal verwalten
 
-Hier kann der Kanal verwaltet werden.
+![Manage Channel](/Screenshots/SCHQ_Web_Manage_Channel.png?raw=true "Manage Channel")
 
-<details>
-  <summary>Screenshot ein-/ausblenden</summary>
-
-  ![Manage Channel](/Screenshots/SCHQ_Web_Manage_Channel.png?raw=true "Manage Channel")
-</details>
+Hier kann ein Kanal verwaltet werden.
 
 - __Kanalpassword:__ Angabe des Kanalpassworts
 - __Beziehungen herunterladen:__ Beim Klick werden die Beziehungen des Kanals als JSON-Datei heruntergeladen
@@ -129,13 +117,9 @@ KRT;1;1
 
 ### Beziehungen
 
+![Relations](/Screenshots/SCHQ_Web_Relations.png?raw=true "Relations")
+
 Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
-
-<details>
-  <summary>Screenshot ein-/ausblenden</summary>
-
-  ![Relations](/Screenshots/SCHQ_Web_Relations.png?raw=true "Relations")
-</details>
 
 - __Kanalpassword:__ Angabe des Kanalpassworts
 - __Aktualisieren:__ Liest die Beziehungen neu aus
