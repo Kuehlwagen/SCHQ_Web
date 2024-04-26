@@ -75,7 +75,14 @@
       <div class="w-auto @(GetRelationClassColors(relHandle))">&nbsp;</div>
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
-          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
+          <div class="h5 h4-sm mb-0">
+            <b>@QueryHandleInfo?.Profile?.Handle</b>
+            <a href="https://robertsspaceindustries.com/community-hub/user/@QueryName" target="_blank">
+              <svg class="bi" width="18" height="18" fill="#4CFF00" hidden="@(!QueryHandleInfo?.IsLive)">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#twitch" />
+              </svg>
+            </a>
+          </div>
           <div><b>CM: @QueryHandleInfo?.Profile?.CommunityMonicker</b></div>
           <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy", CultureInfo.InvariantCulture) (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
