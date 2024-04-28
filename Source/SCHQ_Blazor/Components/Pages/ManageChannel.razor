@@ -75,7 +75,7 @@
 
   private async void Delete() {
     ErrorText = null;
-    bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [Channel]:{Environment.NewLine}{Localizer["Do you really want to delete the gRPC channel?"]}");
+    bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the gRPC channel?"]}");
     if (confirmed) {
       string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
       if (gRPC_Url != null) {
