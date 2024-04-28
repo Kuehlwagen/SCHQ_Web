@@ -205,9 +205,9 @@
           </td>
           <td class="align-middle">
             @if (relation.Type == RelationType.Handle) {
-              <a href="javascript:void(0);" @onclick="() => { QueryNameType = RelationType.Handle; QueryName = relation.Name; Query(); }">@relation.Name</a>
+              <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover" @onclick="() => { QueryNameType = RelationType.Handle; QueryName = relation.Name; Query(); }">@relation.Name</a>
             } else {
-              <a href="javascript:void(0);" @onclick="() => { QueryNameType = RelationType.Organization; QueryName = relation.Name; Query(); }">@relation.Name</a>
+              <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover" @onclick="() => { QueryNameType = RelationType.Organization; QueryName = relation.Name; Query(); }">@relation.Name</a>
             }
           </td>
           <td class="align-middle text-end">
