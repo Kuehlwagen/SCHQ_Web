@@ -150,6 +150,9 @@
   <data name="Channels" xml:space="preserve">
     <value>Kanäle</value>
   </data>
+  <data name="Do you really want to delete the gRPC channel?" xml:space="preserve">
+    <value>Möchtest du den gRPC-Kanal wirklich löschen?</value>
+  </data>
   <data name="Engineering" xml:space="preserve">
     <value>Ingenieurwesen</value>
   </data>
