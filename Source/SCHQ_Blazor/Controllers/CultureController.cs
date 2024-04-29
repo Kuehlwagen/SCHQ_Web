@@ -8,9 +8,9 @@ public class CultureController : Controller {
 
   public IActionResult Set(string culture, string redirectUri) {
     if (culture != null) {
-      var requestCulrure = new RequestCulture(culture, culture);
+      var requestCulture = new RequestCulture(culture, culture);
       var cookieName = CookieRequestCultureProvider.DefaultCookieName;
-      var cookieValue = CookieRequestCultureProvider.MakeCookieValue(requestCulrure);
+      var cookieValue = CookieRequestCultureProvider.MakeCookieValue(requestCulture);
 
       HttpContext.Response.Cookies.Append(cookieName, cookieValue);
     }
