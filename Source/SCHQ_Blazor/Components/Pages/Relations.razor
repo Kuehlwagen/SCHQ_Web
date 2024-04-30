@@ -25,12 +25,12 @@
         <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) @Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
         <label for="floatingInputGroupChannelPassword">@(Channel) @Localizer["Channel Password"]</label>
       </div>
-      <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive">
+      <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive" title="@Localizer["Refresh Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-clockwise" />
         </svg>
       </button>
-      <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations">
+      <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations" title="@Localizer["Sync Relations"]">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
         <svg class="bi" width="16" height="16" fill="currentColor" hidden="@SyncActive">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
@@ -40,7 +40,7 @@
   </p>
   <p>
     <div class="input-group mb-1" id="QueryName">
-      <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive">
+      <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive" title="@Localizer["Switch Type"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           @if (QueryNameType == RelationType.Handle) {
             <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
@@ -53,13 +53,13 @@
         <input type="text" class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@Enter">
         <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
       </div>
-      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))">
+      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
         <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
         </svg>
       </button>
-      <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))">
+      <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
         </svg>
@@ -91,10 +91,10 @@
         </div>
       </div>
       <div class="btn-group-vertical" role="group">
-        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)" disabled="@(relHandle == RelationValue.Friendly)">FR</button>
-        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)" disabled="@(relHandle == RelationValue.Neutral)">NE</button>
-        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)" disabled="@(relHandle == RelationValue.Bogey)">BO</button>
-        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)" disabled="@(relHandle == RelationValue.Bandit)">BA</button>
+        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)" disabled="@(relHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)" disabled="@(relHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)" disabled="@(relHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)" disabled="@(relHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
       </div>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
@@ -117,10 +117,10 @@
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relOrg == RelationValue.Friendly)">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relOrg == RelationValue.Neutral)">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bogey)">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bandit)">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
         </div>
       } else {
         <div class="card-body m-1 p-1 bg-danger text-white">
@@ -151,10 +151,10 @@
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relAff == RelationValue.Friendly)">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relAff == RelationValue.Neutral)">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relAff == RelationValue.Bogey)">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relAff == RelationValue.Bandit)">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
         </div>
       </div>
     }
@@ -165,22 +165,22 @@
       <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
     </div>
     <div class="input-group-text bg-success p-2">
-      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)">
+      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" title="@Localizer["Friendly"]">
     </div>
     <div class="input-group-text bg-secondary p-2">
-      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)">
+      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" title="@Localizer["Neutral"]">
     </div>
     <div class="input-group-text bg-warning p-2">
-      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)">
+      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" title="@Localizer["Bogey"]">
     </div>
     <div class="input-group-text bg-danger p-2">
-      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)">
+      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" title="@Localizer["Bandit"]">
     </div>
     <div class="input-group-text bg-dark p-2">
-      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)">
+      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" title="@Localizer["Not Assigned"]">
     </div>
     <div class="input-group-text bg-info p-2">
-      <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)">
+      <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" title="@Localizer["Organization"]">
     </div>
   </div>
   <table class="table table-striped">
@@ -211,7 +211,7 @@
             }
           </td>
           <td class="align-middle text-end">
-            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)">
+            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
               <svg class="bi" width="12" height="12" fill="currentColor">
                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
               </svg>

@@ -23,7 +23,7 @@
         <input type="text" class="form-control" id="floatingInputGroupChannelFilter" placeholder="@Localizer["Filter"]" @bind=Filter @bind:event="oninput">
         <label for="floatingInputGroupChannelFilter">@Localizer["Filter"]</label>
       </div>
-      <button class="btn btn-primary" type="button" @onclick="GetChannels">
+      <button class="btn btn-primary" type="button" @onclick="GetChannels" title="@Localizer["Refresh Channels"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-clockwise" />
         </svg>

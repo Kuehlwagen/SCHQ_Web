@@ -40,19 +40,19 @@
   </p>
   <p>
     <div class="btn-group">
-      <button type="button" class="btn btn-primary" @onclick="Download" disabled="@IsBusy">
+      <button type="button" class="btn btn-primary" @onclick="Download" disabled="@IsBusy" title="@Localizer["Download Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
         </svg>
         @Localizer["Relations"]
       </button>
-      <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2");" for="input-file" disabled="@IsBusy">
+      <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2");" for="input-file" disabled="@IsBusy" title="@Localizer["Upload Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
         </svg>&nbsp;
         @Localizer["Relations"]
       </label>
-      <button type="button" class="btn btn-danger" @onclick="Delete">
+      <button type="button" class="btn btn-danger" @onclick="Delete" title="@Localizer["Delete Channel"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
         </svg>

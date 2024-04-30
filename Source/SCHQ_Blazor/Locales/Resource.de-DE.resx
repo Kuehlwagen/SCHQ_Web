@@ -129,6 +129,12 @@
   <data name="An error occured" xml:space="preserve">
     <value>Ein Fehler ist aufgetreten</value>
   </data>
+  <data name="Bandit" xml:space="preserve">
+    <value>Bandit</value>
+  </data>
+  <data name="Bogey" xml:space="preserve">
+    <value>Bogey</value>
+  </data>
   <data name="Bounty Hunting" xml:space="preserve">
     <value>Kopfgeldjagd</value>
   </data>
@@ -150,8 +156,20 @@
   <data name="Channels" xml:space="preserve">
     <value>Kanäle</value>
   </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Leeren</value>
+  </data>
+  <data name="Dark" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="Delete Channel" xml:space="preserve">
+    <value>Kanal löschen</value>
+  </data>
   <data name="Do you really want to delete the gRPC channel?" xml:space="preserve">
     <value>Möchtest du den gRPC-Kanal wirklich löschen?</value>
+  </data>
+  <data name="Download Relations" xml:space="preserve">
+    <value>Beziehungen herunterladen</value>
   </data>
   <data name="Engineering" xml:space="preserve">
     <value>Ingenieurwesen</value>
@@ -165,6 +183,9 @@
   <data name="Freelancing" xml:space="preserve">
     <value>Freiberufler</value>
   </data>
+  <data name="Friendly" xml:space="preserve">
+    <value>Friendly</value>
+  </data>
   <data name="Handle" xml:space="preserve">
     <value>Handle</value>
   </data>
@@ -176,6 +197,9 @@
   </data>
   <data name="Infiltration" xml:space="preserve">
     <value>Infiltration</value>
+  </data>
+  <data name="Light" xml:space="preserve">
+    <value>Hell</value>
   </data>
   <data name="Loading" xml:space="preserve">
     <value>Lade</value>
@@ -198,11 +222,20 @@
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>
+  <data name="Neutral" xml:space="preserve">
+    <value>Neutral</value>
+  </data>
   <data name="No channels found" xml:space="preserve">
     <value>Keine Kanäle gefunden</value>
   </data>
   <data name="None" xml:space="preserve">
     <value>Keine</value>
+  </data>
+  <data name="Not Assigned" xml:space="preserve">
+    <value>Nicht zugewiesen</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>Organisation</value>
   </data>
   <data name="Organization not found" xml:space="preserve">
     <value>Organisation nicht gefunden</value>
@@ -219,17 +252,29 @@
   <data name="Read" xml:space="preserve">
     <value>Lesen</value>
   </data>
+  <data name="Refresh Channels" xml:space="preserve">
+    <value>Kanäle aktualisieren</value>
+  </data>
+  <data name="Refresh Relations" xml:space="preserve">
+    <value>Beziehungen aktualisieren</value>
+  </data>
   <data name="Regular" xml:space="preserve">
     <value>Regulär</value>
   </data>
   <data name="Relations" xml:space="preserve">
     <value>Beziehungen</value>
   </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
   <data name="Resources" xml:space="preserve">
     <value>Ressourcen</value>
   </data>
   <data name="Scouting" xml:space="preserve">
     <value>Scouting</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Suchen</value>
   </data>
   <data name="Secured" xml:space="preserve">
     <value>Geschützt</value>
@@ -246,6 +291,15 @@
   <data name="Social" xml:space="preserve">
     <value>Sozial</value>
   </data>
+  <data name="Switch Type" xml:space="preserve">
+    <value>Typ wechseln</value>
+  </data>
+  <data name="Sync Relations" xml:space="preserve">
+    <value>Beziehungen synchronisieren</value>
+  </data>
+  <data name="System Preferred" xml:space="preserve">
+    <value>Vorgabe System</value>
+  </data>
   <data name="Trading" xml:space="preserve">
     <value>Trading</value>
   </data>
@@ -254,6 +308,9 @@
   </data>
   <data name="Type" xml:space="preserve">
     <value>Typ</value>
+  </data>
+  <data name="Upload Relations" xml:space="preserve">
+    <value>Beziehungen hochladen</value>
   </data>
   <data name="Write" xml:space="preserve">
     <value>Schreiben</value>
