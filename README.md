@@ -26,6 +26,13 @@ In der Auswahlliste kann die bevorzugte Sprache ausgewählt werden. Es stehen fo
 - Deutsch
 - English
 
+### Thema
+
+Hier kann das Thema ausgewählt werden. Es stehen folgende Themen zur Verfügung:
+- Dunkel
+- Hell
+- Vorgabe System
+
 ### Kanäle
 
 ![Channels](/Screenshots/SCHQ_Web_Channels.png?raw=true "Channels")
