@@ -32,7 +32,7 @@ public static partial class HandleQuery {
   private static partial Regex RgxOrganizationStarsMethod();
   [GeneratedRegex("<a href=\"\\/orgs\\/(.+)\"><img src=\"(.+)\" \\/><\\/a>\\s+<span class=\"members\">(\\d+) members<\\/span>[\\W\\w]+class=\"value\\s[\\w\\d]*\">(.+)<\\/a>[\\W\\w]+Organization rank<\\/span>\\s+<strong class=\"value\\s[\\w\\d]*\">(.+)<\\/strong>", RegexOptions.Multiline | RegexOptions.Compiled)]
   private static partial Regex RgxOrganizationMethod();
-  [GeneratedRegex("<div class=\\\"logo \\w*\\\">\\s+<img src=\\\"(.+)\\\" \\/>\\s+<span class=\\\"count\\\">(\\d+)[\\w\\W]+<h1>(.+) \\/ <span class=\\\"symbol\\\">(.+)<\\/span>[\\w\\W]+<li class=\\\"commitment\\\">(.+)<\\/li>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>")]
+  [GeneratedRegex("<div class=\\\"logo \\w*\\\">\\s+<img src=\\\"(.+)\\\" \\/>\\s+<span class=\\\"count\\\">(\\d+)[\\w\\W]+<h1>(.+) \\/ <span class=\\\"symbol\\\">(.+)<\\/span>[\\w\\W]+<li class=\\\"commitment\\\">(.+)<\\/li>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>[\\w\\W]+<div class=\\\"content\\\">([\\w\\s]+)<\\/div>")]
   private static partial Regex RgxOrganizationOnlyMethod();
   #endregion
 
