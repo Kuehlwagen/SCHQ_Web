@@ -194,21 +194,19 @@
     <tbody>
       @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
         <tr>
-          <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))">
-            <svg class="bi" width="16" height="16" fill="currentColor">
-              @if (relation.Type == RelationType.Handle) {
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-              } else {
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-              }
-            </svg>
+          <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
+            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+              <svg class="bi" width="16" height="16" fill="white">
+                @if (relation.Type == RelationType.Handle) {
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                } else {
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                }
+              </svg>
+            </a>
           </td>
           <td class="align-middle" style="transform: rotate(0);">
-            @if (relation.Type == RelationType.Handle) {
-              <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = RelationType.Handle; QueryName = relation.Name; Query(); }">@relation.Name</a>
-            } else {
-              <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = RelationType.Organization; QueryName = relation.Name; Query(); }">@relation.Name</a>
-            }
+            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a>
           </td>
           <td class="align-middle text-end">
             <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
