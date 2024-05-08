@@ -159,6 +159,9 @@
   <data name="Clear" xml:space="preserve">
     <value>Leeren</value>
   </data>
+  <data name="Comment" xml:space="preserve">
+    <value>Kommentar</value>
+  </data>
   <data name="Dark" xml:space="preserve">
     <value>Dunkel</value>
   </data>
