@@ -92,7 +92,7 @@
           <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
-          <div class="badge @GetRelationClassColors(relValHandle)" role="button" title="@Localizer["Comment"]" hidden="@string.IsNullOrWhiteSpace(commentHandle)">
+          <div class="badge @GetRelationClassColors(relValHandle)" role="button" title="@Localizer["Comment"]">
             <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentHandle))">
               <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
             </svg>
@@ -126,7 +126,7 @@
             </div>
             <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-            <div class="badge @GetRelationClassColors(relValOrg)" role="button" title="@Localizer["Comment"]" hidden="@string.IsNullOrWhiteSpace(commentOrg)">
+            <div class="badge @GetRelationClassColors(relValOrg)" role="button" title="@Localizer["Comment"]">
               <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentOrg))">
                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
               </svg>
@@ -168,7 +168,7 @@
               }
             </div>
             <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-            <div class="badge @GetRelationClassColors(relValAff)" role="button" title="@Localizer["Comment"]" hidden="@string.IsNullOrWhiteSpace(commentAff)">
+            <div class="badge @GetRelationClassColors(relValAff)" role="button" title="@Localizer["Comment"]">
               <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
               </svg>
