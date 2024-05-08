@@ -273,6 +273,9 @@
   <data name="Resources" xml:space="preserve">
     <value>Ressourcen</value>
   </data>
+  <data name="Save" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
   <data name="Scouting" xml:space="preserve">
     <value>Scouting</value>
   </data>
