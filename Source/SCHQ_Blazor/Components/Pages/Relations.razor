@@ -69,28 +69,30 @@
       <i>@QueryNameError</i>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
-      <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       @{
         RelationInfo? relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandleInfo?.Profile?.Handle) ?? null;
         RelationValue relValHandle = relHandle?.Relation ?? RelationValue.NotAssigned;
         string? commentHandle = relHandle?.Comment ?? string.Empty;
       }
+      <div class="p-0 m-0">
+        <div>
+          <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+        </div>
+        <div hidden="@(!QueryHandleInfo?.IsLive)">
+          <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
+            <span class="badge bg-danger text-white w-100">LIVE</span>
+          </a>
+        </div>
+      </div>
       <div class="w-auto @(GetRelationClassColors(relValHandle))">&nbsp;</div>
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
-          <div class="h5 h4-sm mb-0">
-            <b>@QueryHandleInfo?.Profile?.Handle</b>
-            <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
-              <svg class="bi" width="18" height="18" fill="#4CFF00" hidden="@(!QueryHandleInfo?.IsLive)">
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#twitch" />
-              </svg>
-            </a>
-          </div>
+          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
           <div><b>CM: @QueryHandleInfo?.Profile?.CommunityMonicker</b></div>
           <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
-          <div class="text-warning" hidden="@string.IsNullOrWhiteSpace(commentHandle)">@commentHandle</div>
+          <div class="badge @GetRelationClassColors(relValHandle)" hidden="@string.IsNullOrWhiteSpace(commentHandle)">@commentHandle</div>
         </div>
       </div>
       <div class="btn-group-vertical" role="group">
@@ -119,7 +121,7 @@
             </div>
             <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-            <div class="text-warning" hidden="@string.IsNullOrWhiteSpace(commentOrg)">@commentOrg</div>
+            <div class="badge @GetRelationClassColors(relValOrg)" hidden="@string.IsNullOrWhiteSpace(commentOrg)">@commentOrg</div>
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
@@ -156,7 +158,7 @@
               }
             </div>
             <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-            <div class="text-warning" hidden="@string.IsNullOrWhiteSpace(commentAff)">@commentAff</div>
+            <div class="badge @GetRelationClassColors(relValAff)" hidden="@string.IsNullOrWhiteSpace(commentAff)">@commentAff</div>
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
@@ -215,8 +217,8 @@
             </a>
           </td>
           <td class="align-middle" style="transform: rotate(0);">
-            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a>
-            <div class="text-secondary" hidden="@string.IsNullOrWhiteSpace(relation.Comment)"><small>@relation.Comment</small></div>
+            <div><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
+            <div class="badge @GetRelationClassColors(relation.Relation)" hidden="@string.IsNullOrWhiteSpace(relation.Comment)"><small>@relation.Comment</small></div>
           </td>
           <td class="align-middle text-end">
             <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
