@@ -74,11 +74,11 @@
         RelationValue relValHandle = relHandle?.Relation ?? RelationValue.NotAssigned;
         string? commentHandle = relHandle?.Comment ?? string.Empty;
       }
-      <div class="p-0 m-0">
+      <div>
         <div>
           <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
         </div>
-        <div hidden="@(!QueryHandleInfo?.IsLive)">
+        <div class="text-center" hidden="@(!QueryHandleInfo?.IsLive)">
           <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
             <span class="badge bg-danger text-white w-100">LIVE</span>
           </a>
