@@ -87,8 +87,8 @@
       <div class="w-auto @(GetRelationClassColors(relValHandle))">&nbsp;</div>
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
-          <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
-          <div><b>CM: @QueryHandleInfo?.Profile?.CommunityMonicker</b></div>
+          <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
+          <div><b><span>CM: </span><span class="user-select-all">@QueryHandleInfo?.Profile?.CommunityMonicker</span></b></div>
           <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
@@ -111,8 +111,8 @@
         <div class="w-auto @(GetRelationClassColors(relValOrg))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
-            <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
-            <div><b>@Localizer["SID"]: @QueryHandleInfo?.Organizations?.MainOrganization?.Sid</b></div>
+            <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
+            <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@QueryHandleInfo?.Organizations?.MainOrganization?.Sid</span></b></div>
             <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
               @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
               @for(int i = 0; i < 5; i++) {
@@ -149,8 +149,8 @@
         <div class="w-auto @(GetRelationClassColors(relValAff))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
-            <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
-            <div><b>@Localizer["SID"]: @aff.Sid</b></div>
+            <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
+            <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
             <div>
               @Localizer["Rank"]: @aff.RankName<br />
               @for (int i = 0; i < 5; i++) {
