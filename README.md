@@ -116,10 +116,11 @@ Als Feldtrenner wird ein Semikolon `;` verwendet. Wenn das optionale Feld 3 ange
 - __Feld 3:__ Optionale Angabe, um was für einen Beziehungstyp es sich handelt
   - 0 = Handle __(Standard)__
   - 1 = Organization
+- __Feld 4:__ Optionale Angabe eines Kommentars
 ``` CSV
-Gentle81;3;0
-Kuehlwagen;1;0
-KRT;1;1
+Gentle81;3;0;
+Kuehlwagen;1;0;Cooler Typ
+KRT;1;1;Beste Orga
 ```
 
 ### Beziehungen
