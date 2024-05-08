@@ -207,6 +207,7 @@
           </td>
           <td class="align-middle" style="transform: rotate(0);">
             <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a>
+            <div class="text-secondary" hidden="@string.IsNullOrWhiteSpace(relation.Comment)"><small>@relation.Comment</small></div>
           </td>
           <td class="align-middle text-end">
             <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
@@ -371,7 +372,8 @@
   }
 
   public bool IsVisible(RelationInfo relation) {
-    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase)) &&
+    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase) ||
+    (relation.Comment != null && relation.Comment.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))) &&
     (relation.Relation switch {
       RelationValue.NotAssigned => FilterNotAssigned,
       RelationValue.Friendly => FilterFriendly,
