@@ -62,7 +62,7 @@
         )</td>
           <td class="align-middle text-end">
             <div class="btn-group">
-              <button type="button" class="btn btn-primary btn-sm p-2" @onclick="async () => ManageChannel(channel.Name)">
+              <button type="button" class="btn btn-primary btn-sm p-2" @onclick="async () => ManageChannel(channel.Name)" title="@Localizer["Manage Channel"]">
                 <svg class="bi" width="14" height="14" fill="currentColor">
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#gear" />
                 </svg>
@@ -110,7 +110,7 @@
   }
 
   private void ManageChannel(string channel) {
-    Navigation.NavigateTo($"managechannel?channel={channel}");
+    Navigation.NavigateTo($"managechannel?channel={channel}", true);
   }
 
   private void Relations(string channel) {
