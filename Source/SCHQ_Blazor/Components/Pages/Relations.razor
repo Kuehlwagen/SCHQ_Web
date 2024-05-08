@@ -71,9 +71,11 @@
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
       <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
       @{
-        RelationValue relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandleInfo?.Profile?.Handle)?.Relation ?? RelationValue.NotAssigned;
+        RelationInfo? relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandleInfo?.Profile?.Handle) ?? null;
+        RelationValue relValHandle = relHandle?.Relation ?? RelationValue.NotAssigned;
+        string? commentHandle = relHandle?.Comment ?? string.Empty;
       }
-      <div class="w-auto @(GetRelationClassColors(relHandle))">&nbsp;</div>
+      <div class="w-auto @(GetRelationClassColors(relValHandle))">&nbsp;</div>
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
           <div class="h5 h4-sm mb-0">
@@ -88,20 +90,23 @@
           <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
+          <div class="text-warning" hidden="@string.IsNullOrWhiteSpace(commentHandle)">@commentHandle</div>
         </div>
       </div>
       <div class="btn-group-vertical" role="group">
-        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)" disabled="@(relHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)" disabled="@(relHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)" disabled="@(relHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)" disabled="@(relHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Friendly)" disabled="@(relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Neutral)" disabled="@(relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bogey)" disabled="@(relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Profile?.Handle, RelationValue.Bandit)" disabled="@(relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
       </div>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
         <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
-        RelationValue relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid)?.Relation ?? RelationValue.NotAssigned;
-        <div class="w-auto @(GetRelationClassColors(relOrg))">&nbsp;</div>
+        RelationInfo? relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid) ?? null;
+        RelationValue relValOrg = relOrg?.Relation ?? RelationValue.NotAssigned;
+        string? commentOrg = relOrg?.Comment ?? string.Empty;
+        <div class="w-auto @(GetRelationClassColors(relValOrg))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
@@ -114,13 +119,14 @@
             </div>
             <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+            <div class="text-warning" hidden="@string.IsNullOrWhiteSpace(commentOrg)">@commentOrg</div>
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(QueryHandleInfo?.Organizations?.MainOrganization?.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
         </div>
       } else {
         <div class="card-body m-1 p-1 bg-danger text-white">
@@ -134,9 +140,11 @@
       <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
         <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
         @{
-          RelationValue relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid)?.Relation ?? RelationValue.NotAssigned;
+          RelationInfo? relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid) ?? null;
+          RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
+          string? commentAff = relAff?.Comment ?? string.Empty;
         }
-        <div class="w-auto @(GetRelationClassColors(relAff))">&nbsp;</div>
+        <div class="w-auto @(GetRelationClassColors(relValAff))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0"><b>@aff.Name</b></div>
@@ -148,13 +156,14 @@
               }
             </div>
             <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+            <div class="text-warning" hidden="@string.IsNullOrWhiteSpace(commentAff)">@commentAff</div>
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Friendly, RelationType.Organization)" disabled="@(relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Neutral, RelationType.Organization)" disabled="@(relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bogey, RelationType.Organization)" disabled="@(relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(aff.Sid, RelationValue.Bandit, RelationType.Organization)" disabled="@(relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
         </div>
       </div>
     }
