@@ -179,6 +179,9 @@
                   if (fields.Length > 2 && int.TryParse(fields[2], out int relType)) {
                     relation.Type = (RelationType)relType;
                   }
+                  if (fields.Length > 3 && fields[3] != null) {
+                    relation.Comment = fields[3];
+                  }
                   relations.Add(relation);
                 }
               }
