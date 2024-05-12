@@ -21,8 +21,16 @@
 <p>
   <div class="input-group">
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind-value=Password>
+      <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
       <label for="floatingInputGroupPassword">@Localizer["Channel Password"]</label>
+    </div>
+  </div>
+</p>
+<p>
+  <div class="input-group">
+    <div class="form-floating">
+      <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPasswordConfirm" placeholder="@Localizer["Confirm Channel Password"]" @bind=ConfirmPassword @bind:event="oninput">
+      <label for="floatingInputGroupPasswordConfirm">@Localizer["Confirm Channel Password"]</label>
     </div>
   </div>
 </p>
@@ -52,10 +60,11 @@
     get { return _name; }
     set {
       _name = value;
-      ButtonIsDisabled = string.IsNullOrWhiteSpace(_name);
+      ButtonIsDisabled = string.IsNullOrWhiteSpace(_name) || Password != ConfirmPassword;
     }
   }
   private string? Password { get; set; }
+  private string? ConfirmPassword { get; set; }
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private string? ErrorText { get; set; }
