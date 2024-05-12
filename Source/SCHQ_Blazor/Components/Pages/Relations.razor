@@ -336,6 +336,7 @@
   }
 
   private void SetRelation(RelationInfo relation, RelationValue value) {
+    QueryNameError = null;
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
@@ -365,6 +366,8 @@
           relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
         }
         StateHasChanged();
+      } else {
+        QueryNameError = reply.Info;
       }
     }
   }
