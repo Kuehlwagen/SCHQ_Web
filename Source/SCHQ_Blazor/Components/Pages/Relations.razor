@@ -59,7 +59,7 @@
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
         </svg>
       </button>
-      <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
+      <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; CommentRelation = null; Comment = null; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
         </svg>
