@@ -136,7 +136,7 @@
             <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@QueryHandleInfo?.Organizations?.MainOrganization?.Sid</span></b></div>
             <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
               @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
-              @for(int i = 0; i < 5; i++) {
+              @for (int i = 0; i < 5; i++) {
                 <img width="20" height="20" src="images/rank_star_@(i < QueryHandleInfo?.Organizations?.MainOrganization?.RankStars ? "active" : "inactive").png" />
               }
             </div>
@@ -164,40 +164,46 @@
         </div>
       }
     </div>
-    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []).Where(a => !a.Redacted)) {
+    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? [])) {
       <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
-        @{
+        @if (!aff.Redacted) {
           RelationInfo? relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid) ?? new() { Type = RelationType.Organization, Name = aff.Sid };
           RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
           string? commentAff = relAff?.Comment ?? string.Empty;
-        }
-        <div class="w-auto @(GetRelationClassColors(relValAff))">&nbsp;</div>
-        <div class="card-body m-1 p-1">
-          <div class="card-text small text-break">
-            <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
-            <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
-            <div>
-              @Localizer["Rank"]: @aff.RankName<br />
-              @for (int i = 0; i < 5; i++) {
-                <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
-              }
-            </div>
-            <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-            <div class="badge @GetRelationClassColors(relValAff)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
-              <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-              </svg>
-              @commentAff
+          <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
+          <div class="w-auto @(GetRelationClassColors(relValAff))">&nbsp;</div>
+          <div class="card-body m-1 p-1">
+            <div class="card-text small text-break">
+              <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
+              <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
+              <div>
+                @Localizer["Rank"]: @aff.RankName<br />
+                @for (int i = 0; i < 5; i++) {
+                  <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
+                }
+              </div>
+              <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+              <div class="badge @GetRelationClassColors(relValAff)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
+                <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                </svg>
+                @commentAff
+              </div>
             </div>
           </div>
-        </div>
-        <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
-        </div>
+          <div class="btn-group-vertical" role="group">
+            <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+            <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+            <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+            <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+          </div>
+        } else {
+          <div class="card-body m-1 p-1 bg-danger text-white">
+            <div class="card-text small">
+              REDACTED
+            </div>
+          </div>
+        }
       </div>
     }
   </p>
@@ -323,13 +329,13 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Channel)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
     }
@@ -340,23 +346,23 @@
     string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
     if (gRPC_Url != null) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
       SuccessReply reply = gRPC_Client.SetRelation(new() {
-        Channel = Channel,
-        Password = ChannelPassword ?? string.Empty,
-        Relation = new() {
-          Type = relation.Type,
-          Name = relation.Name,
-          Relation = value,
-          Comment = relation.Comment
-        }
-      });
+          Channel = Channel,
+          Password = ChannelPassword ?? string.Empty,
+          Relation = new() {
+            Type = relation.Type,
+            Name = relation.Name,
+            Relation = value,
+            Comment = relation.Comment
+          }
+        });
       if (reply.Success && relations != null) {
         if (relations.FirstOrDefault(r => r.Type == relation.Type && r.Name == relation.Name) is RelationInfo r) {
           r.Relation = value;
@@ -388,13 +394,13 @@
           StateHasChanged();
           SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
             new() {
-              HttpHandler = new SocketsHttpHandler() {
-                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-                KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-                EnableMultipleHttp2Connections = true
-              }
-            }));
+                HttpHandler = new SocketsHttpHandler() {
+                  PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+                  KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+                  KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+                  EnableMultipleHttp2Connections = true
+                }
+              }));
           using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
           try {
             await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
@@ -452,19 +458,19 @@
         OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
         if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
           QueryHandleInfo = new() {
-            Organizations = new() {
-              MainOrganization = orgInf.Organization
-            },
-            HttpResponse = new() {
-              StatusCode = HttpStatusCode.OK,
-              ErrorText = string.Empty,
-              Source = string.Empty
-            }
-          };
+              Organizations = new() {
+                MainOrganization = orgInf.Organization
+              },
+              HttpResponse = new() {
+                StatusCode = HttpStatusCode.OK,
+                ErrorText = string.Empty,
+                Source = string.Empty
+              }
+            };
         } else {
           QueryHandleInfo = new() {
-            HttpResponse = orgInf?.HttpResponse
-          };
+              HttpResponse = orgInf?.HttpResponse
+            };
         }
       }
       if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
