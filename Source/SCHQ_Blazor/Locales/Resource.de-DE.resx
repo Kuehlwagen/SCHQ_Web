@@ -213,6 +213,9 @@
   <data name="Loading relations for channel" xml:space="preserve">
     <value>Beziehungen laden für Kanal</value>
   </data>
+  <data name="Main Organization" xml:space="preserve">
+    <value>Hauptorganisation</value>
+  </data>
   <data name="Manage Channel" xml:space="preserve">
     <value>Kanal verwalten</value>
   </data>
@@ -257,6 +260,9 @@
   </data>
   <data name="Read" xml:space="preserve">
     <value>Lesen</value>
+  </data>
+  <data name="REDACTED" xml:space="preserve">
+    <value>AUSGEBLENDET</value>
   </data>
   <data name="Refresh Channels" xml:space="preserve">
     <value>Kanäle aktualisieren</value>
