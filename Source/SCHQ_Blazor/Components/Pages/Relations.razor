@@ -107,23 +107,21 @@
         <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
       </div>
     </div>
-    <div class="card flex-row mb-1" hidden="@(CommentRelation == null)">
-      <div class="input-group" id="commentSection">
-        <div class="form-floating">
-          <input type="text" @ref="ElementCommentRef" class="form-control" id="floatingInputGroupComment" placeholder="@($"{CommentRelation?.Name} {Localizer["Comment"]}")" @bind="Comment" @bind:event="oninput" @onkeydown="@EnterComment" />
-          <label for="floatingInputGroupComment">@($"{CommentRelation?.Name} {Localizer["Comment"]}")</label>
-        </div>
-        <button class="btn btn-primary text-white" type="button" @onclick="SaveComment" title="@Localizer["Save"]">
-          <svg class="bi" width="16" height="16" fill="currentColor">
-            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-          </svg>
-        </button>
-        <button type="button" class="btn btn-danger" @onclick="() => { CommentRelation = null; Comment = null; }" disabled="@QueryNameActive" title="@Localizer["Clear"]">
-          <svg class="bi" width="16" height="16" fill="currentColor">
-            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-          </svg>
-        </button>
+    <div class="input-group mb-1" id="commentSection" hidden="@(CommentRelation == null)">
+      <div class="form-floating">
+        <input type="text" @ref="ElementCommentRef" class="form-control" id="floatingInputGroupComment" placeholder="@($"{CommentRelation?.Name} {Localizer["Comment"]}")" @bind="Comment" @bind:event="oninput" @onkeydown="@EnterComment" />
+        <label for="floatingInputGroupComment">@($"{CommentRelation?.Name} {Localizer["Comment"]}")</label>
       </div>
+      <button class="btn btn-primary text-white" type="button" @onclick="SaveComment" title="@Localizer["Save"]">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+        </svg>
+      </button>
+      <button type="button" class="btn btn-danger" @onclick="() => { CommentRelation = null; Comment = null; }" disabled="@QueryNameActive" title="@Localizer["Clear"]">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+        </svg>
+      </button>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
       @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
@@ -506,7 +504,7 @@
   public void RelationCommentClick(RelationInfo relation) {
     if (ElementCommentRef.HasValue) {
       CommentRelation = relation;
-      Comment = string.Empty;
+      Comment = relation.Comment;
       ElementCommentRef?.FocusAsync();
     }
   }
