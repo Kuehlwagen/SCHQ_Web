@@ -10,6 +10,7 @@
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
 
 <PageTitle>SCHQ Web</PageTitle>
@@ -213,22 +214,22 @@
       <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
     </div>
     <div class="input-group-text bg-success p-2">
-      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@((args) => FilterFriendly = (bool?)args.Value)" title="@Localizer["Friendly"]">
+      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Friendly"]">
     </div>
     <div class="input-group-text bg-secondary p-2">
-      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@((args) => FilterNeutral = (bool?)args.Value)" title="@Localizer["Neutral"]">
+      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Neutral"]">
     </div>
     <div class="input-group-text bg-warning p-2">
-      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@((args) => FilterBogey = (bool?)args.Value)" title="@Localizer["Bogey"]">
+      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Bogey"]">
     </div>
     <div class="input-group-text bg-danger p-2">
-      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@((args) => FilterBandit = (bool?)args.Value)" title="@Localizer["Bandit"]">
+      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Bandit"]">
     </div>
     <div class="input-group-text bg-dark p-2">
-      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@((args) => FilterNotAssigned = (bool?)args.Value)" title="@Localizer["Not Assigned"]">
+      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Not Assigned"]">
     </div>
     <div class="input-group-text bg-info p-2">
-      <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@((args) => FilterOrganization = (bool?)args.Value)" title="@Localizer["Organization"]">
+      <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@(async (args) => { FilterOrganization = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterOrganization", $"{FilterOrganization}"); })" title="@Localizer["Organization"]">
     </div>
   </div>
   <table class="table table-striped">
@@ -318,6 +319,34 @@
   private CancellationTokenSource? CTS;
 
   protected async override Task OnInitializedAsync() {
+    try
+    {
+      ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{Channel}", true);
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly))
+      {
+        FilterFriendly = friendly;
+      }
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNeutral"), out bool neutral))
+      {
+        FilterNeutral = neutral;
+      }
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBogey"), out bool bogey))
+      {
+        FilterBogey = bogey;
+      }
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit))
+      {
+        FilterBandit = bandit;
+      }
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned))
+      {
+        FilterNotAssigned = notAssigned;
+      }
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterOrganization"), out bool organization))
+      {
+        FilterOrganization = organization;
+      }
+    } catch {}
     await GetRelations();
   }
 
@@ -338,6 +367,7 @@
         }));
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
+      await LocalStorageService.SetValue(JS, $"pwd{Channel}", ChannelPassword, true);
     }
   }
 

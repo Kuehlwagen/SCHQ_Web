@@ -1,10 +1,12 @@
 ﻿@page "/addchannel"
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
+@using SCHQ_Blazor.Classes
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
 
 <PageTitle>SCHQ Web</PageTitle>
@@ -87,7 +89,8 @@
         Password = Password ?? string.Empty,
         Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None });
       if (reply.Success) {
-        Navigation.NavigateTo("/", true);
+        await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);
+        Navigation.NavigateTo($"/relations?channel={Name}");
       }
       else {
         ErrorText = reply.Info;

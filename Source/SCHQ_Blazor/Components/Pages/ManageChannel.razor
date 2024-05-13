@@ -4,9 +4,10 @@
 @using Grpc.Net.Client
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using SCHQ_Blazor.Classes
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
-@inject IJSRuntime JsRuntime
+@inject IJSRuntime JS
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 @inject IStringLocalizer<Resource> Localizer
@@ -75,7 +76,7 @@
 
   private async void Delete() {
     ErrorText = null;
-    bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the gRPC channel?"]}");
+    bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the gRPC channel?"]}");
     if (confirmed) {
       string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
       if (gRPC_Url != null) {
@@ -90,6 +91,7 @@
           }));
         SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
         if (reply.Success) {
+          await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
           Navigation.NavigateTo("/", true);
         } else {
           ErrorText = reply.Info;
@@ -128,7 +130,7 @@
               });
           using var streamRef = new DotNetStreamReference(relationsStream);
           streamRef.Stream.Position = 0;
-          await JsRuntime.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
+          await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
         } catch (Exception ex) {
           ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
         }
