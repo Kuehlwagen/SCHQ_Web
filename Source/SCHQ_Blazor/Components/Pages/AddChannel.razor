@@ -62,14 +62,32 @@
     get { return _name; }
     set {
       _name = value;
-      ButtonIsDisabled = string.IsNullOrWhiteSpace(_name) || Password != ConfirmPassword;
+      ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
-  private string? Password { get; set; }
-  private string? ConfirmPassword { get; set; }
+  private string? _password;
+  private string? Password {
+    get { return _password; }
+    set {
+      _password = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
+  private string? _confirmPassword;
+  private string? ConfirmPassword {
+    get { return _confirmPassword; }
+    set {
+      _confirmPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private string? ErrorText { get; set; }
+
+  private bool CheckButtonIsDisabled {
+    get { return string.IsNullOrWhiteSpace(_name) || Password != ConfirmPassword; }
+  }
 
   private async void Add() {
     ErrorText = null;
