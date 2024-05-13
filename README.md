@@ -57,6 +57,7 @@ Hier kann ein neuer Kanal erstellt werden.
 
 - __Kanalname:__ Name des Kanals
 - __Kanalpasswort:__ Passwort des Kanals
+- __Kanalpasswort wiederholen:__ Wiederholung des Passworts, damit eine Fehleingabe des Passworts verhindert wird
 - __Kanalberechtigung:__ Angabe, welche Rechte ein Benutzer ohne Angabe des Kanalpassworts hat
   - `None`: Ohne Angabe des Kanalpassworts darf ein Benutzer weder lesen noch schreiben
   - `Read`: Ohne Angabe des Kanalpassworts darf ein Benutzer lesen, jedoch nicht schreiben
@@ -146,6 +147,7 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
     - `Grau`: Neutral
     - `Gelb`: Bogey
     - `Rot`: Bandit
+  - Es ist möglich, via Klick auf die Schaltfläche mit dem Bearbeiten-Symbol einen Kommentar hinzuzufügen.
   - Durch einen Klick auf eine der Beziehung-Schaltflächen am rechten Rand des Suchergebnisses kann die Beziehung festgelegt werden.
   - Wenn im Community-Hub eines Spielers das Twitch-Konto verknüpft ist und der Spieler gerade aktiv streamt, wird ein Twitch-Symbol neben dem Handle dargestellt. Ein Klick auf das Symbol öffnet die Community Hub Seite des Handles.
 - __Filter:__
