@@ -312,7 +312,7 @@
   }
   public RelationInfo? CommentRelation { get; set; }
   public string? Comment { get; set; } = string.Empty;
-  public ElementReference? ElementCommentRef { get; set; }
+  public ElementReference ElementCommentRef { get; set; }
 
   private RelationInfo[]? relations;
   private CancellationTokenSource? CTS;
@@ -501,12 +501,11 @@
     }
   }
 
-  public void RelationCommentClick(RelationInfo relation) {
-    if (ElementCommentRef.HasValue) {
-      CommentRelation = relation;
-      Comment = relation.Comment;
-      ElementCommentRef?.FocusAsync();
-    }
+  public async void RelationCommentClick(RelationInfo relation) {
+    CommentRelation = relation;
+    Comment = relation.Comment;
+    await Task.Run(async () => await ElementCommentRef.FocusAsync());
+    await Task.Run(async () => await ElementCommentRef.FocusAsync());
   }
 
   public void SaveComment() {
