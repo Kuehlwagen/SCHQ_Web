@@ -109,7 +109,7 @@
     </div>
     <div class="input-group mb-1" id="commentSection" hidden="@(CommentRelation == null)">
       <div class="form-floating">
-        <input type="text" @ref="ElementCommentRef" class="form-control" id="floatingInputGroupComment" placeholder="@($"{CommentRelation?.Name} {Localizer["Comment"]}")" @bind="Comment" @bind:event="oninput" @onkeydown="@EnterComment" />
+        <input type="text" @ref="ElementCommentRef" class="form-control" id="floatingInputGroupComment" placeholder="@($"{CommentRelation?.Name} {Localizer["Comment"]}")" @bind="Comment" @bind:event="oninput" @onkeydown="@EnterComment" onfocus="this.select();" />
         <label for="floatingInputGroupComment">@($"{CommentRelation?.Name} {Localizer["Comment"]}")</label>
       </div>
       <button class="btn btn-primary text-white" type="button" @onclick="SaveComment" title="@Localizer["Save"]">
