@@ -87,6 +87,7 @@ Es wird ein JSON-Array mit Beziehungsinformationen erwartet. Der Inhalt einer in
   - 2 = Neutral
   - 3 = Bogey
   - 4 = Bandit
+- __Comment:__ Optionale Angabe eines Kommentars
 ``` JSON
 [
   {
@@ -95,12 +96,14 @@ Es wird ein JSON-Array mit Beziehungsinformationen erwartet. Der Inhalt einer in
   },
   {
     "Name": "Kuehlwagen",
-    "Relation": 1
+    "Relation": 1,
+    "Comment": "Cooler Typ"
   },
   {
     "Type": 1,
     "Name": "KRT",
-    "Relation": 1
+    "Relation": 1,
+    "Comment": "Beste Orga"
   }
 ]
 ```
