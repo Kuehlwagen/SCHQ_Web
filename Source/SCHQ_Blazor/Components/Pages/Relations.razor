@@ -66,7 +66,7 @@
         </svg>
       </button>
     </div>
-    <div class="alert alert-danger" role="alert" hidden="@(QueryNameError == null)">
+    <div class="alert alert-danger mb-1" role="alert" hidden="@(QueryNameError == null)">
       <i>@QueryNameError</i>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
@@ -89,9 +89,9 @@
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
           <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
-          <div><b><span>CM: </span><span class="user-select-all">@QueryHandleInfo?.Profile?.CommunityMonicker</span></b></div>
-          <div>@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
-          <div><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
+          <div hidden="@(QueryHandleInfo?.Profile?.CommunityMonicker == null)"><b><span>CM: </span><span class="user-select-all">@QueryHandleInfo?.Profile?.CommunityMonicker</span></b></div>
+          <div hidden="@(QueryHandleInfo?.Profile?.Enlisted == DateTime.MinValue)">@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
+          <div hidden="@(QueryHandleInfo?.Profile?.DisplayTitle == null)"><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
           <div class="badge @GetRelationClassColors(relValHandle)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relHandle!)">
             <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentHandle))">
@@ -319,34 +319,27 @@
   private CancellationTokenSource? CTS;
 
   protected async override Task OnInitializedAsync() {
-    try
-    {
+    try {
       ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{Channel}", true);
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly))
-      {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly)) {
         FilterFriendly = friendly;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNeutral"), out bool neutral))
-      {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNeutral"), out bool neutral)) {
         FilterNeutral = neutral;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBogey"), out bool bogey))
-      {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBogey"), out bool bogey)) {
         FilterBogey = bogey;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit))
-      {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit)) {
         FilterBandit = bandit;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned))
-      {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned)) {
         FilterNotAssigned = notAssigned;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterOrganization"), out bool organization))
-      {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterOrganization"), out bool organization)) {
         FilterOrganization = organization;
       }
-    } catch {}
+    } catch { }
     await GetRelations();
   }
 
@@ -488,23 +481,23 @@
         OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
         if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
           QueryHandleInfo = new() {
-              Organizations = new() {
-                MainOrganization = orgInf.Organization
-              },
-              HttpResponse = new() {
-                StatusCode = HttpStatusCode.OK,
-                ErrorText = string.Empty,
-                Source = string.Empty
-              }
-            };
+            Organizations = new() {
+              MainOrganization = orgInf.Organization
+            },
+            HttpResponse = new() {
+              StatusCode = HttpStatusCode.OK,
+              ErrorText = string.Empty,
+              Source = string.Empty
+            }
+          };
         } else {
           QueryHandleInfo = new() {
-              HttpResponse = orgInf?.HttpResponse
-            };
+            HttpResponse = orgInf?.HttpResponse
+          };
         }
       }
       if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-        QueryNameError = null;
+        QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
         if (QueryNameType == RelationType.Handle) {
           QueryName = QueryHandleInfo?.Profile?.Handle;
         } else {

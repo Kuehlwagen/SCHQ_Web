@@ -1,5 +1,4 @@
-﻿using SCHQ_Protos;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -17,6 +16,7 @@ public static partial class HandleQuery {
   private static readonly Regex RgxOrganizationStars = RgxOrganizationStarsMethod();
   private static readonly Regex RgxOrganization = RgxOrganizationMethod();
   private static readonly Regex RgxOrganizationOnly = RgxOrganizationOnlyMethod();
+  private static readonly Regex RgxError = RgxErrorMethod();
 
   [GeneratedRegex("<strong class=\"value\">(.+)</strong>", RegexOptions.Multiline | RegexOptions.Compiled)]
   private static partial Regex RgxIdCmHandleEnlistedFluencyMethod();
@@ -32,8 +32,10 @@ public static partial class HandleQuery {
   private static partial Regex RgxOrganizationStarsMethod();
   [GeneratedRegex("<a href=\"\\/orgs\\/(.+)\"><img src=\"(.+)\" \\/><\\/a>\\s+<span class=\"members\">(\\d+) members<\\/span>[\\W\\w]+class=\"value\\s[\\w\\d]*\">(.+)<\\/a>[\\W\\w]+Organization rank<\\/span>\\s+<strong class=\"value\\s[\\w\\d]*\">(.+)<\\/strong>", RegexOptions.Multiline | RegexOptions.Compiled)]
   private static partial Regex RgxOrganizationMethod();
-  [GeneratedRegex("<div class=\\\"logo \\w*\\\">\\s+<img src=\\\"(.+)\\\" \\/>\\s+<span class=\\\"count\\\">(\\d+)[\\w\\W]+<h1>(.+) \\/ <span class=\\\"symbol\\\">(.+)<\\/span>[\\w\\W]+<li class=\\\"commitment\\\">(.+)<\\/li>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>[\\w\\W]+<div class=\\\"content\\\">([\\w\\s]+)<\\/div>")]
+  [GeneratedRegex("<div class=\\\"logo \\w*\\\">\\s+<img src=\\\"(.+)\\\" \\/>\\s+<span class=\\\"count\\\">(\\d+)[\\w\\W]+<h1>(.+) \\/ <span class=\\\"symbol\\\">(.+)<\\/span>[\\w\\W]+<li class=\\\"commitment\\\">(.+)<\\/li>[\\w\\W]+<div class=\\\"content\\\">(\\w+)<\\/div>[\\w\\W]+<div class=\\\"content\\\">([\\w\\s]+)<\\/div>", RegexOptions.Multiline | RegexOptions.Compiled)]
   private static partial Regex RgxOrganizationOnlyMethod();
+  [GeneratedRegex("^\\s*\\<div class=\\\"l-error-page\\\"\\>\\s+\\<div class=\\\"c-error-tech c-error-tech--(\\d+)\\\">\\s*\\<h\\d\\>([\\w\\s]+)\\<\\/h\\d\\>\\s*\\<h\\d\\>([\\w\\s]+)\\<\\/h\\d\\>\\s*\\<\\/div\\>\\s*\\<div class=\\\"c-error-messages\\\"\\>\\s*\\<p\\>([\\w\\s\\.]+)\\<\\/p\\>\\s*\\<\\/div\\>\\s*\\<\\/div\\>", RegexOptions.Multiline | RegexOptions.Compiled)]
+  private static partial Regex RgxErrorMethod();
   #endregion
 
   #region Enumerations
@@ -77,35 +79,46 @@ public static partial class HandleQuery {
             rtnVal.Profile.Enlisted = enlisted;
           }
           rtnVal.Profile.Fluency.AddRange(mcIdCmHandleEnlistedFluency[4].Groups[1].Value.Replace(" ", string.Empty).Split(","));
-        }
 
-        Match matchLocation = RgxLocation.Match(rtnVal.HttpResponse.Source);
-        if (matchLocation?.Groups.Count > 1) {
-          string[] countryRegion = matchLocation.Groups[1].Value.Split(",");
-          rtnVal.Profile.Country = countryRegion[0].Trim();
-          rtnVal.Profile.Region = countryRegion.Length > 1 ? countryRegion[1].Trim() : string.Empty;
-        }
+          Match matchLocation = RgxLocation.Match(rtnVal.HttpResponse.Source);
+          if (matchLocation?.Groups.Count > 1) {
+            string[] countryRegion = matchLocation.Groups[1].Value.Split(",");
+            rtnVal.Profile.Country = countryRegion[0].Trim();
+            rtnVal.Profile.Region = countryRegion.Length > 1 ? countryRegion[1].Trim() : string.Empty;
+          }
 
-        // Avatar
-        MatchCollection mcAvatar = RgxAvatar.Matches(rtnVal.HttpResponse.Source);
-        if (mcAvatar.Count == 1) {
-          rtnVal.Profile.AvatarUrl = CorrectUrl(mcAvatar[0].Groups[1].Value);
+          // Avatar
+          MatchCollection mcAvatar = RgxAvatar.Matches(rtnVal.HttpResponse.Source);
+          if (mcAvatar.Count == 1) {
+            rtnVal.Profile.AvatarUrl = CorrectUrl(mcAvatar[0].Groups[1].Value);
+          } else {
+            rtnVal.Profile.AvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
+          }
+
+          // Display Title
+          MatchCollection mcDisplayTitle = RgxDisplayTitle.Matches(rtnVal.HttpResponse.Source);
+          if (mcDisplayTitle.Count == 1 && mcDisplayTitle[0].Groups.Count == 3) {
+            rtnVal.Profile.DisplayTitle = CorrectText(mcDisplayTitle[0].Groups[2].Value);
+            rtnVal.Profile.DisplayTitleAvatarUrl = CorrectUrl(mcDisplayTitle[0].Groups[1].Value);
+          }
+
+          // Organizations
+          rtnVal.Organizations = orgTask.Result;
+
+          // Handle live
+          rtnVal.IsLive = isLiveTask.Result;
         } else {
           rtnVal.Profile.AvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
+          Match matchError = RgxError.Match(rtnVal.HttpResponse.Source);
+          if (matchError?.Groups.Count > 1) {
+            rtnVal.HttpResponse.ErrorText = string.Join(" - ", [
+              $"Error Code {matchError.Groups[1].Value}",
+              matchError.Groups[2].Value,
+              matchError.Groups[3].Value,
+              matchError.Groups[4].Value
+            ]);
+          }
         }
-
-        // Display Title
-        MatchCollection mcDisplayTitle = RgxDisplayTitle.Matches(rtnVal.HttpResponse.Source);
-        if (mcDisplayTitle.Count == 1 && mcDisplayTitle[0].Groups.Count == 3) {
-          rtnVal.Profile.DisplayTitle = CorrectText(mcDisplayTitle[0].Groups[2].Value);
-          rtnVal.Profile.DisplayTitleAvatarUrl = CorrectUrl(mcDisplayTitle[0].Groups[1].Value);
-        }
-
-        // Organizations
-        rtnVal.Organizations = orgTask.Result;
-
-        // Handle live
-        rtnVal.IsLive = isLiveTask.Result;
 
       } else {
         rtnVal.HttpResponse.StatusCode = rtnVal.HttpResponse.StatusCode != null ? rtnVal.HttpResponse.StatusCode : HttpStatusCode.InternalServerError;
