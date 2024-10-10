@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace SCHQ_Server.Classes;
+namespace SCHQ_Blazor.Classes;
 public static class Encryption {
 
   private static readonly byte[] _saltBytes = [4, 2, 0, 6, 9, 6, 6, 6];

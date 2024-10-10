@@ -78,25 +78,23 @@
     ErrorText = null;
     bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the gRPC channel?"]}");
     if (confirmed) {
-      string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-      if (gRPC_Url != null) {
-        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
-          new() {
-            HttpHandler = new SocketsHttpHandler() {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
+        new() {
+            HttpHandler = new SocketsHttpHandler()
+            {
               PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
               KeepAlivePingDelay = TimeSpan.FromSeconds(60),
               KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
               EnableMultipleHttp2Connections = true
             }
           }));
-        SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
-        if (reply.Success) {
-          await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
-          Navigation.NavigateTo("/", true);
-        } else {
-          ErrorText = reply.Info;
-          StateHasChanged();
-        }
+      SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
+      if (reply.Success) {
+        await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
+        Navigation.NavigateTo("/", true);
+      } else {
+        ErrorText = reply.Info;
+        StateHasChanged();
       }
     }
   }
@@ -105,38 +103,35 @@
     ErrorText = null;
     IsBusy = true;
     StateHasChanged();
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
-        new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
-          Channel = Channel,
-          Password = Password ?? string.Empty
-        });
-      if (reply?.Relations?.Count > 0) {
-        try {
-          using MemoryStream relationsStream = new();
-          JsonSerializer.Serialize<RelationInfo[]>(relationsStream, reply.Relations.ToArray() ?? [],
-            new JsonSerializerOptions() {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-                WriteIndented = true
-              });
-          using var streamRef = new DotNetStreamReference(relationsStream);
-          streamRef.Stream.Position = 0;
-          await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
-        } catch (Exception ex) {
-          ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
+    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
+      new() {
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
         }
-      } else {
-        ErrorText = "No relations found";
+      }));
+    RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
+        Channel = Channel,
+        Password = Password ?? string.Empty
+      });
+    if (reply?.Relations?.Count > 0) {
+      try {
+        using MemoryStream relationsStream = new();
+        JsonSerializer.Serialize<RelationInfo[]>(relationsStream, reply.Relations.ToArray() ?? [],
+          new JsonSerializerOptions() {
+              DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+              WriteIndented = true
+            });
+        using var streamRef = new DotNetStreamReference(relationsStream);
+        streamRef.Stream.Position = 0;
+        await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
+      } catch (Exception ex) {
+        ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
       }
+    } else {
+      ErrorText = "No relations found";
     }
     IsBusy = false;
     StateHasChanged();
@@ -212,27 +207,24 @@
   private async Task<bool> SetRelations(List<RelationInfo> relations) {
     bool success = false;
 
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
-        new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-      SetRelationsRequest request = new() {
-        Channel = Channel,
-        Password = Password ?? string.Empty,
-      };
-      request.Relations.AddRange(relations);
-      SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);
-      success = reply.Success;
-      if (!success) {
-        ErrorText = reply.Info ?? "Unknown error";
-      }
+    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
+      new() {
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
+        }
+      }));
+    SetRelationsRequest request = new() {
+      Channel = Channel,
+      Password = Password ?? string.Empty,
+    };
+    request.Relations.AddRange(relations);
+    SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);
+    success = reply.Success;
+    if (!success) {
+      ErrorText = reply.Info ?? "Unknown error";
     }
 
     return success;

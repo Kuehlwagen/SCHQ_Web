@@ -1,5 +1,4 @@
 ﻿using Microsoft.JSInterop;
-using SCHQ_Server.Classes;
 
 namespace SCHQ_Blazor.Classes;
 

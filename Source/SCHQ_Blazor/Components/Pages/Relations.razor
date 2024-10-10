@@ -348,9 +348,8 @@
   }
 
   private async Task GetRelations() {
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Channel)) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+    if (!string.IsNullOrWhiteSpace(Channel)) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
           HttpHandler = new SocketsHttpHandler() {
             PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
             KeepAlivePingDelay = TimeSpan.FromSeconds(60),
@@ -366,81 +365,75 @@
 
   private void SetRelation(RelationInfo relation, RelationValue value) {
     QueryNameError = null;
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-      SuccessReply reply = gRPC_Client.SetRelation(new() {
-          Channel = Channel,
-          Password = ChannelPassword ?? string.Empty,
-          Relation = new() {
-            Type = relation.Type,
-            Name = relation.Name,
-            Relation = value,
-            Comment = relation.Comment
-          }
-        });
-      if (reply.Success && relations != null) {
-        if (relations.FirstOrDefault(r => r.Type == relation.Type && r.Name == relation.Name) is RelationInfo r) {
-          r.Relation = value;
-          r.Comment = relation.Comment;
-        } else {
-          relation.Relation = value;
-          relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
+    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
+        HttpHandler = new SocketsHttpHandler() {
+          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+          EnableMultipleHttp2Connections = true
         }
-        StateHasChanged();
+      }));
+    SuccessReply reply = gRPC_Client.SetRelation(new() {
+        Channel = Channel,
+        Password = ChannelPassword ?? string.Empty,
+        Relation = new() {
+          Type = relation.Type,
+          Name = relation.Name,
+          Relation = value,
+          Comment = relation.Comment
+        }
+      });
+    if (reply.Success && relations != null) {
+      if (relations.FirstOrDefault(r => r.Type == relation.Type && r.Name == relation.Name) is RelationInfo r) {
+        r.Relation = value;
+        r.Comment = relation.Comment;
       } else {
-        QueryNameError = reply.Info;
+        relation.Relation = value;
+        relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
       }
+      StateHasChanged();
+    } else {
+      QueryNameError = reply.Info;
     }
   }
 
   private async void SyncRelations() {
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
-      try {
-        if (SyncActive) {
-          if (CTS != null && !CTS.IsCancellationRequested) {
-            CTS.Cancel(true);
-          }
-          SyncActive = false;
-        } else {
-          SyncActive = true;
-          CTS = new();
-          await GetRelations();
-          StateHasChanged();
-          SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
-            new() {
-                HttpHandler = new SocketsHttpHandler() {
-                  PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-                  KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-                  KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-                  EnableMultipleHttp2Connections = true
-                }
-              }));
-          using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
-          try {
-            await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
-              if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r) {
-                r.Relation = rel.Relation.Relation;
-                r.Comment = rel.Relation.Comment;
-              } else {
-                relations = [.. relations?.Concat([rel.Relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
-              }
-              StateHasChanged();
-            }
-          } catch { }
-          SyncActive = false;
-          StateHasChanged();
+    try {
+      if (SyncActive) {
+        if (CTS != null && !CTS.IsCancellationRequested) {
+          CTS.Cancel(true);
         }
-      } catch { }
-    }
+        SyncActive = false;
+      } else {
+        SyncActive = true;
+        CTS = new();
+        await GetRelations();
+        StateHasChanged();
+        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
+          new() {
+              HttpHandler = new SocketsHttpHandler() {
+                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+                KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+                EnableMultipleHttp2Connections = true
+              }
+            }));
+        using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
+        try {
+          await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
+            if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r) {
+              r.Relation = rel.Relation.Relation;
+              r.Comment = rel.Relation.Comment;
+            } else {
+              relations = [.. relations?.Concat([rel.Relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
+            }
+            StateHasChanged();
+          }
+        } catch { }
+        SyncActive = false;
+        StateHasChanged();
+      }
+    } catch { }
   }
 
   public bool IsVisible(RelationInfo relation) {

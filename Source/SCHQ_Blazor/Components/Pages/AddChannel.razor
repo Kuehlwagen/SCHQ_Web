@@ -92,9 +92,8 @@
   private async void Add() {
     ErrorText = null;
     StateHasChanged();
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null && !string.IsNullOrWhiteSpace(Name)) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+    if (!string.IsNullOrWhiteSpace(Name)) {
+      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
           HttpHandler = new SocketsHttpHandler() {
             PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
             KeepAlivePingDelay = TimeSpan.FromSeconds(60),

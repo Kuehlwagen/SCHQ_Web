@@ -1,8 +1,7 @@
-using Grpc.Net.Client;
-using SCHQ_Blazor.Classes;
+using Microsoft.EntityFrameworkCore;
 using SCHQ_Blazor.Components;
-using SCHQ_Protos;
-using static SCHQ_Protos.SCHQ_Relations;
+using SCHQ_Blazor.Models;
+using SCHQ_Blazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,10 +10,30 @@ builder.Services.AddControllers();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
+  .AddInteractiveServerComponents()
+  .AddInteractiveWebAssemblyComponents();
+
+// Add services to the container.
+builder.Services.AddGrpc();
 
 var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.MapGrpcService<SCHQ_Service>();
+
+// Create / migrate SQLite database
+RelationsContext context = new();
+if (context.Database.GetPendingMigrations().Any()) {
+  /*
+    Developer-PowerShell:
+    dotnet add package Microsoft.EntityFrameworkCore.Design
+    dotnet tool update --global dotnet-ef
+    dotnet ef migrations add MigrationName
+    dotnet ef migrations remove
+  */
+  await context.Database.MigrateAsync();
+}
+await context.Database.EnsureCreatedAsync();
 
 string[] supportedCultures = ["de-DE", "en-US"];
 var localizationOptions = new RequestLocalizationOptions()
@@ -41,39 +60,7 @@ app.UseAntiforgery();
 app.MapControllers();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode();
-
-app.MapPost("/relations", async (RestSetRelationsRequest request) => {
-  IResult result = Results.Empty;
-  try {
-    string? gRPC_Url = builder.Configuration.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url,
-        new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-      var rpc_request = new SetRelationsRequest() {
-        Channel = request.Channel,
-        Password = request.Password
-      };
-      rpc_request.Relations.AddRange(request.Relations!);
-      SuccessReply rtnVal = await gRPC_Client.SetRelationsAsync(rpc_request);
-      if (rtnVal.Success) {
-        result = Results.Ok(rtnVal);
-      } else {
-        result = Results.BadRequest(rtnVal);
-      }
-    }
-  } catch (Exception ex) {
-    result = Results.Conflict(ex);
-  }
-  return result;
-});
+  .AddInteractiveServerRenderMode()
+  .AddInteractiveWebAssemblyRenderMode();
 
 app.Run();

@@ -84,9 +84,7 @@
   }
 
   private async Task GetChannels() {
-    string? gRPC_Url = Config.GetValue<string>("gRPC_Url");
-    if (gRPC_Url != null) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(gRPC_Url, new() {
+    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
         HttpHandler = new SocketsHttpHandler() {
           PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
           KeepAlivePingDelay = TimeSpan.FromSeconds(60),
@@ -94,9 +92,8 @@
           EnableMultipleHttp2Connections = true
         }
       }));
-      ChannelsReply reply = await gRPC_Client.GetChannelsAsync(new());
-      channels = [.. reply?.Channels];
-    }
+    ChannelsReply reply = await gRPC_Client.GetChannelsAsync(new());
+    channels = [.. reply?.Channels];
   }
 
   public bool IsVisible(ChannelInfo channel) {
