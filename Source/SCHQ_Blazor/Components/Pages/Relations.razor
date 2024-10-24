@@ -476,7 +476,8 @@
     CommentRelation = null;
     Comment = null;
     if (QueryName != null) {
-      string memoryKey = $"{QueryNameType}_{QueryName}";
+      QueryName = QueryName.Trim();
+      string memoryKey = $"{QueryNameType}_{QueryName.ToLowerInvariant()}";
       if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo)) {
         if (QueryNameType == RelationType.Handle) {
           QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
@@ -513,6 +514,7 @@
         }
       } else {
         QueryNameError = null;
+        QueryName = QueryNameType == RelationType.Handle ? MemoryHandleInfo?.Profile?.Handle : MemoryHandleInfo?.Organizations?.MainOrganization?.Sid;
         QueryHandleInfo = MemoryHandleInfo;
       }
     }
