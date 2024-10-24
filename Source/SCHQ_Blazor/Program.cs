@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLocalization();
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache(x => x.SizeLimit = 100);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

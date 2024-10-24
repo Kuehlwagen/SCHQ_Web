@@ -2,6 +2,7 @@
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Core
 @using Grpc.Net.Client
+@using Microsoft.Extensions.Caching.Memory
 @using SCHQ_Blazor.Classes
 @using System.Net
 @using System.Globalization
@@ -12,6 +13,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
+@inject IMemoryCache Memory
 
 <PageTitle>SCHQ Web</PageTitle>
 
@@ -272,6 +274,8 @@
 }
 
 @code {
+  private MemoryCacheEntryOptions? MemoryCacheOptions { get; set; }
+
   [SupplyParameterFromQuery]
   public string? Channel { get; set; }
   private string? ChannelPassword { get; set; }
@@ -319,6 +323,10 @@
   private CancellationTokenSource? CTS;
 
   protected async override Task OnInitializedAsync() {
+    MemoryCacheOptions = new MemoryCacheEntryOptions()
+      .SetSlidingExpiration(TimeSpan.FromMinutes(Config.GetValue<int>("MemoryCache_SlidingExpiration")))
+      .SetAbsoluteExpiration(TimeSpan.FromMinutes(Config.GetValue<int>("MemoryCache_AbsoluteExpiration")))
+      .SetSize(1);
     try {
       ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{Channel}", true);
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly)) {
@@ -468,37 +476,44 @@
     CommentRelation = null;
     Comment = null;
     if (QueryName != null) {
-      if (QueryNameType == RelationType.Handle) {
-        QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
-      } else {
-        OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
-        if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-          QueryHandleInfo = new() {
-            Organizations = new() {
-              MainOrganization = orgInf.Organization
-            },
-            HttpResponse = new() {
-              StatusCode = HttpStatusCode.OK,
-              ErrorText = null,
-              Source = null
-            }
-          };
-        } else {
-          QueryHandleInfo = new() {
-            HttpResponse = orgInf?.HttpResponse
-          };
-        }
-      }
-      if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-        QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
+      string memoryKey = $"{QueryNameType}_{QueryName}";
+      if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo)) {
         if (QueryNameType == RelationType.Handle) {
-          QueryName = QueryHandleInfo?.Profile?.Handle;
+          QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
         } else {
-          QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
+          OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
+          if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+            QueryHandleInfo = new() {
+                Organizations = new() {
+                  MainOrganization = orgInf.Organization
+                },
+                HttpResponse = new() {
+                  StatusCode = HttpStatusCode.OK,
+                  ErrorText = null,
+                  Source = null
+                }
+              };
+          } else {
+            QueryHandleInfo = new() {
+                HttpResponse = orgInf?.HttpResponse
+              };
+          }
+        }
+        if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+          QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
+          if (QueryNameType == RelationType.Handle) {
+            QueryName = QueryHandleInfo?.Profile?.Handle;
+          } else {
+            QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
+          }
+          Memory.Set(memoryKey, QueryHandleInfo, MemoryCacheOptions);
+        } else {
+          QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
+          QueryHandleInfo = null;
         }
       } else {
-        QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
-        QueryHandleInfo = null;
+        QueryNameError = null;
+        QueryHandleInfo = MemoryHandleInfo;
       }
     }
     QueryNameActive = false;
