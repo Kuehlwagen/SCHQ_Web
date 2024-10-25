@@ -16,7 +16,21 @@
   <p><em>@Localizer["Loading"]...</em></p>
 } else if (channels.Length == 0) {
   <p><em>@Localizer["No channels found"]</em></p>
+  <p>
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary btn-sm p-2" @onclick="AddChannel" title="@Localizer["Add Channel"]">
+        @Localizer["Add Channel"]
+      </button>
+    </div>
+  </p>
 } else {
+  <p>
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary btn-sm p-2" @onclick="AddChannel" title="@Localizer["Add Channel"]">
+        @Localizer["Add Channel"]
+      </button>
+    </div>
+  </p>
   <p>
     <div class="input-group">
       <div class="form-floating">
@@ -30,7 +44,7 @@
       </button>
     </div>
   </p>
-  <table class="table table-striped" >
+  <table class="table table-striped">
     <thead>
       <tr>
         <th>@Localizer["Name"]</th>
@@ -52,14 +66,16 @@
               }
             </svg>
           </td>
-          <td class="align-middle">@(
-            channel.Permissions switch {
-              ChannelPermissions.None => Localizer["None"],
-              ChannelPermissions.Read => Localizer["Read"],
-              ChannelPermissions.Write => Localizer["Write"],
-              _ => string.Empty
-            }
-        )</td>
+          <td class="align-middle">
+            @(
+                channel.Permissions switch {
+                  ChannelPermissions.None => Localizer["None"],
+                  ChannelPermissions.Read => Localizer["Read"],
+                  ChannelPermissions.Write => Localizer["Write"],
+                  _ => string.Empty
+                }
+                )
+          </td>
           <td class="align-middle text-end">
             <div class="btn-group">
               <button type="button" class="btn btn-primary btn-sm p-2" @onclick="async () => ManageChannel(channel.Name)" title="@Localizer["Manage Channel"]">
@@ -113,4 +129,9 @@
   private void Relations(string channel) {
     Navigation.NavigateTo($"relations?channel={channel}");
   }
+
+  private void AddChannel() {
+    Navigation.NavigateTo("addchannel", true);
+  }
+
 }
