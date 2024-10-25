@@ -30,7 +30,14 @@
   <nav class="flex-column" onclick="document.querySelector('.navbar-toggler').click()">
     <div class="nav-item px-3 mt-0 pt-0">
       <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> @Localizer["Channels"]
+        <span class="bi" aria-hidden="true"></span> @Localizer["Query"]
+      </NavLink>
+    </div>
+  </nav>
+  <nav class="flex-column" onclick="document.querySelector('.navbar-toggler').click()">
+    <div class="nav-item px-3 mt-0 pt-0">
+      <NavLink class="nav-link" href="channels">
+        <span class="bi" aria-hidden="true"></span> @Localizer["Channels"]
       </NavLink>
     </div>
   </nav>

@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/channels"
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
 @using static SCHQ_Protos.SCHQ_Relations
@@ -8,7 +8,7 @@
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
 
-<PageTitle>SCHQ Web</PageTitle>
+<PageTitle>SCHQ Web > @Localizer["Channels"]</PageTitle>
 
 <h1>@Localizer["Channels"]</h1>
 

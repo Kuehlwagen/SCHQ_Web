@@ -1,0 +1,217 @@
+﻿@page "/"
+@using Microsoft.Extensions.Caching.Memory
+@using SCHQ_Blazor.Classes
+@using System.Net
+@using System.Globalization
+@using static SCHQ_Protos.SCHQ_Relations
+@attribute [StreamRendering(false)]
+@inject IConfiguration Config
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Resource> Localizer
+@inject IMemoryCache Memory
+
+<PageTitle>SCHQ Web</PageTitle>
+
+<h1 id="top">Star Citizen Handle Query</h1>
+
+<p>
+  <div class="input-group mb-1" id="QueryName">
+    <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive" title="@Localizer["Switch Type"]">
+      <svg class="bi" width="16" height="16" fill="currentColor">
+        @if (QueryNameType == RelationType.Handle) {
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+        } else {
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+        }
+      </svg>
+    </button>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
+      <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
+      <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
+      <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
+        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
+      </svg>
+    </button>
+    <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
+      <svg class="bi" width="16" height="16" fill="currentColor">
+        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+      </svg>
+    </button>
+  </div>
+  <div class="alert alert-danger mb-1" role="alert" hidden="@(QueryNameError == null)">
+    <i>@QueryNameError</i>
+  </div>
+  <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
+    <div>
+      <div>
+        <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+      </div>
+      <div class="text-center" hidden="@(!QueryHandleInfo?.IsLive)">
+        <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
+          <span class="badge bg-danger text-white w-100">LIVE</span>
+        </a>
+      </div>
+    </div>
+    <div class="card-body m-1 p-1">
+      <div class="card-text small text-break">
+        <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
+        <div hidden="@(QueryHandleInfo?.Profile?.CommunityMonicker == null)"><b><span>CM: </span><span class="user-select-all">@QueryHandleInfo?.Profile?.CommunityMonicker</span></b></div>
+        <div hidden="@(QueryHandleInfo?.Profile?.Enlisted == DateTime.MinValue)">@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
+        <div hidden="@(QueryHandleInfo?.Profile?.DisplayTitle == null)"><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
+        <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
+      </div>
+    </div>
+  </div>
+  <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
+    @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
+      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+      <div class="card-body m-1 p-1">
+        <div class="card-text small text-break">
+          <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
+          <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@QueryHandleInfo?.Organizations?.MainOrganization?.Sid</span></b></div>
+          <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
+            @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
+            @for (int i = 0; i < 5; i++) {
+              <img width="20" height="20" src="images/rank_star_@(i < QueryHandleInfo?.Organizations?.MainOrganization?.RankStars ? "active" : "inactive").png" />
+            }
+          </div>
+          <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
+          <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+        </div>
+      </div>
+    } else {
+      <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
+        <div class="card-text small">
+          @Localizer["REDACTED"] (@Localizer["Main Organization"])
+        </div>
+      </div>
+    }
+  </div>
+  @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? [])) {
+    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
+      @if (!aff.Redacted) {
+        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
+        <div class="card-body m-1 p-1">
+          <div class="card-text small text-break">
+            <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
+            <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
+            <div>
+              @Localizer["Rank"]: @aff.RankName<br />
+              @for (int i = 0; i < 5; i++) {
+                <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
+              }
+            </div>
+            <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+          </div>
+        </div>
+      } else {
+        <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
+          <div class="card-text small">
+            @Localizer["REDACTED"] (@Localizer["Affiliation"])
+          </div>
+        </div>
+      }
+    </div>
+  }
+</p>
+
+@code {
+  private MemoryCacheEntryOptions? MemoryCacheOptions { get; set; }
+
+  public string? Filter { get; set; }
+  private string? _queryHandle = string.Empty;
+  public string? QueryName {
+    get {
+      return _queryHandle;
+    }
+    set {
+      _queryHandle = value;
+      if (string.IsNullOrWhiteSpace(_queryHandle)) {
+        QueryHandleInfo = null;
+        QueryNameError = null;
+        QueryNameType = RelationType.Handle;
+      }
+    }
+  }
+  public bool QueryNameActive { get; set; }
+  public HandleInfo? QueryHandleInfo { get; set; }
+  public string? QueryNameError { get; set; }
+  public RelationType QueryNameType { get; set; }
+  public string QueryNamePlaceholder {
+    get {
+      return QueryNameType == RelationType.Handle ? @Localizer["Handle"] : @Localizer["SID"];
+    }
+  }
+
+  protected override void OnInitialized() {
+    MemoryCacheOptions = new MemoryCacheEntryOptions()
+      .SetSlidingExpiration(TimeSpan.FromMinutes(Config.GetValue<int>("MemoryCache_SlidingExpiration")))
+      .SetAbsoluteExpiration(TimeSpan.FromMinutes(Config.GetValue<int>("MemoryCache_AbsoluteExpiration")))
+      .SetSize(1);
+  }
+
+  private string? GetLocalizer(string? text) {
+    return Localizer[text ?? string.Empty];
+  }
+
+  public async void Query() {
+    QueryNameActive = true;
+    Navigation.NavigateTo($"{Navigation.Uri}#top");
+    QueryHandleInfo = null;
+    if (QueryName != null) {
+      QueryName = QueryName.Trim();
+      string memoryKey = $"{QueryNameType}_{QueryName.ToLowerInvariant()}";
+      if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo)) {
+        if (QueryNameType == RelationType.Handle) {
+          QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
+        } else {
+          OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
+          if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+            QueryHandleInfo = new() {
+                Organizations = new() {
+                  MainOrganization = orgInf.Organization
+                },
+                HttpResponse = new() {
+                  StatusCode = HttpStatusCode.OK,
+                  ErrorText = null,
+                  Source = null
+                }
+              };
+          } else {
+            QueryHandleInfo = new() {
+                HttpResponse = orgInf?.HttpResponse
+              };
+          }
+        }
+        if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+          QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
+          if (QueryNameType == RelationType.Handle) {
+            QueryName = QueryHandleInfo?.Profile?.Handle;
+          } else {
+            QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
+          }
+          Memory.Set(memoryKey, QueryHandleInfo, MemoryCacheOptions);
+        } else {
+          QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
+          QueryHandleInfo = null;
+        }
+      } else {
+        QueryNameError = null;
+        QueryName = QueryNameType == RelationType.Handle ? MemoryHandleInfo?.Profile?.Handle : MemoryHandleInfo?.Organizations?.MainOrganization?.Sid;
+        QueryHandleInfo = MemoryHandleInfo;
+      }
+    }
+    QueryNameActive = false;
+    StateHasChanged();
+  }
+
+  public void EnterQuery(KeyboardEventArgs e) {
+    if (e.Code == "Enter" || e.Code == "NumpadEnter" || e.Key == "Enter" || e.Key == "NumpadEnter") {
+      Query();
+    }
+  }
+
+}

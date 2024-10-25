@@ -330,4 +330,7 @@
   <data name="Write" xml:space="preserve">
     <value>Schreiben</value>
   </data>
+  <data name="Query" xml:space="preserve">
+    <value>Abfragen</value>
+  </data>
 </root>
