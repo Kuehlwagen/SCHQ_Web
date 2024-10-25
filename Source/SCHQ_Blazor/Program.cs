@@ -3,11 +3,11 @@ using SCHQ_Blazor.Components;
 using SCHQ_Blazor.Models;
 using SCHQ_Blazor.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder  (args);
 
 builder.Services.AddLocalization();
 builder.Services.AddControllers();
-builder.Services.AddMemoryCache(x => x.SizeLimit = 100);
+builder.Services.AddMemoryCache(x => x.SizeLimit = builder.Configuration.GetValue<int>("MemoryCache_SizeLimit"));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
