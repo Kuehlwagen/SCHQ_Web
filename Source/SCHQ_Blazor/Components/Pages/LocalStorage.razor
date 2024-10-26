@@ -45,7 +45,7 @@
       <input type="text" class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
       <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
     </div>
-    <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
+    <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Query"]">
       <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
       <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
         <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
