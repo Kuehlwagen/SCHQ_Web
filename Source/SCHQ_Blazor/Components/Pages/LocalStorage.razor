@@ -381,7 +381,7 @@
       relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
     }
     await LocalStorageService.SetValue(JS, "relations", JsonSerializer.Serialize(relations,
-      new JsonSerializerOptions() { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
+      new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
 
     StateHasChanged();
   }
