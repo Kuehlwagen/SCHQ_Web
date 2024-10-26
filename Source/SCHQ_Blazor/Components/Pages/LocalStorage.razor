@@ -282,7 +282,7 @@
     </button>
   </div>
 </p>
-<div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
+<div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)" @onclick="ResetErrorText">
   <i>@ErrorText</i>
 </div>
 <InputFile OnChange="@Upload" accept="application/json" id="input-file" multiple hidden />
@@ -368,6 +368,7 @@
   }
 
   private async void SetRelation(RelationInfo relation, RelationValue value) {
+    ResetErrorText();
     QueryNameError = null;
 
     if (relations == null) {
@@ -412,6 +413,7 @@
   }
 
   public async void Query() {
+    ResetErrorText();
     QueryNameActive = true;
     Navigation.NavigateTo($"{Navigation.Uri}#top");
     QueryHandleInfo = null;
@@ -477,6 +479,7 @@
   }
 
   public async void RelationCommentClick(RelationInfo relation) {
+    ResetErrorText();
     CommentRelation = relation;
     Comment = relation.Comment;
     await Task.Run(async () => await ElementCommentRef.FocusAsync());
@@ -493,7 +496,7 @@
   }
 
   private async void Delete() {
-    ErrorText = null;
+    ResetErrorText();
     bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Local Storage"]}:{Environment.NewLine}{Localizer["Do you really want to delete all relations?"]}");
     if (confirmed) {
       relations = [];
@@ -503,7 +506,7 @@
   }
 
   private async Task Download() {
-    ErrorText = null;
+    ResetErrorText();
     StateHasChanged();
     try {
       using MemoryStream relationsStream = new();
@@ -522,7 +525,7 @@
   }
 
   private async Task Upload(InputFileChangeEventArgs e) {
-    ErrorText = null;
+    ResetErrorText();
     StateHasChanged();
     try {
       switch (e.File?.ContentType) {
@@ -550,6 +553,10 @@
       ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
     }
     StateHasChanged();
+  }
+
+  private void ResetErrorText() {
+    ErrorText = null;
   }
 
 }
