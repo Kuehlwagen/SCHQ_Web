@@ -351,6 +351,9 @@
   <data name="Empty" xml:space="preserve">
     <value>Leer</value>
   </data>
+  <data name="Delete Relations" xml:space="preserve">
+    <value>Beziehungen löschen</value>
+  </data>
   <data name="Do you really want to delete all relations?" xml:space="preserve">
     <value>Möchtest du wirklich alle Beziehungen löschen?</value>
   </data>
