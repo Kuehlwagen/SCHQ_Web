@@ -76,7 +76,7 @@
 
   private async void Delete() {
     ErrorText = null;
-    bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the gRPC channel?"]}");
+    bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the channel?"]}");
     if (confirmed) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
         new() {
@@ -128,10 +128,10 @@
         streamRef.Stream.Position = 0;
         await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
       } catch (Exception ex) {
-        ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
+        ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
       }
     } else {
-      ErrorText = "No relations found";
+      ErrorText = Localizer["No relations found"];
     }
     IsBusy = false;
     StateHasChanged();
@@ -151,10 +151,10 @@
                   Navigation.NavigateTo($"/relations?channel={Channel}");
                 }
               } else {
-                ErrorText = "No relations found";
+                ErrorText = Localizer["No relations found"];
               }
             } else {
-              ErrorText = "File is empty";
+              ErrorText = Localizer["File is empty"];
             }
             break;
           }
@@ -187,19 +187,19 @@
                   Navigation.NavigateTo($"/relations?channel={Channel}");
                 }
               } else {
-                ErrorText = "No relations found";
+                ErrorText = Localizer["No relations found"];
               }
             } else {
-              ErrorText = "File is empty";
+              ErrorText = Localizer["File is empty"];
             }
             break;
           }
         default:
-          ErrorText = $"File type [{e.File?.ContentType}] not supported";
+          ErrorText = $"{Localizer["File type not supported"]}: [{e.File?.ContentType}]";
           break;
       }
     } catch (Exception ex) {
-      ErrorText = $"Exception: {ex.Message}, Inner-Exception: {ex.InnerException?.Message ?? "Empty"}";
+      ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
     }
     StateHasChanged();
   }
@@ -224,9 +224,10 @@
     SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);
     success = reply.Success;
     if (!success) {
-      ErrorText = reply.Info ?? "Unknown error";
+      ErrorText = reply.Info ?? Localizer["Unknown error"];
     }
 
     return success;
   }
+
 }

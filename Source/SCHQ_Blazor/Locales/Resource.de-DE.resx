@@ -171,8 +171,8 @@
   <data name="Delete Channel" xml:space="preserve">
     <value>Kanal löschen</value>
   </data>
-  <data name="Do you really want to delete the gRPC channel?" xml:space="preserve">
-    <value>Möchtest du den gRPC-Kanal wirklich löschen?</value>
+  <data name="Do you really want to delete the channel?" xml:space="preserve">
+    <value>Möchtest du den Kanal wirklich löschen?</value>
   </data>
   <data name="Download Relations" xml:space="preserve">
     <value>Beziehungen herunterladen</value>
@@ -288,9 +288,6 @@
   <data name="Scouting" xml:space="preserve">
     <value>Scouting</value>
   </data>
-  <data name="Search" xml:space="preserve">
-    <value>Suchen</value>
-  </data>
   <data name="Secured" xml:space="preserve">
     <value>Geschützt</value>
   </data>
@@ -332,5 +329,32 @@
   </data>
   <data name="Query" xml:space="preserve">
     <value>Abfragen</value>
+  </data>
+  <data name="Local Storage" xml:space="preserve">
+    <value>Lokaler Speicher</value>
+  </data>
+  <data name="No relations found" xml:space="preserve">
+    <value>Keine Beziehungen gefunden</value>
+  </data>
+  <data name="File is empty" xml:space="preserve">
+    <value>Datei ist leer</value>
+  </data>
+  <data name="File type not supported" xml:space="preserve">
+    <value>Dateityp wird nicht unterstützt</value>
+  </data>
+  <data name="Exception" xml:space="preserve">
+    <value>Ausnahme</value>
+  </data>
+  <data name="Inner Exception" xml:space="preserve">
+    <value>Innere Ausnahme</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>Leer</value>
+  </data>
+  <data name="Do you really want to delete all relations?" xml:space="preserve">
+    <value>Möchtest du wirklich alle Beziehungen löschen?</value>
+  </data>
+  <data name="Unknown error" xml:space="preserve">
+    <value>Unbekannter Fehler</value>
   </data>
 </root>
