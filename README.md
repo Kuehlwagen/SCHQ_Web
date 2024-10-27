@@ -30,7 +30,10 @@ Hier kann das Thema ausgewählt werden. Es stehen folgende Themen zur Verfügung
 ### Lokaler Speicher
 
 Hier können Beziehungen lokal im Browser (Local Storage) verwaltet werden.
-Für weitere Informationen, siehe `Beziehungen`
+
+![Channels](/Screenshots/SCHQ_Web_LocalStorage.png?raw=true "Local Storage")
+
+Für weitere Informationen, siehe Abschnitt `Beziehungen`
 
 ### Kanäle
 
@@ -38,6 +41,7 @@ Für weitere Informationen, siehe `Beziehungen`
 
 Hier werden die konfigurierten Kanäle aufgelistet.
 
+- __Kanal hinzufügen:__ Durch einen Klick auf diese Schaltfläche kann ein Kanal hinzugefügt werden.
 - __Filter:__
   - __Texteingabe:__ Während der Eingabe wird die Kanalliste gefiltert. Es werden Kanäle angezeigt, welche den eingegebenen Text im Namen enthalten.
   - __Aktualisieren:__ Liest die Kanalliste neu aus
@@ -62,6 +66,47 @@ Hier kann ein neuer Kanal erstellt werden.
   - `Read`: Ohne Angabe des Kanalpassworts darf ein Benutzer lesen, jedoch nicht schreiben
   - `Write`: Ohne Angabe des Kanalpassworts darf ein Benutzer lesen und schreiben
 - __Kanal hinzufügen:__ Beim Klick der Schaltfläche wird der Kanal versucht anzulegen
+
+### Beziehungen
+
+![Relations](/Screenshots/SCHQ_Web_Relations.png?raw=true "Relations")
+
+Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
+
+- __Kanalpassword:__ Angabe des Kanalpassworts
+- __Aktualisieren:__ Liest die Beziehungen neu aus
+- __Sync:__ Startet oder beendet die Synchronisation der Beziehungen des Kanals, abhängig vom Status der Synchronisierung
+  - Die Synchronisierung ist aktiv, wenn die Schaltfläche einen grünen Hintergrund hat
+- __Handle / Organisation:__ Beim Klick kann zwischen der Handle- und Organisationssuche gewechselt werden
+- __Texteingabe:__ Hier kann der Name des zu suchenden Spielers bzw. der zu suchenden Organisation eingegeben werden.
+  - Wenn die Texteingabe geleert wird, wird der Typ auf `Handle` geändert und das Suchergebnis entfernt.
+  - Die Suche wird ausgelöst, wenn eine der beiden Tasten `Enter` oder `NumpadEnter` gedrückt wird.
+- __Suche:__ Startet die Suche
+- __Entfernen:__ Leert die Texteingabe und somit auch das Suchergebnis
+- __Suchergebnis:__ Das Suchergebnis enthält, abhängig vom Typ, Informationen zum Handle und dessen Organisationszugehörigkeiten oder zur Organisation.
+  - Das Avatar eines Suchergebnisses kann geklickt werden, um die abhängige RSI-Seite in einem neuen Fenster zu öffnen.
+  - Rechts neben dem Avatar wird, sofern eine Beziehung festgelegt wurde, die Beziehung farblich dargestellt
+    - `Grün`: Friendly
+    - `Grau`: Neutral
+    - `Gelb`: Bogey
+    - `Rot`: Bandit
+  - Es ist möglich, via Klick auf die Schaltfläche mit dem Bearbeiten-Symbol einen Kommentar hinzuzufügen.
+  - Durch einen Klick auf eine der Beziehung-Schaltflächen am rechten Rand des Suchergebnisses kann die Beziehung festgelegt werden.
+  - Wenn im Community-Hub eines Spielers das Twitch-Konto verknüpft ist und der Spieler gerade aktiv streamt, wird ein Twitch-Symbol neben dem Handle dargestellt. Ein Klick auf das Symbol öffnet die Community Hub Seite des Handles.
+- __Filter:__
+  - __Texteingabe:__ Während der Eingabe wird die Beziehungsliste gefiltert. Es werden Beziehungen angezeigt, welche den eingegebenen Text im Namen enthalten.
+  - __Grün:__ Wenn angehakt, werden freundliche Beziehungen berücksichtigt (Friendly)
+  - __Grau:__ Wenn angehakt, werden neutrale Beziehungen berücksichtigt (Neutral)
+  - __Gelb:__ Wenn angehakt, werden unbekannte Beziehungen berücksichtigt (Bogey)
+  - __Rot:__ Wenn angehakt, werden feindliche Beziehungen berücksichtigt (Bandit)
+  - __Hellblau:__ Wenn angehakt, werden Organisationen berücksichtigt
+- __Beziehungsliste:__
+  - __Typ:__ Beziehungstyp
+    - Person = Handle
+    - Weltkugel = Organisation
+  - __Name:__ Name der Beziehung (bei Handle der Handle und bei Organisationen die SID der Organisation)
+    - Durch einen Klick auf die Schaltfläche mit dem Bearbeiten-Symbol kann ein Kommentar hinzugefügt werden.
+  - __Aktion:__ Beim Klick auf die `Entfernen`-Schaltfläche wird der Beziehungswert `Not Assigned` zugewiesen, sodass die Beziehung bei der Verwendung des Standardfilters ausgeblendet wird.
 
 ### Kanal verwalten
 
@@ -125,47 +170,6 @@ Gentle81;3;0;
 Kuehlwagen;1;0;Cooler Typ
 KRT;1;1;Beste Orga
 ```
-
-### Beziehungen
-
-![Relations](/Screenshots/SCHQ_Web_Relations.png?raw=true "Relations")
-
-Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
-
-- __Kanalpassword:__ Angabe des Kanalpassworts
-- __Aktualisieren:__ Liest die Beziehungen neu aus
-- __Sync:__ Startet oder beendet die Synchronisation der Beziehungen des Kanals, abhängig vom Status der Synchronisierung
-  - Die Synchronisierung ist aktiv, wenn die Schaltfläche einen grünen Hintergrund hat
-- __Handle / Organisation:__ Beim Klick kann zwischen der Handle- und Organisationssuche gewechselt werden
-- __Texteingabe:__ Hier kann der Name des zu suchenden Spielers bzw. der zu suchenden Organisation eingegeben werden.
-  - Wenn die Texteingabe geleert wird, wird der Typ auf `Handle` geändert und das Suchergebnis entfernt.
-  - Die Suche wird ausgelöst, wenn eine der beiden Tasten `Enter` oder `NumpadEnter` gedrückt wird.
-- __Suche:__ Startet die Suche
-- __Entfernen:__ Leert die Texteingabe und somit auch das Suchergebnis
-- __Suchergebnis:__ Das Suchergebnis enthält, abhängig vom Typ, Informationen zum Handle und dessen Organisationszugehörigkeiten oder zur Organisation.
-  - Das Avatar eines Suchergebnisses kann geklickt werden, um die abhängige RSI-Seite in einem neuen Fenster zu öffnen.
-  - Rechts neben dem Avatar wird, sofern eine Beziehung festgelegt wurde, die Beziehung farblich dargestellt
-    - `Grün`: Friendly
-    - `Grau`: Neutral
-    - `Gelb`: Bogey
-    - `Rot`: Bandit
-  - Es ist möglich, via Klick auf die Schaltfläche mit dem Bearbeiten-Symbol einen Kommentar hinzuzufügen.
-  - Durch einen Klick auf eine der Beziehung-Schaltflächen am rechten Rand des Suchergebnisses kann die Beziehung festgelegt werden.
-  - Wenn im Community-Hub eines Spielers das Twitch-Konto verknüpft ist und der Spieler gerade aktiv streamt, wird ein Twitch-Symbol neben dem Handle dargestellt. Ein Klick auf das Symbol öffnet die Community Hub Seite des Handles.
-- __Filter:__
-  - __Texteingabe:__ Während der Eingabe wird die Beziehungsliste gefiltert. Es werden Beziehungen angezeigt, welche den eingegebenen Text im Namen enthalten.
-  - __Grün:__ Wenn angehakt, werden freundliche Beziehungen berücksichtigt (Friendly)
-  - __Grau:__ Wenn angehakt, werden neutrale Beziehungen berücksichtigt (Neutral)
-  - __Gelb:__ Wenn angehakt, werden unbekannte Beziehungen berücksichtigt (Bogey)
-  - __Rot:__ Wenn angehakt, werden feindliche Beziehungen berücksichtigt (Bandit)
-  - __Hellblau:__ Wenn angehakt, werden Organisationen berücksichtigt
-- __Beziehungsliste:__
-  - __Typ:__ Beziehungstyp
-    - Person = Handle
-    - Weltkugel = Organisation
-  - __Name:__ Name der Beziehung (bei Handle der Handle und bei Organisationen die SID der Organisation)
-    - Durch einen Klick auf die Schaltfläche mit dem Bearbeiten-Symbol kann ein Kommentar hinzugefügt werden.
-  - __Aktion:__ Beim Klick auf die `Entfernen`-Schaltfläche wird der Beziehungswert `Not Assigned` zugewiesen, sodass die Beziehung bei der Verwendung des Standardfilters ausgeblendet wird.
 
 ## Installation
 
