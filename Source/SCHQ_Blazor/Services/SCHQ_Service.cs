@@ -1,21 +1,22 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using SCHQ_Blazor.Classes;
+using SCHQ_Blazor.Locales;
 using SCHQ_Blazor.Models;
 using SCHQ_Protos;
 
 namespace SCHQ_Blazor.Services;
-public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_RelationsBase {
+public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer) : SCHQ_Relations.SCHQ_RelationsBase {
 
-  private readonly ILogger<SCHQ_Service> _logger = logger;
   private readonly RelationsContext _db = new();
   private DateTime SyncTimestamp = DateTime.MinValue;
 
   #region Channels
   public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}",
+    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
@@ -30,27 +31,27 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
           });
           rtnVal.Success = _db.SaveChanges() > 0;
           if (!rtnVal.Success) {
-            rtnVal.Info = "No entries written";
+            rtnVal.Info = localizer["No entries written"];
           }
         } else {
-          rtnVal.Info = "Channel already exists";
+          rtnVal.Info = localizer["Channel already exists"];
         }
       } catch (Exception ex) {
-        rtnVal.Info = $"Exception: {ex.Message}, Inner Exception: {ex.InnerException?.Message ?? "Empty"}";
-        _logger.LogWarning("[{Guid} AddChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+        logger.LogWarning("[{Guid} AddChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
           guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     } else {
       rtnVal.Info = "No channel name was given";
     }
 
-    _logger.LogInformation("[{Guid} AddChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
+    logger.LogInformation("[{Guid} AddChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return Task.FromResult(rtnVal);
   }
 
   public override Task<ChannelsReply> GetChannels(Empty request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} GetChannels Request]", guid);
+    logger.LogInformation("[{Guid} GetChannels Request]", guid);
     ChannelsReply rtnVal = new();
 
     try {
@@ -65,17 +66,17 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
         });
       }
     } catch (Exception ex) {
-      _logger.LogWarning("[{Guid} GetChannels Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+      logger.LogWarning("[{Guid} GetChannels Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
         guid, ex.Message, ex.InnerException?.Message ?? "Empty");
     }
 
-    _logger.LogInformation("[{Guid} GetChannels Reply] Count: {Count}", guid, rtnVal.Channels.Count);
+    logger.LogInformation("[{Guid} GetChannels Reply] Count: {Count}", guid, rtnVal.Channels.Count);
     return Task.FromResult(rtnVal);
   }
 
   public override Task<ChannelReply> GetChannel(ChannelNameRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} GetChannel Request] Channel: {Channel}", guid, request.Channel);
+    logger.LogInformation("[{Guid} GetChannel Request] Channel: {Channel}", guid, request.Channel);
     ChannelReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -92,19 +93,19 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
           };
         }
       } catch (Exception ex) {
-        _logger.LogWarning("[{Guid} GetChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+        logger.LogWarning("[{Guid} GetChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
           guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     }
 
-    _logger.LogInformation("[{Guid} GetChannel Reply] Found: {Found}, Channel: {Channel}",
+    logger.LogInformation("[{Guid} GetChannel Reply] Found: {Found}, Channel: {Channel}",
       guid, rtnVal.Found, rtnVal.Channel);
     return Task.FromResult(rtnVal);
   }
 
   public override Task<SuccessReply> RemoveChannel(ChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Password: {Password}",
+    logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Password: {Password}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
@@ -118,24 +119,24 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
             _db.Remove(channel);
             rtnVal.Success = _db.SaveChanges() > 0;
             if (!rtnVal.Success) {
-              rtnVal.Info = "No entries written";
+              rtnVal.Info = localizer["No entries written"];
             }
           } else {
-            rtnVal.Info = "Access denied";
+            rtnVal.Info = localizer["Access denied"];
           }
         } else {
-          rtnVal.Info = "Channel not found";
+          rtnVal.Info = localizer["Channel not found"];
         }
       } catch (Exception ex) {
-        rtnVal.Info = $"Exception: {ex.Message}, Inner Exception: {ex.InnerException?.Message ?? "Empty"}";
-        _logger.LogWarning("[{Guid} RemoveChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+        logger.LogWarning("[{Guid} RemoveChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
           guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     } else {
-      rtnVal.Info = "No channel name was given";
+      rtnVal.Info = localizer["No channel name was given"];
     }
 
-    _logger.LogInformation("[{Guid} RemoveChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
+    logger.LogInformation("[{Guid} RemoveChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return Task.FromResult(rtnVal);
   }
   #endregion
@@ -143,7 +144,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
   #region Relations
   public override Task<SuccessReply> SetRelations(SetRelationsRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} SetRelations Request] Channel: {Channel}, Password: {Password}, Relations: {Relations}",
+    logger.LogInformation("[{Guid} SetRelations Request] Channel: {Channel}, Password: {Password}, Relations: {Relations}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request?.Relations?.Count);
     SuccessReply rtnVal = new();
 
@@ -175,33 +176,33 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
               _db.UpdateRange(relations!);
               rtnVal.Success = _db.SaveChanges() > 0;
               if (!rtnVal.Success) {
-                rtnVal.Info = "No entries written";
+                rtnVal.Info = localizer["No entries written"];
               }
             } else {
-              rtnVal.Info = "Access denied";
+              rtnVal.Info = localizer["Access denied"];
             }
           } else {
-            rtnVal.Info = "Channel not found";
+            rtnVal.Info = localizer["Channel not found"];
           }
         } catch (Exception ex) {
-          rtnVal.Info = $"Exception: {ex.Message}, Inner Exception: {ex.InnerException?.Message ?? "Empty"}";
-          _logger.LogWarning("[{Guid} SetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+          rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+          logger.LogWarning("[{Guid} SetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
             guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
       } else {
-        rtnVal.Info = "No relations were given";
+        rtnVal.Info = localizer["No relations were given"];
       }
     } else {
-      rtnVal.Info = "No channel name was given";
+      rtnVal.Info = localizer["No channel name was given"];
     }
 
-    _logger.LogInformation("[{Guid} SetRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
+    logger.LogInformation("[{Guid} SetRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return Task.FromResult(rtnVal);
   }
 
   public override Task<SuccessReply> SetRelation(SetRelationRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} SetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}, Relation: {Relation}, Comment: {Comment}",
+    logger.LogInformation("[{Guid} SetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}, Relation: {Relation}, Comment: {Comment}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Relation.Type, request.Relation.Name, request.Relation.Relation, request.Relation.Comment ?? "Empty");
     SuccessReply rtnVal = new();
 
@@ -228,33 +229,33 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
               _db.Update(relation);
               rtnVal.Success = _db.SaveChanges() > 0;
               if (!rtnVal.Success) {
-                rtnVal.Info = "No entries written";
+                rtnVal.Info = localizer["No entries written"];
               }
             } else {
-              rtnVal.Info = "Access denied";
+              rtnVal.Info = localizer["Access denied"];
             }
           } else {
-            rtnVal.Info = "Channel not found";
+            rtnVal.Info = localizer["Channel not found"];
           }
         } catch (Exception ex) {
-          rtnVal.Info = $"Exception: {ex.Message}, Inner Exception: {ex.InnerException?.Message ?? "Empty"}";
-          _logger.LogWarning("[{Guid} SetRelation Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+          rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+          logger.LogWarning("[{Guid} SetRelation Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
             guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
       } else {
-        rtnVal.Info = "No relation name was given";
+        rtnVal.Info = localizer["No relation name was given"];
       }
     } else {
-      rtnVal.Info = "No channel name was given";
+      rtnVal.Info = localizer["No channel name was given"];
     }
 
-    _logger.LogInformation("[{Guid} SetRelation Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
+    logger.LogInformation("[{Guid} SetRelation Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return Task.FromResult(rtnVal);
   }
 
   public override Task<RelationsReply> GetRelations(ChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} GetRelations Request] Channel: {Channel}, Password: {Password}",
+    logger.LogInformation("[{Guid} GetRelations Request] Channel: {Channel}, Password: {Password}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No");
     RelationsReply rtnVal = new();
 
@@ -278,18 +279,18 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
           }
         }
       } catch (Exception ex) {
-        _logger.LogWarning("[{Guid} GetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+        logger.LogWarning("[{Guid} GetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
           guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     }
 
-    _logger.LogInformation("[{Guid} GetRelations Reply] Count: {Count}", guid, rtnVal.Relations.Count);
+    logger.LogInformation("[{Guid} GetRelations Reply] Count: {Count}", guid, rtnVal.Relations.Count);
     return Task.FromResult(rtnVal);
   }
 
   public override Task<RelationReply> GetRelation(RelationRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} GetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}",
+    logger.LogInformation("[{Guid} GetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Type, request.Name);
     RelationReply rtnVal = new();
 
@@ -311,19 +312,19 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
           }
         }
       } catch (Exception ex) {
-        _logger.LogWarning("[{Guid} GetRelation Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+        logger.LogWarning("[{Guid} GetRelation Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
           guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     }
 
-    _logger.LogInformation("[{Guid} GetRelation Reply] Found: {Found}, Relation: {Relation}",
+    logger.LogInformation("[{Guid} GetRelation Reply] Found: {Found}, Relation: {Relation}",
       guid, rtnVal.Found, rtnVal.Relation);
     return Task.FromResult(rtnVal);
   }
 
   public override async Task SyncRelations(ChannelRequest request, IServerStreamWriter<SyncRelationsReply> responseStream, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    _logger.LogInformation("[{Guid} SyncRelations Request] Channel: {Channel}, Password: {Password}",
+    logger.LogInformation("[{Guid} SyncRelations Request] Channel: {Channel}, Password: {Password}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No");
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -359,11 +360,11 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger) : SCHQ_Relations.SCHQ_Re
           }
         }
       } catch (Exception ex) {
-        _logger.LogWarning("[{Guid} SyncRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}", guid, ex.Message, ex.InnerException?.Message ?? "Empty");
+        logger.LogWarning("[{Guid} SyncRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}", guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     }
 
-    _logger.LogInformation("[{Guid} SyncRelations End]", guid);
+    logger.LogInformation("[{Guid} SyncRelations End]", guid);
   }
   #endregion
 

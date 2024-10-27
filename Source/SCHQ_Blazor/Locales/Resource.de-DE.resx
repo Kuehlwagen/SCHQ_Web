@@ -363,4 +363,25 @@
   <data name="Channels without password will be deleted on server restart." xml:space="preserve">
     <value>Kanäle ohne Passwort werden beim Serverneustart gelöscht.</value>
   </data>
+  <data name="No entries written" xml:space="preserve">
+    <value>Keine Einträge geschrieben</value>
+  </data>
+  <data name="Channel already exists" xml:space="preserve">
+    <value>Kanal existiert bereits</value>
+  </data>
+  <data name="Access denied" xml:space="preserve">
+    <value>Zugriff verweigert</value>
+  </data>
+  <data name="Channel not found" xml:space="preserve">
+    <value>Kanal nicht gefunden</value>
+  </data>
+  <data name="No channel name was given" xml:space="preserve">
+    <value>Es wurde kein Kanalname angegeben</value>
+  </data>
+  <data name="No relations were given" xml:space="preserve">
+    <value>Es wurden keine Beziehungen angegeben</value>
+  </data>
+  <data name="No relation name was given" xml:space="preserve">
+    <value>Es wurde kein Beziehung-Name angegeben</value>
+  </data>
 </root>
