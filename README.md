@@ -171,6 +171,18 @@ Kuehlwagen;1;0;Cooler Typ
 KRT;1;1;Beste Orga
 ```
 
+## Weitere Informationen
+
+### gRPC-Server
+- Für die Benutzer übergreifende Synchronisation von Beziehungen stellt `SCHQ_Web` einen gRPC-Server zur Verfügung. Hier können außerdem Kanäle verwaltet werden.
+- Der gRPC-Server hat die selbe URL wie das Web-Interface.
+
+### Memory Cache
+- Das Web-Interface verwendet für die Verwaltung von bereits ermittelten Handle- und Organisations-Daten einen Memory Cache, damit die Daten, wenn sie in einem bestimmten Zeitraum erneut abgefragt werden, nicht erneut von der RSI-Webseite heruntergeladen werden müssen.
+- Es werden maximal 1.024 Datensätze vorgehalten.
+- Wird innerhalb von vier Stunden nach dem letzten Abruf eines Datensaltzes dieser erneut abgefragt, hat dieser eine erneute Gültigkeit von vier Stunden.
+- Spätestens 12 Stunden nach der initialen Erstellung eines Datensatzes wird dieser erneut von der RSI-Webseite heruntergeladen.
+
 ## Installation
 
 SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
@@ -179,8 +191,8 @@ SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
 
 In der Datei `appsettings.json` können folgende Werte in der Gruppe `MemoryCache` angepasst werden:
 - __`SizeLimit`:__ Angabe der maximal im Cache zu verwaltenden Handle- und Organisations-Daten
-- __`SlidingExpirationInHours`:__ Angabe, in welchem Zeitraum nach dem Aufruf eines Datensatzes die Ablaufzeit zurückgesetzt wird (Angabe in Stunden)
-- __`AbsoluteExpirationInHours`:__ Angabe, wann ein Datensatz nach dem ersten Speichern spätestens gelöscht werden soll (Angabe in Stunden)
+- __`SlidingExpirationInHours`:__ Angabe, in welchem Zeitraum nach dem Aufruf eines Datensatzes die Gültigkeit zurückgesetzt wird (Angabe in Stunden)
+- __`AbsoluteExpirationInHours`:__ Angabe, wann ein Datensatz nach der initialen Erstellung spätestens gelöscht werden soll (Angabe in Stunden)
 ``` JSON
 {
   "MemoryCache": {
