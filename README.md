@@ -1,20 +1,14 @@
 # SCHQ_Web
 
-Web-Interface für den Star Citizen Handle Query Server (SCHQ Server)
+Web-Interface und gRPC-Server für die Applikation `Star Citizen Handle Query`
 
 ![Relations Data](/Screenshots/SCHQ_Web_Relations_Data.png?raw=true "Relations Data")
 
 ## Verwandte Projekte
 
-### SCHQ_Server
-
-Der gRPC-Server wird für die Verwendung des Web-Interfaces vorausgesetzt.
-
-Repository-URL: https://github.com/Kuehlwagen/SCHQ_Server
-
 ### Star Citizen Handle Query
 
-Das Tool `Star Citizen Handle Query` verwendet den `SCHQ_Server`, um Beziehungen Benutzer übergreifend zu synchronisieren.
+Das Tool `Star Citizen Handle Query` verwendet den gRPC-Server, um Beziehungen Benutzer übergreifend zu synchronisieren.
 
 Repository-URL: https://github.com/Kuehlwagen/Star-Citizen-Handle-Query
 
@@ -44,7 +38,7 @@ Hier werden die konfigurierten Kanäle aufgelistet.
   - __Aktualisieren:__ Liest die Kanalliste neu aus
 - __Kanalliste:__
   - __Name:__ Name des Kanals
-    - Beim Klick werden die Relationen des Kanals geöffnet
+    - Beim Klick werden die Beziehungen des Kanals geöffnet
   - __Geschützt:__ Angabe, ob der Kanal durch ein Passwort geschützt ist
   - __Berechtigung:__ Angabe, welche Rechte ein Benutzer ohne Angabe des Kanalpassworts hat (siehe auch `Kanal erstellen`)
   - __Aktion:__ Beim Klick auf die `Verwalten`-Schaltfläche wird die Verwaltung des Kanals geöffnet
@@ -56,7 +50,7 @@ Hier werden die konfigurierten Kanäle aufgelistet.
 Hier kann ein neuer Kanal erstellt werden.
 
 - __Kanalname:__ Name des Kanals
-- __Kanalpasswort:__ Passwort des Kanals
+- __Kanalpasswort:__ Passwort des Kanals (Kanäle ohne Passwort werden beim Serverneustart gelöscht.)
 - __Kanalpasswort wiederholen:__ Wiederholung des Passworts, damit eine Fehleingabe des Passworts verhindert wird
 - __Kanalberechtigung:__ Angabe, welche Rechte ein Benutzer ohne Angabe des Kanalpassworts hat
   - `None`: Ohne Angabe des Kanalpassworts darf ein Benutzer weder lesen noch schreiben
@@ -70,7 +64,7 @@ Hier kann ein neuer Kanal erstellt werden.
 
 Hier kann ein Kanal verwaltet werden.
 
-- __Kanalpassword:__ Angabe des Kanalpassworts
+- __Kanalpassword:__ Angabe des Kanalpassworts, um Berechtigungen für die folgenden Funktinalitäten zu bekommen
 - __Beziehungen herunterladen:__ Beim Klick werden die Beziehungen des Kanals als JSON-Datei heruntergeladen
 - __Beziehungen hochladen:__ Beim Klick können Beziehungen als JSON- oder CSV-Datei hochgeladen werden
 - __Kanal löschen:__ Beim Klick wird der Kanal nach Bestätigung, dass der Kanal wirklich gelöscht werden soll, gelöscht
@@ -165,16 +159,12 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
     - Person = Handle
     - Weltkugel = Organisation
   - __Name:__ Name der Beziehung (bei Handle der Handle und bei Organisationen die SID der Organisation)
+    - Durch einen Klick auf die Schaltfläche mit dem Bearbeiten-Symbol kann ein Kommentar hinzugefügt werden.
   - __Aktion:__ Beim Klick auf die `Entfernen`-Schaltfläche wird der Beziehungswert `Not Assigned` zugewiesen, sodass die Beziehung bei der Verwendung des Standardfilters ausgeblendet wird.
 
 ## Installation
 
 SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
-
-### Voraussetzungen
-Für die Ausführung wird ein laufender SCHQ_Server vorausgesetzt, auf den zugegriffen werden kann.
-
-Siehe: https://github.com/Kuehlwagen/SCHQ_Server
 
 ### Konfigurationswerte
 
@@ -182,6 +172,10 @@ In der Datei `appsettings.json` müssen folgende Werte angepasst werden:
 - __`gRPC_Url`:__ URL des zu verwendenden gRPC-Servers (SCHQ_Server)
 ``` JSON
 {
-  "gRPC_Url": "https://schq.sctools.de"
+  "MemoryCache": {
+    "SizeLimit": 1024,
+    "SlidingExpirationInHours": 4,
+    "AbsoluteExpirationInHours": 12
+  }
 }
 ```
