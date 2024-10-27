@@ -29,11 +29,14 @@ Hier kann das Thema ausgewählt werden. Es stehen folgende Themen zur Verfügung
 
 ### Lokaler Speicher
 
+![Local Storage](/Screenshots/SCHQ_Web_LocalStorage.png?raw=true "Local Storage")
+
 Hier können Beziehungen lokal im Browser (Local Storage) verwaltet werden.
 
-![Channels](/Screenshots/SCHQ_Web_LocalStorage.png?raw=true "Local Storage")
-
-Für weitere Informationen, siehe Abschnitt `Beziehungen`
+- __Beziehungen herunterladen:__ Beim Klick werden die Beziehungen des Kanals als JSON-Datei heruntergeladen
+- __Beziehungen hochladen:__ Beim Klick können Beziehungen als JSON-Datei hochgeladen werden
+- __Beziehungen löschen:__ Beim Klick werden alle Beziehungen des lokalen Speichers des Browsers nach Bestätigung, dass die Beziehungen wirklich gelöscht werden sollen, gelöscht
+- Für weitere Informationen, siehe Abschnitt `Beziehungen`
 
 ### Kanäle
 
