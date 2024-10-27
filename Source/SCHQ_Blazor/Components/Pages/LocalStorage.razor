@@ -245,9 +245,14 @@
             </svg>
           </a>
         </td>
-        <td class="align-middle" style="transform: rotate(0);">
-          <div><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
-          <div class="badge @GetRelationClassColors(relation.Relation)" hidden="@string.IsNullOrWhiteSpace(relation.Comment)"><small>@relation.Comment</small></div>
+        <td class="align-middle">
+          <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
+          <div class="badge @GetRelationClassColors(relation.Relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
+            <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
+              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+            </svg>
+            @relation.Comment
+          </div>
         </td>
         <td class="align-middle text-end">
           <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
