@@ -3,7 +3,7 @@ using SCHQ_Blazor.Components;
 using SCHQ_Blazor.Models;
 using SCHQ_Blazor.Services;
 
-var builder = WebApplication.CreateBuilder  (args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLocalization();
 builder.Services.AddControllers();
@@ -36,21 +36,30 @@ if (context.Database.GetPendingMigrations().Any()) {
 }
 await context.Database.EnsureCreatedAsync();
 
+// Remove channels without password
+try {
+  Channel?[] channels = [.. context.Channels.Where(c => string.IsNullOrEmpty(c.Password))];
+  if (channels?.Length > 0) {
+    context.RemoveRange(channels!);
+    context.SaveChanges();
+  }
+} catch (Exception) { }
+
+// Culture / Localization
 string[] supportedCultures = ["de-DE", "en-US"];
 var localizationOptions = new RequestLocalizationOptions()
   .SetDefaultCulture(supportedCultures[0])
   .AddSupportedCultures(supportedCultures)
   .AddSupportedUICultures(supportedCultures);
-
 app.UseRequestLocalization(localizationOptions);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
-    app.UseWebAssemblyDebugging();
+  app.UseWebAssemblyDebugging();
 } else {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+  app.UseExceptionHandler("/Error", createScopeForErrors: true);
+  // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+  app.UseHsts();
 }
 
 app.UseHttpsRedirection();
