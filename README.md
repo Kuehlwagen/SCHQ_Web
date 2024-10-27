@@ -183,7 +183,7 @@ KRT;1;1;Beste Orga
 ### Memory Cache
 - Das Web-Interface verwendet für die Verwaltung von bereits ermittelten Handle- und Organisations-Daten einen Memory Cache, damit die Daten, wenn sie in einem bestimmten Zeitraum erneut abgefragt werden, nicht erneut von der RSI-Webseite heruntergeladen werden müssen.
 - Es werden maximal 1.024 Datensätze vorgehalten.
-- Wird innerhalb von vier Stunden nach dem letzten Abruf eines Datensaltzes dieser erneut abgefragt, hat dieser eine erneute Gültigkeit von vier Stunden.
+- Wird innerhalb von vier Stunden nach dem letzten Abruf eines Datensatzes dieser erneut abgefragt, hat dieser eine erneute Gültigkeit von vier Stunden.
 - Spätestens 12 Stunden nach der initialen Erstellung eines Datensatzes wird dieser erneut von der RSI-Webseite heruntergeladen.
 
 ## Installation
