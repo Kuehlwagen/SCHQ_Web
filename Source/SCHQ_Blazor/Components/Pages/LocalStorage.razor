@@ -199,7 +199,7 @@
     </div>
   }
 </p>
-<div class="input-group" hidden="@(relations?.Length == 0)">
+<div class="input-group" hidden="@(relations == null || relations.Length == 0)">
   <div class="form-floating">
     <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="@Localizer["Filter"]" @bind="Filter" @bind:event="oninput">
     <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
@@ -222,70 +222,68 @@
   <div class="input-group-text bg-info p-2">
     <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@(async (args) => { FilterOrganization = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterOrganization", $"{FilterOrganization}"); })" title="@Localizer["Organization"]">
   </div>
-</div>
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th scope="col" width="1%">@Localizer["Type"]</th>
-      <th scope="col">@Localizer["Name"]</th>
-      <th scope="col" width="1%">@Localizer["Action"]</th>
-    </tr>
-  </thead>
-  <tbody>
-    @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
+  <table class="table table-striped">
+    <thead>
       <tr>
-        <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
-          <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-            <svg class="bi" width="16" height="16" fill="white">
-              @if (relation.Type == RelationType.Handle) {
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-              } else {
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-              }
-            </svg>
-          </a>
-        </td>
-        <td class="align-middle">
-          <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
-          <div class="badge @GetRelationClassColors(relation.Relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
-            <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
-              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-            </svg>
-            @relation.Comment
-          </div>
-        </td>
-        <td class="align-middle text-end">
-          <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
-            <svg class="bi" width="12" height="12" fill="currentColor">
-              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-            </svg>
-          </button>
-        </td>
+        <th scope="col" width="1%">@Localizer["Type"]</th>
+        <th scope="col">@Localizer["Name"]</th>
+        <th scope="col" width="1%">@Localizer["Action"]</th>
       </tr>
-    }
-  </tbody>
-</table>
-<p>
-  <div class="btn-group">
-    <button type="button" class="btn btn-primary" @onclick="Download" disabled="@(relations == null || relations.Length == 0)" title="@Localizer["Download Relations"]">
-      <svg class="bi" width="16" height="16" fill="currentColor">
-        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
-      </svg>
-      @Localizer["Relations"]
-    </button>
-    <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: #1B6EC2" for="input-file" title="@Localizer["Upload Relations"]">
-      <svg class="bi" width="16" height="16" fill="currentColor">
-        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
-      </svg>&nbsp;
-      @Localizer["Relations"]
-    </label>
-    <button type="button" class="btn btn-danger" @onclick="Delete" disabled="@(relations == null || relations.Length == 0)" title="@Localizer["Delete Relations"]">
-      <svg class="bi" width="16" height="16" fill="currentColor">
-        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-      </svg>
-    </button>
-  </div>
-</p>
+    </thead>
+    <tbody>
+      @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
+        <tr>
+          <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
+            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+              <svg class="bi" width="16" height="16" fill="white">
+                @if (relation.Type == RelationType.Handle) {
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                } else {
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                }
+              </svg>
+            </a>
+          </td>
+          <td class="align-middle">
+            <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
+            <div class="badge @GetRelationClassColors(relation.Relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
+              <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+              </svg>
+              @relation.Comment
+            </div>
+          </td>
+          <td class="align-middle text-end">
+            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
+              <svg class="bi" width="12" height="12" fill="currentColor">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+<div class="btn-group">
+  <button type="button" class="btn btn-primary" @onclick="Download" hidden="@(relations == null || relations.Length == 0)" title="@Localizer["Download Relations"]">
+    <svg class="bi" width="16" height="16" fill="currentColor">
+      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+    </svg>
+    @Localizer["Relations"]
+  </button>
+  <label class="btn btn-primary@(relations == null || relations.Length == 0 ? " rounded" : string.Empty)" style="display: inline-flex; align-items: center; background-color: #1B6EC2" for="input-file" title="@Localizer["Upload Relations"]">
+    <svg class="bi" width="16" height="16" fill="currentColor">
+      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
+    </svg>&nbsp;
+    @Localizer["Relations"]
+  </label>
+  <button type="button" class="btn btn-danger" @onclick="Delete" hidden="@(relations == null || relations.Length == 0)" title="@Localizer["Delete Relations"]">
+    <svg class="bi" width="16" height="16" fill="currentColor">
+      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+    </svg>
+  </button>
+</div>
 <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)" @onclick="ResetErrorText">
   <i>@ErrorText</i>
 </div>
