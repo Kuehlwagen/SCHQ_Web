@@ -27,6 +27,11 @@ Hier kann das Thema ausgewählt werden. Es stehen folgende Themen zur Verfügung
 - Hell
 - Vorgabe System
 
+### Lokaler Speicher
+
+Hier können Beziehungen lokal im Browser (Local Storage) verwaltet werden.
+Für weitere Informationen, siehe `Beziehungen`
+
 ### Kanäle
 
 ![Channels](/Screenshots/SCHQ_Web_Channels.png?raw=true "Channels")
@@ -168,8 +173,10 @@ SCHQ_Web kann auf einem IIS als .NET-Anwendung installiert werden.
 
 ### Konfigurationswerte
 
-In der Datei `appsettings.json` müssen folgende Werte angepasst werden:
-- __`gRPC_Url`:__ URL des zu verwendenden gRPC-Servers (SCHQ_Server)
+In der Datei `appsettings.json` können folgende Werte in der Gruppe `MemoryCache` angepasst werden:
+- __`SizeLimit`:__ Angabe der maximal im Cache zu verwaltenden Handle- und Organisations-Daten
+- __`SlidingExpirationInHours`:__ Angabe, in welchem Zeitraum nach dem Aufruf eines Datensatzes die Ablaufzeit zurückgesetzt wird (Angabe in Stunden)
+- __`AbsoluteExpirationInHours`:__ Angabe, wann ein Datensatz nach dem ersten Speichern spätestens gelöscht werden soll (Angabe in Stunden)
 ``` JSON
 {
   "MemoryCache": {
