@@ -360,4 +360,7 @@
   <data name="Unknown error" xml:space="preserve">
     <value>Unbekannter Fehler</value>
   </data>
+  <data name="Channels without password will be deleted on server restart." xml:space="preserve">
+    <value>Kanäle ohne Passwort werden beim Serverneustart gelöscht.</value>
+  </data>
 </root>
