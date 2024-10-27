@@ -329,8 +329,8 @@
 
   protected async override Task OnInitializedAsync() {
     MemoryCacheOptions = new MemoryCacheEntryOptions()
-      .SetSlidingExpiration(TimeSpan.FromMinutes(Config.GetValue<int>("MemoryCache_SlidingExpiration")))
-      .SetAbsoluteExpiration(TimeSpan.FromMinutes(Config.GetValue<int>("MemoryCache_AbsoluteExpiration")))
+      .SetSlidingExpiration(TimeSpan.FromHours(Config.GetSection("MemoryCache").GetValue<int>("SlidingExpirationInHours")))
+      .SetAbsoluteExpiration(TimeSpan.FromHours(Config.GetSection("MemoryCache").GetValue<int>("AbsoluteExpirationInHours")))
       .SetSize(1);
     try {
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly)) {

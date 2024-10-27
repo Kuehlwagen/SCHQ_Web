@@ -91,7 +91,7 @@
       SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
       if (reply.Success) {
         await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
-        Navigation.NavigateTo("/", true);
+        Navigation.NavigateTo("/channels", true);
       } else {
         ErrorText = reply.Info;
         StateHasChanged();
