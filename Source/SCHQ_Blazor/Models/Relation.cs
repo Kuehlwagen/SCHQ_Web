@@ -26,7 +26,7 @@ public class RelationsContext : DbContext {
 
 }
 
-[Table("Relations"), Index("ChannelId", new string[] { "Type", "Name" }, IsUnique = true, Name = "RelationID")]
+[Table("Relations"), Index("ChannelId", ["Type", "Name"], IsUnique = true, Name = "RelationID")]
 public class Relation {
   [SQLite.PrimaryKey, AutoIncrement]
   public int Id { get; set; }
@@ -39,7 +39,7 @@ public class Relation {
   public string? Comment { get; set; }
 }
 
-[Table("Channels"), Index("Name", new string[] {}, IsUnique = true, Name = "ChannelName")]
+[Table("Channels"), Index("Name", [], IsUnique = true, Name = "ChannelName")]
 public class Channel {
   [SQLite.PrimaryKey, AutoIncrement]
   public int Id { get; set; }
