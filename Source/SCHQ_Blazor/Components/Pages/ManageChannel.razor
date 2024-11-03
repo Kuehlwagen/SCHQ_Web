@@ -227,7 +227,7 @@
         ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
       }
     } else {
-      ErrorText = Localizer["No relations found"];
+      ErrorText = !string.IsNullOrWhiteSpace(reply?.Info) ? reply.Info : Localizer["No relations found"];
     }
     IsBusy = false;
     StateHasChanged();
