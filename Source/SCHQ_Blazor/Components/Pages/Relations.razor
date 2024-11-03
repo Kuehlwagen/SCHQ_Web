@@ -361,6 +361,7 @@
   }
 
   private async Task GetRelations() {
+    QueryNameError = null;
     if (!string.IsNullOrWhiteSpace(Channel)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
           HttpHandler = new SocketsHttpHandler() {
@@ -372,6 +373,9 @@
         }));
       RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
+      if (!string.IsNullOrWhiteSpace(reply?.Info)) {
+        QueryNameError = reply.Info;
+      }
       await LocalStorageService.SetValue(JS, $"pwd{Channel}", ChannelPassword, true);
     }
   }

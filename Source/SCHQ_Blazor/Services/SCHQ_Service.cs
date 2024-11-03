@@ -277,8 +277,11 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               Comment = !string.IsNullOrWhiteSpace(rel.Comment) ? rel.Comment : null
             });
           }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
         }
       } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
         logger.LogWarning("[{Guid} GetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
           guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
