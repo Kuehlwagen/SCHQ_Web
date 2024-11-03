@@ -384,4 +384,13 @@
   <data name="No relation name was given" xml:space="preserve">
     <value>Es wurde kein Beziehung-Name angegeben</value>
   </data>
+  <data name="New Channel Password" xml:space="preserve">
+    <value>Neues Kanalpasswort</value>
+  </data>
+  <data name="Confirm New Channel Password" xml:space="preserve">
+    <value>Neues Kanalpasswort wiederholen</value>
+  </data>
+  <data name="Passwords don't match" xml:space="preserve">
+    <value>Passwörter stimmen nicht überein</value>
+  </data>
 </root>

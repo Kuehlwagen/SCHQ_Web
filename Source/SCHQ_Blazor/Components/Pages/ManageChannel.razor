@@ -35,12 +35,41 @@
 } else {
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel @Localizer["Channel Password"]" @bind-value=Password>
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel @Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
       <label for="floatingInputGroupChannelPassword">@Channel @Localizer["Channel Password"]</label>
     </div>
   </p>
   <p>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelPassword" placeholder="@Channel @Localizer["New Channel Password"]" @bind=NewPassword @bind:event="oninput">
+      <label for="floatingInputGroupNewChannelPassword">@Channel @Localizer["New Channel Password"]</label>
+    </div>
+  </p>
+  <p>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewChannelPassword" placeholder="@Channel @Localizer["Confirm New Channel Password"]" @bind=ConfirmNewPassword @bind:event="oninput">
+      <label for="floatingInputGroupConfirmNewChannelPassword">@Channel @Localizer["Confirm New Channel Password"]</label>
+    </div>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
+          <option value="None" selected>@Localizer["None"]</option>
+          <option value="Read">@Localizer["Read"]</option>
+          <option value="Write">@Localizer["Write"]</option>
+        </select>
+        <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]</label>
+      </div>
+    </div>
+  </p>
+  <p>
     <div class="btn-group">
+      <button type="button" class="btn btn-primary" @onclick="Save" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
+        </svg>
+      </button>
       <button type="button" class="btn btn-primary" @onclick="Download" disabled="@IsBusy" title="@Localizer["Download Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
@@ -70,9 +99,77 @@
 @code {
   [SupplyParameterFromQuery]
   public string? Channel { get; set; }
-  private string? Password;
+  public ChannelInfo? ChannelInformation { get; set; }
+  private string? Password = string.Empty;
+  private string? _newPassword = string.Empty;
+  private string? NewPassword {
+    get { return _newPassword; }
+    set {
+      _newPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
+  private string? _confirmNewPassword = string.Empty;
+  private string? ConfirmNewPassword {
+    get { return _confirmNewPassword; }
+    set {
+      _confirmNewPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
+  private string? Permissions { get; set; }
+  private bool ButtonIsDisabled { get; set; } = true;
+  private bool CheckButtonIsDisabled {
+    get { return NewPassword != ConfirmNewPassword || (Password!.Length > 0 && NewPassword == Password); }
+  }
   private bool IsBusy { get; set; }
   private string? ErrorText { get; set; }
+
+  protected override async Task OnInitializedAsync() {
+    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
+  new() {
+      HttpHandler = new SocketsHttpHandler() {
+        PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+        EnableMultipleHttp2Connections = true
+      }
+    }));
+    ChannelReply reply = await gRPC_Client.GetChannelAsync(new() { Channel = Channel });
+    if (reply?.Channel?.Name == Channel) {
+      ChannelInformation = reply?.Channel;
+      Permissions = ChannelInformation?.Permissions.ToString();
+    }
+    ButtonIsDisabled = CheckButtonIsDisabled;
+    StateHasChanged();
+  }
+
+  private async void Save() {
+    ErrorText = null;
+    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
+      new() {
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
+    SuccessReply reply = await gRPC_Client.UpdateChannelAsync(new() {
+        Channel = Channel,
+        Password = Password,
+        NewPassword = NewPassword,
+        NewPasswordConfirm = ConfirmNewPassword,
+        Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
+      });
+    if (reply.Success) {
+      await LocalStorageService.SetValue(JS, $"pwd{Channel}", NewPassword, true);
+      Navigation.NavigateTo($"/relations?channel={Channel}", true);
+    } else {
+      ErrorText = reply.Info;
+      StateHasChanged();
+    }
+  }
 
   private async void Delete() {
     ErrorText = null;
@@ -80,8 +177,7 @@
     if (confirmed) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
         new() {
-            HttpHandler = new SocketsHttpHandler()
-            {
+            HttpHandler = new SocketsHttpHandler() {
               PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
               KeepAlivePingDelay = TimeSpan.FromSeconds(60),
               KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
@@ -105,13 +201,13 @@
     StateHasChanged();
     SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
       new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
     RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
         Channel = Channel,
         Password = Password ?? string.Empty
@@ -168,8 +264,8 @@
                 fields = line.Split(';');
                 if (!string.IsNullOrWhiteSpace(fields[0])) {
                   relation = new() {
-                    Name = fields[0]
-                  };
+                      Name = fields[0]
+                    };
                   if (fields.Length > 1 && int.TryParse(fields[1], out int relVal)) {
                     relation.Relation = (RelationValue)relVal;
                   }
@@ -209,17 +305,17 @@
 
     SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
       new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
+          HttpHandler = new SocketsHttpHandler() {
+            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+          }
+        }));
     SetRelationsRequest request = new() {
-      Channel = Channel,
-      Password = Password ?? string.Empty,
-    };
+        Channel = Channel,
+        Password = Password ?? string.Empty,
+      };
     request.Relations.AddRange(relations);
     SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);
     success = reply.Success;
