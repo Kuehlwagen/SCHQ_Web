@@ -42,7 +42,7 @@
     </div>
   </p>
   <p>
-    <div class="input-group mb-1" id="QueryName">
+    <div class="input-group mb-1" id="QueryName" hidden="@(relations?.Length == 0 && QueryNameError != null)">
       <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive" title="@Localizer["Switch Type"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           @if (QueryNameType == RelationType.Handle) {
@@ -210,7 +210,7 @@
       </div>
     }
   </p>
-  <div class="input-group" hidden="@(relations?.Length == 0)">
+  <div class="input-group" hidden="@(relations?.Length == 0 && QueryNameError != null)">
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="@Localizer["Filter"]" @bind="Filter" @bind:event="oninput">
       <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
@@ -234,7 +234,7 @@
       <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@(async (args) => { FilterOrganization = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterOrganization", $"{FilterOrganization}"); })" title="@Localizer["Organization"]">
     </div>
   </div>
-  <table class="table table-striped">
+  <table class="table table-striped" hidden="@(relations?.Length == 0 && QueryNameError != null)">
     <thead>
       <tr>
         <th scope="col" width="1%">@Localizer["Type"]</th>
