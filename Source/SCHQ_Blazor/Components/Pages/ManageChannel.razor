@@ -164,7 +164,7 @@
       });
     if (reply.Success) {
       await LocalStorageService.SetValue(JS, $"pwd{Channel}", NewPassword, true);
-      Navigation.NavigateTo($"/relations?channel={Channel}", true);
+      Navigation.NavigateTo("/channels", true);
     } else {
       ErrorText = reply.Info;
       StateHasChanged();
