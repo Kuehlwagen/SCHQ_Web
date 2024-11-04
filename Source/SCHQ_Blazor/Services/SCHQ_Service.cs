@@ -110,7 +110,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
   public override Task<SuccessReply> UpdateChannel(UpdateChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Password: {Password}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}",
+    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
