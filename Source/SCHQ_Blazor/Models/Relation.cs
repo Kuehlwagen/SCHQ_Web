@@ -50,5 +50,11 @@ public class Channel {
     set { Password = !string.IsNullOrEmpty(value) ? Encryption.EncryptText(value) : string.Empty; }
   }
   public string? Password { get; set; }
+  [DAS.NotMapped]
+  public string? DecryptedAdminPassword {
+    get { return Encryption.DecryptText(AdminPassword); }
+    set { AdminPassword = !string.IsNullOrEmpty(value) ? Encryption.EncryptText(value) : string.Empty; }
+  }
+  public string? AdminPassword { get; set; }
   public ChannelPermissions Permissions { get; set; }
 }

@@ -37,6 +37,7 @@ message ChannelRequest {
   string channel = 1;
   string password = 2;
   ChannelPermissions permissons = 3;
+  string adminPassword = 4;
 }
 
 message ChannelReply {
@@ -93,7 +94,7 @@ message RelationInfo {
 
 message UpdateChannelRequest {
   string channel = 1;
-  string password = 2;
+  string adminPassword = 2;
   string newPassword = 3;
   string newPasswordConfirm = 4;
   ChannelPermissions permissions = 5;

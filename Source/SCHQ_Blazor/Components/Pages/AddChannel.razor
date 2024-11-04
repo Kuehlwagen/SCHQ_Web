@@ -15,8 +15,8 @@
 <p>
   <div class="input-group">
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="@Localizer["Channel Name"]" @bind=Name @bind:event="oninput">
-      <label for="floatingInputGroupChannel">@Localizer["Channel Name"]</label>
+      <input type="text" class="form-control" id="floatingInputGroupChannel" placeholder="@Localizer["Channel Name"]*" @bind=Name @bind:event="oninput">
+      <label for="floatingInputGroupChannel">@Localizer["Channel Name"]*</label>
     </div>
   </div>
 </p>
@@ -43,11 +43,27 @@
   <div class="input-group">
     <div class="form-floating">
       <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
-        <option value="None" selected>@Localizer["None"]</option>
+        <option value="Write" selected>@Localizer["Write"]</option>
         <option value="Read">@Localizer["Read"]</option>
-        <option value="Write">@Localizer["Write"]</option>
+        <option value="None">@Localizer["None"]</option>
       </select>
-      <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]</label>
+      <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
+    </div>
+  </div>
+</p>
+<p>
+  <div class="input-group">
+    <div class="form-floating">
+      <input type="password" class="form-control @(AdminPassword != AdminConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupAdminPassword">@Localizer["Admin Password"]*</label>
+    </div>
+  </div>
+</p>
+<p>
+  <div class="input-group">
+    <div class="form-floating">
+      <input type="password" class="form-control @(AdminPassword != AdminConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPasswordConfirm" placeholder="@Localizer["Confirm Admin Password"]*" @bind=AdminConfirmPassword @bind:event="oninput">
+      <label for="floatingInputGroupAdminPasswordConfirm">@Localizer["Confirm Admin Password"]*</label>
     </div>
   </div>
 </p>
@@ -84,12 +100,28 @@
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
+  private string? _adminPassword = string.Empty;
+  private string? AdminPassword {
+    get { return _adminPassword; }
+    set {
+      _adminPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
+  private string? _adminConfirmPassword = string.Empty;
+  private string? AdminConfirmPassword {
+    get { return _adminConfirmPassword; }
+    set {
+      _adminConfirmPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private string? ErrorText { get; set; }
 
   private bool CheckButtonIsDisabled {
-    get { return string.IsNullOrWhiteSpace(_name) || Password != ConfirmPassword; }
+    get { return string.IsNullOrWhiteSpace(_name) || Password != ConfirmPassword || string.IsNullOrWhiteSpace(AdminPassword) || AdminPassword != AdminConfirmPassword || Password == AdminPassword; }
   }
 
   private async void Add() {
@@ -106,7 +138,7 @@
         }));
       SuccessReply reply = await gRPC_Client.AddChannelAsync(new() {
         Channel = Name,
-        Password = Password ?? string.Empty,
+        AdminPassword = AdminPassword ?? string.Empty,
         Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None });
       if (reply.Success) {
         await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);

@@ -35,8 +35,8 @@
 } else {
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel @Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
-      <label for="floatingInputGroupChannelPassword">@Channel @Localizer["Channel Password"]</label>
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel @Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupChannelPassword">@Channel @Localizer["Admin Password"]*</label>
     </div>
   </p>
   <p>
@@ -55,11 +55,11 @@
     <div class="input-group">
       <div class="form-floating">
         <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
-          <option value="None" selected>@Localizer["None"]</option>
+          <option value="Write" selected>@Localizer["Write"]</option>
           <option value="Read">@Localizer["Read"]</option>
-          <option value="Write">@Localizer["Write"]</option>
+          <option value="None">@Localizer["None"]</option>
         </select>
-        <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]</label>
+        <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
       </div>
     </div>
   </p>
@@ -99,7 +99,7 @@
   [SupplyParameterFromQuery]
   public string? Channel { get; set; }
   public ChannelInfo? ChannelInformation { get; set; }
-  private string? Password = string.Empty;
+  private string? AdminPassword = string.Empty;
   private string? _newPassword = string.Empty;
   private string? NewPassword {
     get { return _newPassword; }
@@ -119,7 +119,7 @@
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private bool CheckButtonIsDisabled {
-    get { return NewPassword != ConfirmNewPassword || (Password!.Length > 0 && NewPassword == Password); }
+    get { return NewPassword != ConfirmNewPassword || (AdminPassword!.Length > 0 && NewPassword == AdminPassword); }
   }
   private bool IsBusy { get; set; }
   private string? ErrorText { get; set; }
@@ -156,7 +156,7 @@
         }));
     SuccessReply reply = await gRPC_Client.UpdateChannelAsync(new() {
         Channel = Channel,
-        Password = Password,
+        AdminPassword = AdminPassword,
         NewPassword = NewPassword,
         NewPasswordConfirm = ConfirmNewPassword,
         Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
@@ -183,7 +183,7 @@
               EnableMultipleHttp2Connections = true
             }
           }));
-      SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, Password = Password ?? string.Empty });
+      SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, AdminPassword = AdminPassword ?? string.Empty });
       if (reply.Success) {
         await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
         Navigation.NavigateTo("/channels", true);
@@ -209,7 +209,7 @@
         }));
     RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
         Channel = Channel,
-        Password = Password ?? string.Empty
+        Password = AdminPassword ?? string.Empty
       });
     if (reply?.Relations?.Count > 0) {
       try {
@@ -313,7 +313,7 @@
         }));
     SetRelationsRequest request = new() {
         Channel = Channel,
-        Password = Password ?? string.Empty,
+        Password = AdminPassword ?? string.Empty,
       };
     request.Relations.AddRange(relations);
     SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);

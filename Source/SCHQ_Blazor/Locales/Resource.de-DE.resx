@@ -393,4 +393,13 @@
   <data name="Passwords don't match" xml:space="preserve">
     <value>Passwörter stimmen nicht überein</value>
   </data>
+  <data name="Admin Password" xml:space="preserve">
+    <value>Adminpasswort</value>
+  </data>
+  <data name="Confirm Admin Password" xml:space="preserve">
+    <value>Adminpasswort wiederholen</value>
+  </data>
+  <data name="No admin password was given" xml:space="preserve">
+    <value>Es wurde kein Adminpasswort angegeben</value>
+  </data>
 </root>

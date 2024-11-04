@@ -16,30 +16,35 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   #region Channels
   public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No");
+    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, Admin Password: {AdminPassword}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
-      request.Channel = request.Channel.Trim();
-      try {
-        if (!_db.Channels.Any(c => c.Name != null && c.Name == request.Channel)) {
-          _db.Add(new Channel() {
-            Name = request.Channel,
-            DecryptedPassword = request.Password,
-            Permissions = request.Permissons
-          });
-          rtnVal.Success = _db.SaveChanges() > 0;
-          if (!rtnVal.Success) {
-            rtnVal.Info = localizer["No entries written"];
+      if (!string.IsNullOrWhiteSpace(request.AdminPassword)) {
+        request.Channel = request.Channel.Trim();
+        try {
+          if (!_db.Channels.Any(c => c.Name != null && c.Name == request.Channel)) {
+            _db.Add(new Channel() {
+              Name = request.Channel,
+              DecryptedPassword = request.Password,
+              DecryptedAdminPassword = request.AdminPassword,
+              Permissions = request.Permissons
+            });
+            rtnVal.Success = _db.SaveChanges() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["Channel already exists"];
           }
-        } else {
-          rtnVal.Info = localizer["Channel already exists"];
+        } catch (Exception ex) {
+          rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+          logger.LogWarning("[{Guid} AddChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+            guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
-      } catch (Exception ex) {
-        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-        logger.LogWarning("[{Guid} AddChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
+      } else {
+        rtnVal.Info = "No admin password was given";
       }
     } else {
       rtnVal.Info = "No channel name was given";
@@ -106,16 +111,16 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   public override Task<SuccessReply> UpdateChannel(UpdateChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Password: {Password}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No");
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
-      request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+      request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
         Channel? channel = _db.Channels.FirstOrDefault(c => c.Name == request.Channel);
         if (channel != null) {
-          if (channel.Password == request.Password) {
+          if (channel.AdminPassword == request.AdminPassword) {
             if (!string.IsNullOrWhiteSpace(request.NewPassword) && !string.IsNullOrWhiteSpace(request.NewPasswordConfirm)) {
               if (request.NewPassword == request.NewPasswordConfirm) {
                 channel.DecryptedPassword = request.NewPassword;
@@ -152,17 +157,17 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
   public override Task<SuccessReply> RemoveChannel(ChannelRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Password: {Password}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No");
+    logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Admin Password: {AdminPassword}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
-      request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+      request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
         Channel? channel = _db.Channels.FirstOrDefault(c => c.Name == request.Channel);
         if (channel != null) {
-          if (channel.Password == request.Password) {
+          if (channel.AdminPassword == request.AdminPassword) {
             _db.Remove(channel);
             rtnVal.Success = _db.SaveChanges() > 0;
             if (!rtnVal.Success) {
