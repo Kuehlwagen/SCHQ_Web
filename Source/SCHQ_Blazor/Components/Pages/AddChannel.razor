@@ -138,6 +138,7 @@
         }));
       SuccessReply reply = await gRPC_Client.AddChannelAsync(new() {
         Channel = Name,
+        Password = Password,
         AdminPassword = AdminPassword ?? string.Empty,
         Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None });
       if (reply.Success) {
