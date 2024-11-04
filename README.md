@@ -62,12 +62,14 @@ Hier werden die konfigurierten Kanäle aufgelistet.
 Hier kann ein neuer Kanal erstellt werden.
 
 - __Kanalname:__ Name des Kanals
-- __Kanalpasswort:__ Passwort des Kanals (Kanäle ohne Passwort werden beim Serverneustart gelöscht.)
-- __Kanalpasswort wiederholen:__ Wiederholung des Passworts, damit eine Fehleingabe des Passworts verhindert wird
+- __Kanalpasswort:__ Passwort des Kanals (Kanäle ohne Passwort werden beim Serverneustart gelöscht)
+- __Kanalpasswort wiederholen:__ Wiederholung des Kanalpassworts, damit eine Fehleingabe des Passworts verhindert wird
 - __Kanalberechtigung:__ Angabe, welche Rechte ein Benutzer ohne Angabe des Kanalpassworts hat
   - `None`: Ohne Angabe des Kanalpassworts darf ein Benutzer weder lesen noch schreiben
   - `Read`: Ohne Angabe des Kanalpassworts darf ein Benutzer lesen, jedoch nicht schreiben
   - `Write`: Ohne Angabe des Kanalpassworts darf ein Benutzer lesen und schreiben
+- __Adminpasswort:__ Passwort für die Verwaltung des Kanals
+- __Adminpasswort wiederholen:__ Wiederholung des Adminpassworts, damit eine Fehleingabe des Passworts verhindert wird
 - __Kanal hinzufügen:__ Beim Klick der Schaltfläche wird der Kanal versucht anzulegen
 
 ### Beziehungen
@@ -117,10 +119,14 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
 
 Hier kann ein Kanal verwaltet werden.
 
-- __Kanalpassword:__ Angabe des Kanalpassworts, um Berechtigungen für die folgenden Funktinalitäten zu bekommen
+- __Adminpasswort:__ Angabe des Adminpassworts für die Verwaltung des Kanals
+- __Neues Kanalpassword:__ Optionale Angabe eines neuen Kanalpassworts
+- __Neues Kanalpassword wiederholen:__ Wiederholung des neuen Kanalpassworts, um eine Fehleingabe des Passworts zu verhindern
+- __Kanalberechtigung:__ Angabe der Kanalberechtigung
+- __Kanal speichern:__ Beim Klick werden die Änderungen des Kanals gespeichert
+- __Kanal löschen:__ Beim Klick wird der Kanal nach Bestätigung, dass der Kanal wirklich gelöscht werden soll, gelöscht
 - __Beziehungen herunterladen:__ Beim Klick werden die Beziehungen des Kanals als JSON-Datei heruntergeladen
 - __Beziehungen hochladen:__ Beim Klick können Beziehungen als JSON- oder CSV-Datei hochgeladen werden
-- __Kanal löschen:__ Beim Klick wird der Kanal nach Bestätigung, dass der Kanal wirklich gelöscht werden soll, gelöscht
 
 #### JSON
 Es wird ein JSON-Array mit Beziehungsinformationen erwartet. Der Inhalt einer in der Kanalverwaltung heruntergeladenen Beziehungen-Datei entspricht dem erwarteten Format.
