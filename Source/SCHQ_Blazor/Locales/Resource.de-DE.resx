@@ -117,8 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Action" xml:space="preserve">
-    <value>Aktion</value>
+  <data name="Mng." xml:space="preserve">
+    <value>Verw.</value>
   </data>
   <data name="Add Channel" xml:space="preserve">
     <value>Kanal hinzufügen</value>
@@ -249,8 +249,8 @@
   <data name="Organization not found" xml:space="preserve">
     <value>Organisation nicht gefunden</value>
   </data>
-  <data name="Permissions" xml:space="preserve">
-    <value>Berechtigung</value>
+  <data name="Perm." xml:space="preserve">
+    <value>Ber.</value>
   </data>
   <data name="Piracy" xml:space="preserve">
     <value>Piraterie</value>
@@ -401,5 +401,8 @@
   </data>
   <data name="No admin password was given" xml:space="preserve">
     <value>Es wurde kein Adminpasswort angegeben</value>
+  </data>
+  <data name="Channel Description" xml:space="preserve">
+    <value>Kanalbeschreibung</value>
   </data>
 </root>

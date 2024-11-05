@@ -48,33 +48,31 @@
     <thead>
       <tr>
         <th>@Localizer["Name"]</th>
-        <th width="1%">@Localizer["Secured"]</th>
-        <th width="1%">@Localizer["Permissions"]</th>
-        <th width="1%">@Localizer["Action"]</th>
+        <th width="1%">@Localizer["Perm."]</th>
+        <th width="1%">@Localizer["Mng."]</th>
       </tr>
     </thead>
     <tbody>
       @foreach (var channel in channels.Where(c => IsVisible(c))) {
         <tr>
-          <td class="align-middle" style="transform: rotate(0);"><a href="" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => Relations(channel.Name)">@channel.Name</a></td>
-          <td class="align-middle">
-            <svg class="bi @(channel.HasPassword ? "text-success" : "text-danger")" width="18" height="18" fill="currentColor">
-              @if (channel.HasPassword) {
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#shield-lock" />
+          <td class="align-middle" style="transform: rotate(0);">
+            <a href="" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => Relations(channel.Name)">
+              @channel.Name
+            </a>
+            <div class="text-muted fw-lighter" hidden="@(string.IsNullOrWhiteSpace(channel.Description))">
+              <small>@channel.Description</small>
+            </div>
+          </td>
+          <td class="align-middle" style="transform: rotate(0);">
+            <svg class="bi text-lighter" width="18" height="18" fill="currentColor">
+              @if (channel.Permissions == ChannelPermissions.Write) {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+              } else if (channel.Permissions == ChannelPermissions.Read) {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#eye" />
               } else {
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#shield-slash" />
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#shield-lock" />
               }
             </svg>
-          </td>
-          <td class="align-middle">
-            @(
-                channel.Permissions switch {
-                  ChannelPermissions.None => Localizer["None"],
-                  ChannelPermissions.Read => Localizer["Read"],
-                  ChannelPermissions.Write => Localizer["Write"],
-                  _ => string.Empty
-                }
-                )
           </td>
           <td class="align-middle text-end">
             <div class="btn-group">

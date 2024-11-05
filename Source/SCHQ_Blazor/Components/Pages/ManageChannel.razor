@@ -40,6 +40,14 @@
     </div>
   </p>
   <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="text" class="form-control" id="floatingInputGroupDescription" placeholder="@Localizer["Channel Description"]" @bind=Description @bind:event="oninput">
+        <label for="floatingInputGroupDescription">@Localizer["Channel Description"]</label>
+      </div>
+    </div>
+  </p>
+  <p>
     <div class="form-floating">
       <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelPassword" placeholder="@Channel @Localizer["New Channel Password"]" @bind=NewPassword @bind:event="oninput">
       <label for="floatingInputGroupNewChannelPassword">@Channel @Localizer["New Channel Password"]</label>
@@ -108,6 +116,7 @@
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
+  private string? Description { get; set; }
   private string? _confirmNewPassword = string.Empty;
   private string? ConfirmNewPassword {
     get { return _confirmNewPassword; }
@@ -135,9 +144,10 @@
       }
     }));
     ChannelReply reply = await gRPC_Client.GetChannelAsync(new() { Channel = Channel });
-    if (reply?.Channel?.Name == Channel) {
+    if (reply != null && reply.Found && reply.Channel?.Name == Channel) {
       ChannelInformation = reply?.Channel;
       Permissions = ChannelInformation?.Permissions.ToString();
+      Description = reply?.Channel?.Description ?? string.Empty;
     }
     ButtonIsDisabled = CheckButtonIsDisabled;
     StateHasChanged();
@@ -156,6 +166,7 @@
         }));
     SuccessReply reply = await gRPC_Client.UpdateChannelAsync(new() {
         Channel = Channel,
+        Description = Description,
         AdminPassword = AdminPassword,
         NewPassword = NewPassword,
         NewPasswordConfirm = ConfirmNewPassword,

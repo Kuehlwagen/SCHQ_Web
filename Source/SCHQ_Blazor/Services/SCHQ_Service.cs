@@ -25,8 +25,12 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
         request.Channel = request.Channel.Trim();
         try {
           if (!_db.Channels.Any(c => c.Name != null && c.Name == request.Channel)) {
+            DateTime utcNow = DateTime.UtcNow;
             _db.Add(new Channel() {
+              DateCreated = utcNow,
+              Timestamp = utcNow,
               Name = request.Channel,
+              Description = request.Description,
               DecryptedPassword = request.Password,
               DecryptedAdminPassword = request.AdminPassword,
               Permissions = request.Permissons
@@ -66,6 +70,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       foreach (Channel c in results.ToListAsync().Result) {
         rtnVal.Channels.Add(new ChannelInfo() {
           Name = c.Name,
+          Description = c.Description ?? string.Empty,
           HasPassword = c.Password?.Length > 0,
           Permissions = c.Permissions
         });
@@ -92,6 +97,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
             Found = true,
             Channel = new() {
               Name = channel.Name,
+              Description = channel.Description ?? string.Empty,
               HasPassword = channel.Password?.Length > 0,
               Permissions = channel.Permissions
             }
@@ -130,6 +136,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
             }
             if (string.IsNullOrWhiteSpace(rtnVal.Info)) {
               channel.Permissions = request.Permissions;
+              channel.Timestamp = DateTime.UtcNow;
+              channel.Description = request.Description;
               _db.Update(channel);
               rtnVal.Success = _db.SaveChanges() > 0;
               if (!rtnVal.Success) {
@@ -211,12 +219,15 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               List<Relation?> relations = [];
               foreach (RelationInfo relationInfo in request.Relations) {
                 Relation? relation = _db.Relations.FirstOrDefault(r => r.Type == relationInfo.Type && r.ChannelId == channel.Id && r.Name == relationInfo.Name);
+                DateTime utcNow = DateTime.UtcNow;
                 relation ??= new() {
                   ChannelId = channel.Id,
                   Type = relationInfo.Type,
-                  Name = relationInfo.Name
+                  Name = relationInfo.Name,
+                  DateCreated = utcNow
                 };
-                relation.Timestamp = DateTime.UtcNow;
+                relation.Timestamp = utcNow;
+                relation.UpdateCount++;
                 if (relationInfo.Relation > RelationValue.NotAssigned) {
                   relation.Value = relationInfo.Relation;
                 }
@@ -268,12 +279,15 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
           if (channel != null) {
             if (channel.Permissions >= ChannelPermissions.Write || channel.Password == request.Password) {
               Relation? relation = _db.Relations.FirstOrDefault(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
+              DateTime utcNow = DateTime.UtcNow;
               relation ??= new() {
                 ChannelId = channel.Id,
                 Type = request.Relation.Type,
                 Name = request.Relation.Name,
+                DateCreated = utcNow
               };
-              relation.Timestamp = DateTime.UtcNow;
+              relation.Timestamp = utcNow;
+              relation.UpdateCount++;
               relation.Value = request.Relation.Relation;
               if (request.Relation.Comment != null) {
                 relation.Comment = request.Relation.Comment;
