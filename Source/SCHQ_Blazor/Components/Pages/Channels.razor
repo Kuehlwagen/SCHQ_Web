@@ -56,7 +56,7 @@
       @foreach (var channel in channels.Where(c => IsVisible(c))) {
         <tr>
           <td class="align-middle" style="transform: rotate(0);">
-            <a href="" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => Relations(channel.Name)">
+            <a href="" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link@(!channel.HasPassword ? " fst-italic text-secondary" : string.Empty)" @onclick="() => Relations(channel.Name)">
               @channel.Name
             </a>
             <div class="text-muted fw-lighter" hidden="@(string.IsNullOrWhiteSpace(channel.Description))">
