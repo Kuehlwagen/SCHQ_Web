@@ -111,13 +111,9 @@
   }
 
   public bool IsVisible(ChannelInfo channel) {
-    if (string.IsNullOrWhiteSpace(Filter))
-      return true;
-
-    if (channel.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))
-      return true;
-
-    return false;
+    return string.IsNullOrWhiteSpace(Filter) ||
+      channel.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase) ||
+      channel.Description.Contains(Filter, StringComparison.InvariantCultureIgnoreCase);
   }
 
   private void ManageChannel(string channel) {
