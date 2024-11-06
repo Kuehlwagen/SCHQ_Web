@@ -232,7 +232,7 @@
     </thead>
     <tbody>
       @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
-        <tr>
+        <tr class="border-1">
           <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
             <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
               <svg class="bi" width="16" height="16" fill="white">
