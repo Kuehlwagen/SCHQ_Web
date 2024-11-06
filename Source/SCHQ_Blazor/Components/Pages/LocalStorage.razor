@@ -26,7 +26,7 @@
   }
 </script>
 
-<PageTitle>SCHQ Web > @Localizer["Local Storage"]</PageTitle>
+<PageTitle>SCHQ Web > @Localizer["Local Storage"] > @Localizer["Channel"]: @Channel</PageTitle>
 
 <h1 id="top">@Localizer["Local Storage"]</h1>
 
@@ -292,6 +292,9 @@
 @code {
   private MemoryCacheEntryOptions? MemoryCacheOptions { get; set; }
 
+  [SupplyParameterFromQuery]
+  public string? Channel { get; set; }
+
   public string? Filter { get; set; }
   public bool? FilterNotAssigned { get; set; } = false;
   public bool? FilterFriendly { get; set; } = true;
@@ -363,7 +366,7 @@
   }
 
   private async Task GetRelations() {
-    string? relationsJson = await LocalStorageService.GetValue(JS, "relations");
+    string? relationsJson = await LocalStorageService.GetValue(JS, $"relations{Channel}");
     if (!string.IsNullOrWhiteSpace(relationsJson)) {
       relations = JsonSerializer.Deserialize<RelationInfo[]>(relationsJson) ?? [];
     }
@@ -383,7 +386,7 @@
       relation.Relation = value;
       relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
     }
-    await LocalStorageService.SetValue(JS, "relations", JsonSerializer.Serialize(relations,
+    await LocalStorageService.SetValue(JS, $"relations{Channel}", JsonSerializer.Serialize(relations,
       new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
 
     StateHasChanged();
@@ -502,7 +505,7 @@
     bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Local Storage"]}:{Environment.NewLine}{Localizer["Do you really want to delete all relations?"]}");
     if (confirmed) {
       relations = [];
-      await LocalStorageService.RemoveValue(JS, "relations");
+      await LocalStorageService.RemoveValue(JS, $"relations{Channel}");
       StateHasChanged();
     }
   }

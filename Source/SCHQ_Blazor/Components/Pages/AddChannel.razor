@@ -2,6 +2,8 @@
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
 @using SCHQ_Blazor.Classes
+@using System.Text.Json
+@using System.Text.Json.Serialization
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
@@ -21,60 +23,70 @@
   </div>
 </p>
 <p>
-  <div class="input-group">
-    <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupDescription" placeholder="@Localizer["Channel Description"]" @bind=Description @bind:event="oninput">
-      <label for="floatingInputGroupDescription">@Localizer["Channel Description"]</label>
-    </div>
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="flexCheckIsLocalCache" @bind=IsLocalStorage @bind:event="oninput">
+    <label class="form-check-label" for="flexCheckIsLocalCache">
+      @Localizer["Local Storage"]
+    </label>
   </div>
 </p>
-<p>
-  <div class="input-group">
-    <div class="form-floating">
-      <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
-      <label for="floatingInputGroupPassword">@Localizer["Channel Password"]</label>
+<div hidden="@(IsLocalStorage)">
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="text" class="form-control" id="floatingInputGroupDescription" placeholder="@Localizer["Channel Description"]" @bind=Description @bind:event="oninput">
+        <label for="floatingInputGroupDescription">@Localizer["Channel Description"]</label>
+      </div>
     </div>
-  </div>
-</p>
-<p>
-  <div class="input-group">
-    <div class="form-floating">
-      <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPasswordConfirm" placeholder="@Localizer["Confirm Channel Password"]" @bind=ConfirmPassword @bind:event="oninput">
-      <label for="floatingInputGroupPasswordConfirm">@Localizer["Confirm Channel Password"]</label>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
+        <label for="floatingInputGroupPassword">@Localizer["Channel Password"]</label>
+      </div>
     </div>
-  </div>
-</p>
-<p hidden="@(Password != null && Password.Length > 0)">
-  <div class="bg-warning text-dark px-2 rounded">@Localizer["Channels without password will be deleted on server restart."]</div>
-</p>
-<p>
-  <div class="input-group">
-    <div class="form-floating">
-      <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
-        <option value="None" selected>@Localizer["None"]</option>
-        <option value="Read">@Localizer["Read"]</option>
-        <option value="Write">@Localizer["Write"]</option>
-      </select>
-      <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPasswordConfirm" placeholder="@Localizer["Confirm Channel Password"]" @bind=ConfirmPassword @bind:event="oninput">
+        <label for="floatingInputGroupPasswordConfirm">@Localizer["Confirm Channel Password"]</label>
+      </div>
     </div>
-  </div>
-</p>
-<p>
-  <div class="input-group">
-    <div class="form-floating">
-      <input type="password" class="form-control @(AdminPassword != AdminConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
-      <label for="floatingInputGroupAdminPassword">@Localizer["Admin Password"]*</label>
+  </p>
+  <p hidden="@(Password != null && Password.Length > 0)">
+    <div class="bg-warning text-dark px-2 rounded">@Localizer["Channels without password will be deleted on server restart."]</div>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
+          <option value="None" selected>@Localizer["None"]</option>
+          <option value="Read">@Localizer["Read"]</option>
+          <option value="Write">@Localizer["Write"]</option>
+        </select>
+        <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
+      </div>
     </div>
-  </div>
-</p>
-<p>
-  <div class="input-group">
-    <div class="form-floating">
-      <input type="password" class="form-control @(AdminPassword != AdminConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPasswordConfirm" placeholder="@Localizer["Confirm Admin Password"]*" @bind=AdminConfirmPassword @bind:event="oninput">
-      <label for="floatingInputGroupAdminPasswordConfirm">@Localizer["Confirm Admin Password"]*</label>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control @(AdminPassword != AdminConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
+        <label for="floatingInputGroupAdminPassword">@Localizer["Admin Password"]*</label>
+      </div>
     </div>
-  </div>
-</p>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
+        <input type="password" class="form-control @(AdminPassword != AdminConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPasswordConfirm" placeholder="@Localizer["Confirm Admin Password"]*" @bind=AdminConfirmPassword @bind:event="oninput">
+        <label for="floatingInputGroupAdminPasswordConfirm">@Localizer["Confirm Admin Password"]*</label>
+      </div>
+    </div>
+  </p>
+</div>
 <p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">@Localizer["Add Channel"]</button></p>
 <p>
   <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
@@ -100,7 +112,7 @@
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
-  private string? _confirmPassword= string.Empty;
+  private string? _confirmPassword = string.Empty;
   private string? ConfirmPassword {
     get { return _confirmPassword; }
     set {
@@ -126,38 +138,64 @@
   }
   private string? Permissions { get; set; }
   private string? Description { get; set; }
+  private bool _isLocalStorage;
+  private bool IsLocalStorage {
+    get { return _isLocalStorage; }
+    set {
+      _isLocalStorage = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
   private bool ButtonIsDisabled { get; set; } = true;
   private string? ErrorText { get; set; }
 
   private bool CheckButtonIsDisabled {
-    get { return string.IsNullOrWhiteSpace(_name) || Password != ConfirmPassword || string.IsNullOrWhiteSpace(AdminPassword) || AdminPassword != AdminConfirmPassword || Password == AdminPassword; }
+    get {
+      return string.IsNullOrWhiteSpace(Name) || (!IsLocalStorage && (Password != ConfirmPassword || string.IsNullOrWhiteSpace(AdminPassword) || AdminPassword != AdminConfirmPassword || Password == AdminPassword));
+    }
   }
 
   private async void Add() {
     ErrorText = null;
     StateHasChanged();
     if (!string.IsNullOrWhiteSpace(Name)) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-      SuccessReply reply = await gRPC_Client.AddChannelAsync(new() {
-        Channel = Name,
-        Description = Description,
-        Password = Password,
-        AdminPassword = AdminPassword ?? string.Empty,
-        Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None });
-      if (reply.Success) {
-        await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);
-        Navigation.NavigateTo($"/relations?channel={Name}");
-      }
-      else {
-        ErrorText = reply.Info;
-        StateHasChanged();
+      if (!IsLocalStorage) {
+        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
+            HttpHandler = new SocketsHttpHandler() {
+              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+              EnableMultipleHttp2Connections = true
+            }
+          }));
+        SuccessReply reply = await gRPC_Client.AddChannelAsync(new() {
+            Channel = Name,
+            Description = Description,
+            Password = Password,
+            AdminPassword = AdminPassword ?? string.Empty,
+            Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
+          });
+        if (reply.Success) {
+          await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);
+          Navigation.NavigateTo($"/relations?channel={Name}");
+        } else {
+          ErrorText = reply.Info;
+          StateHasChanged();
+        }
+      } else {
+        string[] channels = [];
+        string? channelsJson = await LocalStorageService.GetValue(JS, "channels");
+        if (!string.IsNullOrWhiteSpace(channelsJson)) {
+          channels = JsonSerializer.Deserialize<string[]>(channelsJson) ?? [];
+        }
+        if (!channels.Any(c => c.Equals(Name, StringComparison.InvariantCultureIgnoreCase))) {
+          channels = channels.Append(Name).ToArray();
+          await LocalStorageService.SetValue(JS, "channels", JsonSerializer.Serialize(channels, new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
+          Navigation.NavigateTo($"/localstorage?channel={Name}");
+        } else {
+          ErrorText = Localizer["Channel already exists"];
+          StateHasChanged();
+        }
       }
     }
   }
