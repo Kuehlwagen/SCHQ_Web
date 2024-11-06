@@ -174,7 +174,7 @@
       });
     if (reply.Success) {
       await LocalStorageService.SetValue(JS, $"pwd{Channel}", NewPassword, true);
-      Navigation.NavigateTo("/channels", true);
+      Navigation.NavigateTo("/", true);
     } else {
       ErrorText = reply.Info;
       StateHasChanged();
@@ -197,7 +197,7 @@
       SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, AdminPassword = AdminPassword ?? string.Empty });
       if (reply.Success) {
         await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
-        Navigation.NavigateTo("/channels", true);
+        Navigation.NavigateTo("/", true);
       } else {
         ErrorText = reply.Info;
         StateHasChanged();
