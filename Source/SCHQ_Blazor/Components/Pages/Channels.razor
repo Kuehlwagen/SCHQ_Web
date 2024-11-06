@@ -55,13 +55,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr class="border-1" hidden="@(!IsVisible(new() { Name = @Localizer["Local Storage"], Description = @Localizer["Store relations locally on your browser"] }))">
+      <tr class="border-1" hidden="@(!IsVisible(new() { Name = @Localizer["Local Storage"], Description = @Localizer["Store on your browser"] }))">
         <td class="align-middle" style="transform: rotate(0);">
           <a href="" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => LocalStorage()">
             @Localizer["Local Storage"]
           </a>
           <div class="text-muted">
-            <small>@Localizer["Store relations locally on your browser"]</small>
+            <small>@Localizer["Store on your browser"]</small>
           </div>
         </td>
         <td class="align-middle" style="transform: rotate(0);">

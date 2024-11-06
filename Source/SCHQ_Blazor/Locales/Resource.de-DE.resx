@@ -405,7 +405,7 @@
   <data name="Channel Description" xml:space="preserve">
     <value>Kanalbeschreibung</value>
   </data>
-  <data name="Store relations locally on your browser" xml:space="preserve">
-    <value>Beziehungen lokal im Browser speichern</value>
+  <data name="Store on your browser" xml:space="preserve">
+    <value>Im Browser speichern</value>
   </data>
 </root>
