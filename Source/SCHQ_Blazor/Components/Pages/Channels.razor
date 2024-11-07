@@ -56,6 +56,30 @@
       </tr>
     </thead>
     <tbody>
+      <tr class="border-1" hidden="@(!IsVisible(new() { Name = Localizer["Local Storage"], Description = Localizer["Store on your browser"] }))">
+        <td class="align-middle" style="transform: rotate(0);">
+          <a href="" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => LocalStorage(string.Empty)">
+            @Localizer["Local Storage"]
+          </a>
+          <div class="text-muted">
+            <small>@Localizer["Store on your browser"]</small>
+          </div>
+        </td>
+        <td class="align-middle" style="transform: rotate(0);">
+          <svg class="bi text-lighter" width="18" height="18" fill="currentColor">
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#house-heart" />
+          </svg>
+        </td>
+        <td class="align-middle text-end">
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary btn-sm p-2" disabled="@true">
+              <svg class="bi" width="14" height="14" fill="currentColor">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
       @foreach (var localChannelName in localChannels!) {
         <tr class="border-1" hidden="@(!IsVisible(new() { Name = localChannelName }))">
           <td class="align-middle" style="transform: rotate(0);">
@@ -188,7 +212,7 @@
   }
 
   private void LocalStorage(string channel) {
-    Navigation.NavigateTo($"localstorage?channel={channel}", true);
+    Navigation.NavigateTo($"localstorage{(!string.IsNullOrWhiteSpace(channel) ? $"?channel={channel}" : string.Empty)}", true);
   }
 
 }
