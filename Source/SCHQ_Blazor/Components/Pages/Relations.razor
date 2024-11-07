@@ -441,8 +441,9 @@
             if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r) {
               r.Relation = rel.Relation.Relation;
               r.Comment = rel.Relation.Comment;
+              relations = relations?.Where(r => !r.Equals(rel.Relation)).Prepend(rel.Relation).ToArray();
             } else {
-              relations = [.. relations?.Concat([rel.Relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
+              relations = relations?.Prepend(rel.Relation).ToArray();
             }
             StateHasChanged();
           }
