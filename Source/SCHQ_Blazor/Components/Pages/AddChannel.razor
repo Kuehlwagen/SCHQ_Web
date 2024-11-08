@@ -4,6 +4,7 @@
 @using SCHQ_Blazor.Classes
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using System.Web
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
@@ -177,7 +178,7 @@
           });
         if (reply.Success) {
           await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);
-          Navigation.NavigateTo($"/relations?channel={Name}");
+          Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(Name)}");
         } else {
           ErrorText = reply.Info;
           StateHasChanged();
@@ -191,7 +192,7 @@
         if (!channels.Any(c => c.Equals(Name, StringComparison.InvariantCultureIgnoreCase))) {
           channels = channels.Append(Name).ToArray();
           await LocalStorageService.SetValue(JS, "channels", JsonSerializer.Serialize(channels, new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
-          Navigation.NavigateTo($"/localstorage?channel={Name}");
+          Navigation.NavigateTo($"/localchannel/{HttpUtility.UrlEncode(Name)}");
         } else {
           ErrorText = Localizer["Channel already exists"];
           StateHasChanged();

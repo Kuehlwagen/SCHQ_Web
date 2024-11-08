@@ -1,10 +1,11 @@
-﻿@page "/managechannel"
+﻿@page "/managechannel/{ChannelName}"
 @using Google.Protobuf.Collections
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Net.Client
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using SCHQ_Blazor.Classes
+@using System.Web
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IJSRuntime JS
@@ -26,17 +27,17 @@
   }
 </script>
 
-<PageTitle>SCHQ Web > @Localizer["Manage Channel"] > @Localizer["Channel"]: @Channel</PageTitle>
+<PageTitle>SCHQ Web > @Localizer["Manage Channel"] > @Localizer["Channel"]: @ChannelName</PageTitle>
 
-<h1>@Localizer["Manage Channel"]</h1>
+<h1>@ChannelName</h1>
 
-@if (string.IsNullOrWhiteSpace(Channel)) {
+@if (string.IsNullOrWhiteSpace(ChannelName)) {
   <p>No channel name provided</p>
 } else {
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Channel @Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
-      <label for="floatingInputGroupChannelPassword">@Channel @Localizer["Admin Password"]*</label>
+      <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupChannelPassword">@Localizer["Admin Password"]*</label>
     </div>
   </p>
   <p>
@@ -49,14 +50,14 @@
   </p>
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelPassword" placeholder="@Channel @Localizer["New Channel Password"]" @bind=NewPassword @bind:event="oninput">
-      <label for="floatingInputGroupNewChannelPassword">@Channel @Localizer["New Channel Password"]</label>
+      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelPassword" placeholder="@Localizer["New Channel Password"]" @bind=NewPassword @bind:event="oninput">
+      <label for="floatingInputGroupNewChannelPassword">@Localizer["New Channel Password"]</label>
     </div>
   </p>
   <p>
     <div class="form-floating">
-      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewChannelPassword" placeholder="@Channel @Localizer["Confirm New Channel Password"]" @bind=ConfirmNewPassword @bind:event="oninput">
-      <label for="floatingInputGroupConfirmNewChannelPassword">@Channel @Localizer["Confirm New Channel Password"]</label>
+      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewChannelPassword" placeholder="@Localizer["Confirm New Channel Password"]" @bind=ConfirmNewPassword @bind:event="oninput">
+      <label for="floatingInputGroupConfirmNewChannelPassword">@Localizer["Confirm New Channel Password"]</label>
     </div>
   </p>
   <p>
@@ -104,8 +105,8 @@
 }
 
 @code {
-  [SupplyParameterFromQuery]
-  public string? Channel { get; set; }
+  [Parameter]
+  public string? ChannelName { get; set; }
   public ChannelInfo? ChannelInformation { get; set; }
   private string? AdminPassword = string.Empty;
   private string? _newPassword = string.Empty;
@@ -143,8 +144,8 @@
         EnableMultipleHttp2Connections = true
       }
     }));
-    ChannelReply reply = await gRPC_Client.GetChannelAsync(new() { Channel = Channel });
-    if (reply != null && reply.Found && reply.Channel?.Name == Channel) {
+    ChannelReply reply = await gRPC_Client.GetChannelAsync(new() { Channel = ChannelName });
+    if (reply != null && reply.Found && reply.Channel?.Name == ChannelName) {
       ChannelInformation = reply?.Channel;
       Permissions = ChannelInformation?.Permissions.ToString();
       Description = reply?.Channel?.Description ?? string.Empty;
@@ -165,7 +166,7 @@
           }
         }));
     SuccessReply reply = await gRPC_Client.UpdateChannelAsync(new() {
-        Channel = Channel,
+        Channel = ChannelName,
         Description = Description,
         AdminPassword = AdminPassword,
         NewPassword = NewPassword,
@@ -173,7 +174,7 @@
         Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
       });
     if (reply.Success) {
-      await LocalStorageService.SetValue(JS, $"pwd{Channel}", NewPassword, true);
+      await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", NewPassword, true);
       Navigation.NavigateTo("/", true);
     } else {
       ErrorText = reply.Info;
@@ -183,7 +184,7 @@
 
   private async void Delete() {
     ErrorText = null;
-    bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{Channel}]:{Environment.NewLine}{Localizer["Do you really want to delete the channel?"]}");
+    bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{ChannelName}]:{Environment.NewLine}{Localizer["Do you really want to delete the channel?"]}");
     if (confirmed) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
         new() {
@@ -194,9 +195,9 @@
               EnableMultipleHttp2Connections = true
             }
           }));
-      SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = Channel, AdminPassword = AdminPassword ?? string.Empty });
+      SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = ChannelName, AdminPassword = AdminPassword ?? string.Empty });
       if (reply.Success) {
-        await LocalStorageService.RemoveValue(JS, $"pwd{Channel}");
+        await LocalStorageService.RemoveValue(JS, $"pwd{ChannelName}");
         Navigation.NavigateTo("/", true);
       } else {
         ErrorText = reply.Info;
@@ -219,7 +220,7 @@
           }
         }));
     RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
-        Channel = Channel,
+        Channel = ChannelName,
         Password = AdminPassword ?? string.Empty
       });
     if (reply?.Relations?.Count > 0) {
@@ -232,7 +233,7 @@
             });
         using var streamRef = new DotNetStreamReference(relationsStream);
         streamRef.Stream.Position = 0;
-        await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{Channel}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
+        await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{ChannelName}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
       } catch (Exception ex) {
         ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
       }
@@ -254,7 +255,7 @@
               List<RelationInfo> relations = JsonSerializer.Deserialize<RelationInfo[]>(reader)?.Where(r => !string.IsNullOrWhiteSpace(r.Name)).ToList() ?? [];
               if (relations?.Count > 0) {
                 if (await SetRelations(relations)) {
-                  Navigation.NavigateTo($"/relations?channel={Channel}");
+                  Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(ChannelName)}");
                 }
               } else {
                 ErrorText = Localizer["No relations found"];
@@ -290,7 +291,7 @@
               }
               if (relations.Count > 0) {
                 if (await SetRelations(relations)) {
-                  Navigation.NavigateTo($"/relations?channel={Channel}");
+                  Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(ChannelName)}");
                 }
               } else {
                 ErrorText = Localizer["No relations found"];
@@ -323,7 +324,7 @@
           }
         }));
     SetRelationsRequest request = new() {
-        Channel = Channel,
+        Channel = ChannelName,
         Password = AdminPassword ?? string.Empty,
       };
     request.Relations.AddRange(relations);

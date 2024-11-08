@@ -1,4 +1,5 @@
-﻿@page "/localstorage"
+﻿@page "/localchannel"
+@page "/localchannel/{ChannelName}"
 @using Microsoft.Extensions.Caching.Memory
 @using SCHQ_Blazor.Classes
 @using System.Net
@@ -26,9 +27,9 @@
   }
 </script>
 
-<PageTitle>SCHQ Web > @Localizer["Local Storage"]@(!string.IsNullOrWhiteSpace(Channel) ? $" > {Localizer["Channel"]}: {Channel}" : string.Empty)</PageTitle>
+<PageTitle>SCHQ Web > @Localizer["Local Storage"]@(!string.IsNullOrWhiteSpace(ChannelName) ? $" > {Localizer["Channel"]}: {ChannelName}" : string.Empty)</PageTitle>
 
-<h1 id="top">@Localizer["Local Storage"]</h1>
+<h1 id="top">@(!string.IsNullOrWhiteSpace(ChannelName) ? $"{Localizer["Local"]}: {ChannelName}" : Localizer["Local Storage"])</h1>
 
 <p>
   <div class="input-group mb-1" id="QueryName">
@@ -292,8 +293,8 @@
 @code {
   private MemoryCacheEntryOptions? MemoryCacheOptions { get; set; }
 
-  [SupplyParameterFromQuery]
-  public string? Channel { get; set; }
+  [Parameter]
+  public string? ChannelName { get; set; }
 
   public string? Filter { get; set; }
   public bool? FilterNotAssigned { get; set; } = false;
@@ -366,7 +367,7 @@
   }
 
   private async Task GetRelations() {
-    string? relationsJson = await LocalStorageService.GetValue(JS, $"relations{Channel}");
+    string? relationsJson = await LocalStorageService.GetValue(JS, $"relations{ChannelName}");
     if (!string.IsNullOrWhiteSpace(relationsJson)) {
       relations = JsonSerializer.Deserialize<RelationInfo[]>(relationsJson) ?? [];
     }
@@ -386,7 +387,7 @@
       relation.Relation = value;
       relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
     }
-    await LocalStorageService.SetValue(JS, $"relations{Channel}", JsonSerializer.Serialize(relations,
+    await LocalStorageService.SetValue(JS, $"relations{ChannelName}", JsonSerializer.Serialize(relations,
       new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
 
     StateHasChanged();
@@ -505,7 +506,7 @@
     bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Local Storage"]}:{Environment.NewLine}{Localizer["Do you really want to delete all relations?"]}");
     if (confirmed) {
       relations = [];
-      await LocalStorageService.RemoveValue(JS, $"relations{Channel}");
+      await LocalStorageService.RemoveValue(JS, $"relations{ChannelName}");
       StateHasChanged();
     }
   }

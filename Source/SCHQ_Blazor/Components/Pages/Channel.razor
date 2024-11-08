@@ -1,4 +1,4 @@
-﻿@page "/relations"
+﻿@page "/channel/{ChannelName}"
 @using Google.Protobuf.WellKnownTypes
 @using Grpc.Core
 @using Grpc.Net.Client
@@ -15,18 +15,18 @@
 @inject IStringLocalizer<Resource> Localizer
 @inject IMemoryCache Memory
 
-<PageTitle>SCHQ Web > @Localizer["Relations"] > @Localizer["Channel"]: @Channel</PageTitle>
+<PageTitle>SCHQ Web > @Localizer["Relations"] > @Localizer["Channel"]: @ChannelName</PageTitle>
 
-<h1 id="top">@Localizer["Relations"]</h1>
+<h1 id="top">@ChannelName</h1>
 
 @if (relations == null) {
-  <p><em>@Localizer["Loading relations for channel"] <b>@Channel</b>...</em></p>
+  <p><em>@Localizer["Loading relations for channel"] <b>@ChannelName</b>...</em></p>
 } else {
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(Channel) @Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
-        <label for="floatingInputGroupChannelPassword">@(Channel) @Localizer["Channel Password"]</label>
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(ChannelName) @Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
+        <label for="floatingInputGroupChannelPassword">@(ChannelName) @Localizer["Channel Password"]</label>
       </div>
       <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive" title="@Localizer["Refresh Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
@@ -281,8 +281,8 @@
 @code {
   private MemoryCacheEntryOptions? MemoryCacheOptions { get; set; }
 
-  [SupplyParameterFromQuery]
-  public string? Channel { get; set; }
+  [Parameter]
+  public string? ChannelName { get; set; }
   private string? ChannelPassword { get; set; }
   public string? Filter { get; set; }
   public bool? FilterNotAssigned { get; set; } = false;
@@ -334,7 +334,7 @@
       .SetAbsoluteExpiration(TimeSpan.FromHours(Config.GetSection("MemoryCache").GetValue<int>("AbsoluteExpirationInHours")))
       .SetSize(1);
     try {
-      ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{Channel}", true);
+      ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{ChannelName}", true);
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly)) {
         FilterFriendly = friendly;
       }
@@ -363,7 +363,7 @@
 
   private async Task GetRelations() {
     QueryNameError = null;
-    if (!string.IsNullOrWhiteSpace(Channel)) {
+    if (!string.IsNullOrWhiteSpace(ChannelName)) {
       SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
           HttpHandler = new SocketsHttpHandler() {
             PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
@@ -372,12 +372,12 @@
             EnableMultipleHttp2Connections = true
           }
         }));
-      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty });
+      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
       if (!string.IsNullOrWhiteSpace(reply?.Info)) {
         QueryNameError = reply.Info;
       }
-      await LocalStorageService.SetValue(JS, $"pwd{Channel}", ChannelPassword, true);
+      await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", ChannelPassword, true);
     }
   }
 
@@ -392,7 +392,7 @@
         }
       }));
     SuccessReply reply = gRPC_Client.SetRelation(new() {
-        Channel = Channel,
+        Channel = ChannelName,
         Password = ChannelPassword ?? string.Empty,
         Relation = new() {
           Type = relation.Type,
@@ -441,7 +441,7 @@
                 EnableMultipleHttp2Connections = true
               }
             }));
-        using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = Channel, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
+        using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
         try {
           await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
             if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r) {

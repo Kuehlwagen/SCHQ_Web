@@ -4,6 +4,7 @@
 @using SCHQ_Blazor.Classes
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using System.Web
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
@@ -200,11 +201,11 @@
   }
 
   private void ManageChannel(string channel) {
-    Navigation.NavigateTo($"managechannel?channel={channel}", true);
+    Navigation.NavigateTo($"managechannel/{HttpUtility.UrlEncode(channel)}", true);
   }
 
   private void Relations(string channel) {
-    Navigation.NavigateTo($"relations?channel={channel}", true);
+    Navigation.NavigateTo($"channel/{HttpUtility.UrlEncode(channel)}", true);
   }
 
   private void AddChannel() {
@@ -212,7 +213,7 @@
   }
 
   private void LocalStorage(string channel) {
-    Navigation.NavigateTo($"localstorage{(!string.IsNullOrWhiteSpace(channel) ? $"?channel={channel}" : string.Empty)}", true);
+    Navigation.NavigateTo($"localchannel{(!string.IsNullOrWhiteSpace(channel) ? $"/{HttpUtility.UrlEncode(channel)}" : string.Empty)}", true);
   }
 
 }

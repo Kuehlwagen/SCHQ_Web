@@ -408,4 +408,7 @@
   <data name="Store on your browser" xml:space="preserve">
     <value>Im Browser speichern</value>
   </data>
+  <data name="Local" xml:space="preserve">
+    <value>Lokal</value>
+  </data>
 </root>
