@@ -25,8 +25,8 @@
   <p>
     <div class="input-group">
       <div class="form-floating">
-        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@(ChannelName) @Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
-        <label for="floatingInputGroupChannelPassword">@(ChannelName) @Localizer["Channel Password"]</label>
+        <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
+        <label for="floatingInputGroupChannelPassword">@Localizer["Channel Password"]</label>
       </div>
       <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive" title="@Localizer["Refresh Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
