@@ -340,7 +340,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               Type = rel.Type,
               Name = rel.Name,
               Relation = rel.Value,
-              Comment = !string.IsNullOrWhiteSpace(rel.Comment) ? rel.Comment : null
+              Comment = !string.IsNullOrWhiteSpace(rel.Comment) ? rel.Comment : null,
+              Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp()
             });
           }
         } else {
@@ -376,7 +377,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
           foreach (Relation rel in results.ToListAsync().Result) {
             rtnVal = new RelationReply() {
               Found = true,
-              Relation = rel.Value
+              Relation = rel.Value,
+              Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp()
             };
           }
         }
@@ -418,7 +420,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
                     Type = rel.Type,
                     Name = rel.Name,
                     Relation = rel.Value,
-                    Comment = rel.Comment ?? string.Empty
+                    Comment = rel.Comment ?? string.Empty,
+                    Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp()
                   }
                 });
                 SyncTimestamp = rel.Timestamp;

@@ -87,7 +87,7 @@
           </a>
         </div>
       </div>
-      <div class="w-auto @(GetRelationClassColors(relValHandle))">&nbsp;</div>
+      <div class="w-auto @(GetRelationClassColors(relHandle!))">&nbsp;</div>
       <div class="card-body m-1 p-1">
         <div class="card-text small text-break">
           <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
@@ -95,7 +95,7 @@
           <div hidden="@(QueryHandleInfo?.Profile?.Enlisted == DateTime.MinValue)">@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
           <div hidden="@(QueryHandleInfo?.Profile?.DisplayTitle == null)"><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
-          <div class="badge @GetRelationClassColors(relValHandle)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relHandle!)">
+          <div class="badge @GetRelationClassColors(relHandle!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relHandle!)">
             <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentHandle))">
               <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
             </svg>
@@ -132,7 +132,7 @@
         RelationInfo? relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid) ?? new() { Type = RelationType.Organization, Name = QueryHandleInfo?.Organizations?.MainOrganization?.Sid };
         RelationValue relValOrg = relOrg?.Relation ?? RelationValue.NotAssigned;
         string? commentOrg = relOrg?.Comment ?? string.Empty;
-        <div class="w-auto @(GetRelationClassColors(relValOrg))">&nbsp;</div>
+        <div class="w-auto @(GetRelationClassColors(relOrg!))">&nbsp;</div>
         <div class="card-body m-1 p-1">
           <div class="card-text small text-break">
             <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
@@ -145,7 +145,7 @@
             </div>
             <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-            <div class="badge @GetRelationClassColors(relValOrg)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relOrg!)">
+            <div class="badge @GetRelationClassColors(relOrg!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relOrg!)">
               <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentOrg))">
                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
               </svg>
@@ -174,7 +174,7 @@
           RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
           string? commentAff = relAff?.Comment ?? string.Empty;
           <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
-          <div class="w-auto @(GetRelationClassColors(relValAff))">&nbsp;</div>
+          <div class="w-auto @(GetRelationClassColors(relAff!))">&nbsp;</div>
           <div class="card-body m-1 p-1">
             <div class="card-text small text-break">
               <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
@@ -186,7 +186,7 @@
                 }
               </div>
               <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
-              <div class="badge @GetRelationClassColors(relValAff)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
+              <div class="badge @GetRelationClassColors(relAff!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
                 <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
                 </svg>
@@ -245,7 +245,7 @@
     <tbody>
       @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
         <tr class="border-1">
-          <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
+          <td class="p-3 mb-2 @(GetRelationClassColors(relation, true))" style="transform: rotate(0);">
             <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
               <svg class="bi" width="16" height="16" fill="white">
                 @if (relation.Type == RelationType.Handle) {
@@ -258,7 +258,7 @@
           </td>
           <td class="align-middle" style="transform: rotate(0);">
             <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
-            <div class="badge @GetRelationClassColors(relation.Relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
+            <div class="badge @GetRelationClassColors(relation, true)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
               <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
               </svg>
@@ -326,6 +326,7 @@
 
   private RelationInfo[]? relations;
   private CancellationTokenSource? CTS;
+  private DateTime SyncStart { get; set; } = DateTime.MinValue.ToUniversalTime();
 
   protected async override Task OnInitializedAsync() {
     MemoryCacheOptions = new MemoryCacheEntryOptions()
@@ -406,7 +407,9 @@
         r.Comment = relation.Comment;
       } else {
         relation.Relation = value;
-        relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
+        if (!SyncActive) {
+          relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
+        }
       }
       StateHasChanged();
     } else {
@@ -420,8 +423,11 @@
         if (CTS != null && !CTS.IsCancellationRequested) {
           CTS.Cancel(true);
         }
+        SyncStart = DateTime.MinValue.ToUniversalTime();
         SyncActive = false;
+        await GetRelations();
       } else {
+        SyncStart = DateTime.UtcNow;
         SyncActive = true;
         CTS = new();
         await GetRelations();
@@ -441,7 +447,7 @@
             if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r) {
               r.Relation = rel.Relation.Relation;
               r.Comment = rel.Relation.Comment;
-              relations = relations?.Where(r => !r.Equals(rel.Relation)).Prepend(rel.Relation).ToArray();
+              relations = relations?.Where(r => r.Type != rel.Relation.Type || r.Name != rel.Relation.Name).Prepend(rel.Relation).ToArray();
             } else {
               relations = relations?.Prepend(rel.Relation).ToArray();
             }
@@ -449,8 +455,9 @@
           }
         } catch { }
         SyncActive = false;
-        StateHasChanged();
+        SyncStart = DateTime.UtcNow;
       }
+      StateHasChanged();
     } catch { }
   }
 
@@ -468,13 +475,14 @@
     (relation.Type == RelationType.Handle || (FilterOrganization.HasValue && FilterOrganization.Value));
   }
 
-  public string GetRelationClassColors(RelationValue relation) {
-    return relation switch {
-      RelationValue.NotAssigned => "bg-dark text-white",
-      RelationValue.Friendly => "bg-success text-white",
-      RelationValue.Neutral => "bg-secondary text-white",
-      RelationValue.Bogey => "bg-warning text-white",
-      RelationValue.Bandit => "bg-danger text-white",
+  public string GetRelationClassColors(RelationInfo relation, bool withSync = false) {
+    string syncZusatz = withSync && SyncActive && relation.Timestamp?.ToDateTime() < SyncStart ? "-subtle" : string.Empty;
+    return relation?.Relation switch {
+      RelationValue.NotAssigned => $"bg-dark{syncZusatz} text-white",
+      RelationValue.Friendly => $"bg-success{syncZusatz} text-white",
+      RelationValue.Neutral => $"bg-secondary{syncZusatz} text-white",
+      RelationValue.Bogey => $"bg-warning{syncZusatz} text-white",
+      RelationValue.Bandit => $"bg-danger{syncZusatz} text-white",
       _ => "bg-transparent text-dark"
     };
   }
