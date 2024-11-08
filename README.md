@@ -27,17 +27,6 @@ Hier kann das Thema ausgewählt werden. Es stehen folgende Themen zur Verfügung
 - Hell
 - Vorgabe System
 
-### Lokaler Speicher
-
-![Local Storage](/Screenshots/SCHQ_Web_LocalStorage.png?raw=true "Local Storage")
-
-Hier können Beziehungen lokal im Browser (Local Storage) verwaltet werden.
-
-- __Beziehungen herunterladen:__ Beim Klick werden die Beziehungen des Kanals als JSON-Datei heruntergeladen
-- __Beziehungen hochladen:__ Beim Klick können Beziehungen als JSON-Datei hochgeladen werden
-- __Beziehungen löschen:__ Beim Klick werden alle Beziehungen des lokalen Speichers des Browsers nach Bestätigung, dass die Beziehungen wirklich gelöscht werden sollen, gelöscht
-- Für weitere Informationen, siehe Abschnitt `Beziehungen`
-
 ### Kanäle
 
 ![Channels](/Screenshots/SCHQ_Web_Channels.png?raw=true "Channels")
@@ -55,6 +44,17 @@ Hier werden die konfigurierten Kanäle aufgelistet.
   - __Berechtigung:__ Angabe, welche Rechte ein Benutzer ohne Angabe des Kanalpassworts hat (siehe auch `Kanal erstellen`)
   - __Aktion:__ Beim Klick auf die `Verwalten`-Schaltfläche wird die Verwaltung des Kanals geöffnet
 
+#### Lokaler Speicher
+
+![Local Storage](/Screenshots/SCHQ_Web_LocalStorage.png?raw=true "Local Storage")
+
+Hier können Beziehungen lokal im Browser (Local Storage) verwaltet werden.
+
+- __Beziehungen herunterladen:__ Beim Klick werden die Beziehungen des Kanals als JSON-Datei heruntergeladen
+- __Beziehungen hochladen:__ Beim Klick können Beziehungen als JSON-Datei hochgeladen werden
+- __Beziehungen löschen:__ Beim Klick werden alle Beziehungen des lokalen Speichers des Browsers nach Bestätigung, dass die Beziehungen wirklich gelöscht werden sollen, gelöscht
+- Für weitere Informationen, siehe Abschnitt `Beziehungen`
+
 ### Kanal hinzufügen
 
 ![Add Channel](/Screenshots/SCHQ_Web_Add_Channel.png?raw=true "Add Channel")
@@ -62,6 +62,8 @@ Hier werden die konfigurierten Kanäle aufgelistet.
 Hier kann ein neuer Kanal erstellt werden.
 
 - __Kanalname:__ Name des Kanals
+- __Kanalbeschreibung:__ Kurze Beschreibung des Kanals
+- __Lokaler Speicher:__ Angabe, ob die Beziehungen im lokalen Speicher des Browsers gespeichert werden sollen
 - __Kanalpasswort:__ Passwort des Kanals (Kanäle ohne Passwort werden beim Serverneustart gelöscht)
 - __Kanalpasswort wiederholen:__ Wiederholung des Kanalpassworts, damit eine Fehleingabe des Passworts verhindert wird
 - __Kanalberechtigung:__ Angabe, welche Rechte ein Benutzer ohne Angabe des Kanalpassworts hat
@@ -82,6 +84,7 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
 - __Aktualisieren:__ Liest die Beziehungen neu aus
 - __Sync:__ Startet oder beendet die Synchronisation der Beziehungen des Kanals, abhängig vom Status der Synchronisierung
   - Die Synchronisierung ist aktiv, wenn die Schaltfläche einen grünen Hintergrund hat
+  - Wenn die Synchronisierung aktiv ist, werden neu synchronisierte Beziehungen oben in der Tabelle eingefügt.
 - __Handle / Organisation:__ Beim Klick kann zwischen der Handle- und Organisationssuche gewechselt werden
 - __Texteingabe:__ Hier kann der Name des zu suchenden Spielers bzw. der zu suchenden Organisation eingegeben werden.
   - Wenn die Texteingabe geleert wird, wird der Typ auf `Handle` geändert und das Suchergebnis entfernt.
@@ -120,6 +123,7 @@ Hier können Beziehungen ausgelesen, geschrieben und synchronisiert werden.
 Hier kann ein Kanal verwaltet werden.
 
 - __Adminpasswort:__ Angabe des Adminpassworts für die Verwaltung des Kanals
+- __Kanalbeschreibung:__ Kurze Beschreibung des Kanals
 - __Neues Kanalpassword:__ Optionale Angabe eines neuen Kanalpassworts
 - __Neues Kanalpassword wiederholen:__ Wiederholung des neuen Kanalpassworts, um eine Fehleingabe des Passworts zu verhindern
 - __Kanalberechtigung:__ Angabe der Kanalberechtigung
