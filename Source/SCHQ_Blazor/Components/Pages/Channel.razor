@@ -104,10 +104,10 @@
         </div>
       </div>
       <div class="btn-group-vertical" role="group">
-        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Friendly)" disabled="@(relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Neutral)" disabled="@(relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bogey)" disabled="@(relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Friendly)" disabled="@(!SyncActive && relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Neutral)" disabled="@(!SyncActive && relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bogey)" disabled="@(!SyncActive && relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(!SyncActive && relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
       </div>
     </div>
     <div class="input-group mb-1" id="commentSection" hidden="@(CommentRelation == null)">
@@ -154,10 +154,10 @@
           </div>
         </div>
         <div class="btn-group-vertical" role="group">
-          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Friendly)" disabled="@(relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Neutral)" disabled="@(relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Friendly)" disabled="@(!SyncActive && relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Neutral)" disabled="@(!SyncActive && relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(!SyncActive && relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(!SyncActive && relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
         </div>
       } else {
         <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
@@ -195,10 +195,10 @@
             </div>
           </div>
           <div class="btn-group-vertical" role="group">
-            <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-            <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-            <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-            <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+            <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(!SyncActive && relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+            <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(!SyncActive && relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+            <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(!SyncActive && relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+            <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(!SyncActive && relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
           </div>
         } else {
           <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
@@ -246,7 +246,7 @@
       @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
         <tr class="border-1">
           <td class="p-3 mb-2 @(GetRelationClassColors(relation, true))" style="transform: rotate(0);">
-            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+            <a href="javascript:void(0);" title="@(SyncActive ? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
               <svg class="bi" width="16" height="16" fill="white">
                 @if (relation.Type == RelationType.Handle) {
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
