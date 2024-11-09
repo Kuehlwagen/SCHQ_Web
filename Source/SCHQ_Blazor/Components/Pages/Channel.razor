@@ -53,8 +53,20 @@
         </svg>
       </button>
       <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
+        <input type="text" @onfocusin=OnFocusIn @onfocusout=OnFocusOut class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
         <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
+      </div>
+      <div class="input-group-text bg-success p-2" hidden="@HideFilter">
+        <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
+      </div>
+      <div class="input-group-text bg-secondary p-2" hidden="@HideFilter">
+        <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
+      </div>
+      <div class="input-group-text bg-warning p-2" hidden="@HideFilter">
+        <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
+      </div>
+      <div class="input-group-text bg-danger p-2" hidden="@HideFilter">
+        <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
       </div>
       <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
@@ -210,31 +222,7 @@
       </div>
     }
   </p>
-  <div class="input-group" hidden="@(relations?.Length == 0 && QueryNameError != null)">
-    <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="@Localizer["Filter"]" @bind="Filter" @bind:event="oninput">
-      <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
-    </div>
-    <div class="input-group-text bg-success p-2">
-      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Friendly"]">
-    </div>
-    <div class="input-group-text bg-secondary p-2">
-      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Neutral"]">
-    </div>
-    <div class="input-group-text bg-warning p-2">
-      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Bogey"]">
-    </div>
-    <div class="input-group-text bg-danger p-2">
-      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Bandit"]">
-    </div>
-    <div class="input-group-text bg-dark p-2">
-      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Not Assigned"]">
-    </div>
-    <div class="input-group-text bg-info p-2">
-      <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@(async (args) => { FilterOrganization = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterOrganization", $"{FilterOrganization}"); })" title="@Localizer["Organization"]">
-    </div>
-  </div>
-  <table class="table table-striped" hidden="@(relations?.Length == 0 && QueryNameError != null)">
+  <table class="table table-striped mt-0" hidden="@(relations?.Length == 0 && QueryNameError != null)">
     <thead>
       <tr>
         <th scope="col" width="1%">@Localizer["Type"]</th>
@@ -271,7 +259,7 @@
                 @if (!SyncActive) {
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
                 } else {
-                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pin-fill" />
                 }
               </svg>
             </button>
@@ -288,13 +276,11 @@
   [Parameter]
   public string? ChannelName { get; set; }
   private string? ChannelPassword { get; set; }
-  public string? Filter { get; set; }
-  public bool? FilterNotAssigned { get; set; } = false;
+  public bool HideFilter { get; set; }
   public bool? FilterFriendly { get; set; } = true;
   public bool? FilterNeutral { get; set; } = true;
   public bool? FilterBogey { get; set; } = true;
   public bool? FilterBandit { get; set; } = true;
-  public bool? FilterOrganization { get; set; } = true;
   public bool SyncActive { get; set; } = false;
   public string SyncButtonClass {
     get {
@@ -350,12 +336,6 @@
       }
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit)) {
         FilterBandit = bandit;
-      }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned)) {
-        FilterNotAssigned = notAssigned;
-      }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterOrganization"), out bool organization)) {
-        FilterOrganization = organization;
       }
     } catch { }
     await GetRelations();
@@ -466,17 +446,15 @@
   }
 
   public bool IsVisible(RelationInfo relation) {
-    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase) ||
-    (relation.Comment != null && relation.Comment.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))) &&
+    return (string.IsNullOrWhiteSpace(QueryName) || relation.Type == QueryNameType && (relation.Name.Contains(QueryName, StringComparison.InvariantCultureIgnoreCase) ||
+    (relation.Comment != null && relation.Comment.Contains(QueryName, StringComparison.InvariantCultureIgnoreCase)))) &&
     (relation.Relation switch {
-      RelationValue.NotAssigned => FilterNotAssigned,
       RelationValue.Friendly => FilterFriendly,
       RelationValue.Neutral => FilterNeutral,
       RelationValue.Bogey => FilterBogey,
       RelationValue.Bandit => FilterBandit,
       _ => false
-    } ?? false) &&
-    (relation.Type == RelationType.Handle || (FilterOrganization.HasValue && FilterOrganization.Value));
+    } ?? false);
   }
 
   public string GetRelationClassColors(RelationInfo relation, bool withSync = false) {
@@ -571,4 +549,13 @@
       Comment = null;
     }
   }
+
+  private void OnFocusIn(FocusEventArgs e) {
+    HideFilter = true;
+  }
+
+  private void OnFocusOut(FocusEventArgs e) {
+    HideFilter = false;
+  }
+
 }
