@@ -266,9 +266,13 @@
             </div>
           </td>
           <td class="align-middle text-end">
-            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
+            <button type="button" class="btn @(!SyncActive ? "btn-dark" : GetRelationClassColors(relation)) btn-sm p-2" @onclick="() => SetRelation(relation, !SyncActive ? RelationValue.NotAssigned : relation.Relation)" disabled="@(!SyncActive && relation.Relation == RelationValue.NotAssigned)" title="@(!SyncActive ? Localizer["Remove"] : Localizer["Push"])">
               <svg class="bi" width="12" height="12" fill="currentColor">
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                @if (!SyncActive) {
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                } else {
+                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
+                }
               </svg>
             </button>
           </td>
