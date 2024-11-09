@@ -43,8 +43,20 @@
       </svg>
     </button>
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
+      <input type="text" @onfocusin=OnFocusIn @onfocusout=OnFocusOut class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
       <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
+    </div>
+    <div class="input-group-text bg-success p-2" hidden="@HideFilter">
+      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
+    </div>
+    <div class="input-group-text bg-secondary p-2" hidden="@HideFilter">
+      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
+    </div>
+    <div class="input-group-text bg-warning p-2" hidden="@HideFilter">
+      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
+    </div>
+    <div class="input-group-text bg-danger p-2" hidden="@HideFilter">
+      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
     </div>
     <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Query"]">
       <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
@@ -200,72 +212,48 @@
     </div>
   }
 </p>
-<div class="input-group" hidden="@(relations == null || relations.Length == 0)">
-  <div class="form-floating">
-    <input type="text" class="form-control" id="floatingInputGroupFilter" placeholder="@Localizer["Filter"]" @bind="Filter" @bind:event="oninput">
-    <label for="floatingInputGroupFilter">@Localizer["Filter"]</label>
-  </div>
-  <div class="input-group-text bg-success p-2">
-    <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Friendly"]">
-  </div>
-  <div class="input-group-text bg-secondary p-2">
-    <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Neutral"]">
-  </div>
-  <div class="input-group-text bg-warning p-2">
-    <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Bogey"]">
-  </div>
-  <div class="input-group-text bg-danger p-2">
-    <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Bandit"]">
-  </div>
-  <div class="input-group-text bg-dark p-2">
-    <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Not Assigned"]">
-  </div>
-  <div class="input-group-text bg-info p-2">
-    <input class="form-check-input mt-0 bg-info border-white" type="checkbox" value="" checked="@FilterOrganization" @onchange="@(async (args) => { FilterOrganization = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterOrganization", $"{FilterOrganization}"); })" title="@Localizer["Organization"]">
-  </div>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th scope="col" width="1%">@Localizer["Type"]</th>
-        <th scope="col">@Localizer["Name"]</th>
-        <th scope="col" width="1%">@Localizer["Action"]</th>
+<table class="table table-striped" hidden="@(relations == null || relations.Length == 0)">
+  <thead>
+    <tr>
+      <th scope="col" width="1%">@Localizer["Type"]</th>
+      <th scope="col">@Localizer["Name"]</th>
+      <th scope="col" width="1%">@Localizer["Action"]</th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
+      <tr class="border-1">
+        <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
+          <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+            <svg class="bi" width="16" height="16" fill="white">
+              @if (relation.Type == RelationType.Handle) {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+              } else {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+              }
+            </svg>
+          </a>
+        </td>
+        <td class="align-middle">
+          <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
+          <div class="badge @GetRelationClassColors(relation.Relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
+            <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
+              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+            </svg>
+            @relation.Comment
+          </div>
+        </td>
+        <td class="align-middle text-end">
+          <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
+            <svg class="bi" width="12" height="12" fill="currentColor">
+              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+            </svg>
+          </button>
+        </td>
       </tr>
-    </thead>
-    <tbody>
-      @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
-        <tr class="border-1">
-          <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
-            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-              <svg class="bi" width="16" height="16" fill="white">
-                @if (relation.Type == RelationType.Handle) {
-                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                } else {
-                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-                }
-              </svg>
-            </a>
-          </td>
-          <td class="align-middle">
-            <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
-            <div class="badge @GetRelationClassColors(relation.Relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
-              <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-              </svg>
-              @relation.Comment
-            </div>
-          </td>
-          <td class="align-middle text-end">
-            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
-              <svg class="bi" width="12" height="12" fill="currentColor">
-                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-              </svg>
-            </button>
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
+    }
+  </tbody>
+</table>
 <div class="alert alert-danger mb-3" role="alert" hidden="@(ErrorText == null)" @onclick="ResetErrorText">
   <i>@ErrorText</i>
 </div>
@@ -296,13 +284,11 @@
   [Parameter]
   public string? ChannelName { get; set; }
 
-  public string? Filter { get; set; }
-  public bool? FilterNotAssigned { get; set; } = false;
+  public bool HideFilter { get; set; }
   public bool? FilterFriendly { get; set; } = true;
   public bool? FilterNeutral { get; set; } = true;
   public bool? FilterBogey { get; set; } = true;
   public bool? FilterBandit { get; set; } = true;
-  public bool? FilterOrganization { get; set; } = true;
   private string? _queryHandle = string.Empty;
   public string? QueryName {
     get {
@@ -352,12 +338,6 @@
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit)) {
         FilterBandit = bandit;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned)) {
-        FilterNotAssigned = notAssigned;
-      }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterOrganization"), out bool organization)) {
-        FilterOrganization = organization;
-      }
     } catch { }
     await GetRelations();
   }
@@ -394,17 +374,15 @@
   }
 
   public bool IsVisible(RelationInfo relation) {
-    return (string.IsNullOrWhiteSpace(Filter) || relation.Name.Contains(Filter, StringComparison.InvariantCultureIgnoreCase) ||
-    (relation.Comment != null && relation.Comment.Contains(Filter, StringComparison.InvariantCultureIgnoreCase))) &&
+    return (string.IsNullOrWhiteSpace(QueryName) || relation.Type == QueryNameType && (relation.Name.Contains(QueryName, StringComparison.InvariantCultureIgnoreCase) ||
+    (relation.Comment != null && relation.Comment.Contains(QueryName, StringComparison.InvariantCultureIgnoreCase)))) &&
     (relation.Relation switch {
-      RelationValue.NotAssigned => FilterNotAssigned,
       RelationValue.Friendly => FilterFriendly,
       RelationValue.Neutral => FilterNeutral,
       RelationValue.Bogey => FilterBogey,
       RelationValue.Bandit => FilterBandit,
       _ => false
-    } ?? false) &&
-    (relation.Type == RelationType.Handle || (FilterOrganization.HasValue && FilterOrganization.Value));
+    } ?? false);
   }
 
   public string GetRelationClassColors(RelationValue relation) {
@@ -563,6 +541,14 @@
 
   private void ResetErrorText() {
     ErrorText = null;
+  }
+
+  private void OnFocusIn(FocusEventArgs e) {
+    HideFilter = true;
+  }
+
+  private void OnFocusOut(FocusEventArgs e) {
+    HideFilter = false;
   }
 
 }
