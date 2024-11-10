@@ -15,7 +15,7 @@
 @inject IStringLocalizer<Resource> Localizer
 @inject IMemoryCache Memory
 
-<PageTitle>SCHQ Web > @Localizer["Relations"] > @Localizer["Channel"]: @ChannelName</PageTitle>
+<PageTitle>SCHQ Web > @Localizer["Channel"]: @ChannelName</PageTitle>
 
 <h1 id="top">@ChannelName</h1>
 
@@ -53,7 +53,7 @@
         </svg>
       </button>
       <div class="form-floating">
-        <input type="text" @onfocusin=OnFocusIn @onfocusout=OnFocusOut class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
+        <input type="text" @onfocusin=OnFocusIn class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
         <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
       </div>
       <div class="input-group-text bg-success p-2" hidden="@HideFilter">
@@ -68,6 +68,18 @@
       <div class="input-group-text bg-danger p-2" hidden="@HideFilter">
         <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
       </div>
+      <div class="input-group-text bg-dark p-2" hidden="@HideFilter">
+        <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Filter"]: @Localizer["Not Assigned"]">
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" @onclick="() => { HideFilter = !HideFilter; }" title="@Localizer["Filter"]">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          @if(HideFilter) {
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel" />
+          } else {
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel-fill" />
+          }
+        </svg>
+      </button>
       <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
         <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
         <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
@@ -276,11 +288,12 @@
   [Parameter]
   public string? ChannelName { get; set; }
   private string? ChannelPassword { get; set; }
-  public bool HideFilter { get; set; }
+  public bool HideFilter { get; set; } = true;
   public bool? FilterFriendly { get; set; } = true;
   public bool? FilterNeutral { get; set; } = true;
   public bool? FilterBogey { get; set; } = true;
   public bool? FilterBandit { get; set; } = true;
+  public bool? FilterNotAssigned { get; set; } = false;
   public bool SyncActive { get; set; } = false;
   public string SyncButtonClass {
     get {
@@ -336,6 +349,9 @@
       }
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit)) {
         FilterBandit = bandit;
+      }
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned)) {
+        FilterNotAssigned = notAssigned;
       }
     } catch { }
     await GetRelations();
@@ -453,6 +469,7 @@
       RelationValue.Neutral => FilterNeutral,
       RelationValue.Bogey => FilterBogey,
       RelationValue.Bandit => FilterBandit,
+      RelationValue.NotAssigned => FilterNotAssigned,
       _ => false
     } ?? false);
   }
@@ -552,10 +569,6 @@
 
   private void OnFocusIn(FocusEventArgs e) {
     HideFilter = true;
-  }
-
-  private void OnFocusOut(FocusEventArgs e) {
-    HideFilter = false;
   }
 
 }
