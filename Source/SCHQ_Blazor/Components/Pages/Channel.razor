@@ -53,22 +53,22 @@
         </svg>
       </button>
       <div class="form-floating">
-        <input type="text" @onfocusin=OnFocusIn class="form-control" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
-        <label for="floatingInputGroupName">@QueryNamePlaceholder</label>
+        <input type="text" @onfocusin=OnFocusIn class="form-control z-0" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
+        <label for="floatingInputGroupName" class="z-0">@QueryNamePlaceholder</label>
       </div>
-      <div class="input-group-text bg-success p-2" hidden="@HideFilter">
+      <div class="input-group-text bg-success p-2 z-1" hidden="@HideFilter">
         <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
       </div>
-      <div class="input-group-text bg-secondary p-2" hidden="@HideFilter">
+      <div class="input-group-text bg-secondary p-2 z-1" hidden="@HideFilter">
         <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
       </div>
-      <div class="input-group-text bg-warning p-2" hidden="@HideFilter">
+      <div class="input-group-text bg-warning p-2 z-1" hidden="@HideFilter">
         <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
       </div>
-      <div class="input-group-text bg-danger p-2" hidden="@HideFilter">
+      <div class="input-group-text bg-danger p-2 z-1" hidden="@HideFilter">
         <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
       </div>
-      <div class="input-group-text bg-dark p-2" hidden="@HideFilter">
+      <div class="input-group-text bg-dark p-2 z-1" hidden="@HideFilter">
         <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Filter"]: @Localizer["Not Assigned"]">
       </div>
       <button type="button" class="btn btn-sm btn-primary" @onclick="() => { HideFilter = !HideFilter; }" title="@Localizer["Filter"]">
