@@ -215,7 +215,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
         try {
           Channel? channel = _db.Channels.FirstOrDefault(c => c.Name == request.Channel);
           if (channel != null) {
-            if (channel.Permissions >= ChannelPermissions.Write || channel.Password == request.Password) {
+            if (channel.AdminPassword == request.Password) {
               List<Relation?> relations = [];
               foreach (RelationInfo relationInfo in request.Relations) {
                 Relation? relation = _db.Relations.FirstOrDefault(r => r.Type == relationInfo.Type && r.ChannelId == channel.Id && r.Name == relationInfo.Name);
