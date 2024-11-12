@@ -329,7 +329,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = _db.Channels.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
+        Channel? channel = _db.Channels.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password));
         if (channel != null) {
           IOrderedQueryable<Relation> results = from rel in _db.Relations
                                                 where rel.ChannelId == channel.Id
