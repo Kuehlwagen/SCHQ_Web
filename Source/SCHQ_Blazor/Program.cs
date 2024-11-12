@@ -18,7 +18,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddGrpc();
 
 // Create / migrate SQLite database
-RelationsContext context = new(builder.Configuration.GetConnectionString("MYSQL")!);
+// %APPDATA%\Microsoft\UserSecrets\8eabe3e9-80e2-423c-b908-9c6a9a0113bf\secrets.json
+// dotnet user-secrets set "MySQL:ConnectionString" "Server=localhost;Port=3306;Database=Relations;Uid=xxx;Pwd=yyy;"
+// {
+//   "MySQL": {
+//     "ConnectionString": "Server=localhost;Port=3306;Database=Relations;Uid=xxx;Pwd=yyy;"
+//   }
+// }
+RelationsContext context = new(builder.Configuration["MySQL:ConnectionString"]!);
 if (context.Database.GetPendingMigrations().Any()) {
   /*
     Developer-PowerShell:
