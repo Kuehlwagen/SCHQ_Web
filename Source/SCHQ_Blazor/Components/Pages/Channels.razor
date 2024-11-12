@@ -7,7 +7,6 @@
 @using System.Web
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
-@inject IConfiguration Config
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
@@ -18,15 +17,6 @@
 
 @if (channels == null) {
   <p><em>@Localizer["Loading"]...</em></p>
-} else if (channels.Length == 0 && (localChannels == null || localChannels.Length == 0)) {
-  <p><em>@Localizer["No channels found"]</em></p>
-  <p>
-    <div class="btn-group">
-      <button type="button" class="btn btn-primary btn-sm p-2" @onclick="AddChannel" title="@Localizer["Add Channel"]">
-        @Localizer["Add Channel"]
-      </button>
-    </div>
-  </p>
 } else {
   <p>
     <div class="btn-group">

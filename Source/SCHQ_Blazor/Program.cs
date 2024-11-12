@@ -17,13 +17,8 @@ builder.Services.AddRazorComponents()
 // Add services to the container.
 builder.Services.AddGrpc();
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-app.MapGrpcService<SCHQ_Service>();
-
 // Create / migrate SQLite database
-RelationsContext context = new();
+RelationsContext context = new(builder.Configuration.GetConnectionString("MYSQL")!);
 if (context.Database.GetPendingMigrations().Any()) {
   /*
     Developer-PowerShell:
@@ -44,6 +39,13 @@ try {
     context.SaveChanges();
   }
 } catch (Exception) { }
+
+builder.Services.AddSingleton(context);
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.MapGrpcService<SCHQ_Service>();
 
 // Culture / Localization
 string[] supportedCultures = ["de-DE", "en-US"];

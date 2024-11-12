@@ -8,9 +8,9 @@ using SCHQ_Blazor.Models;
 using SCHQ_Protos;
 
 namespace SCHQ_Blazor.Services;
-public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer) : SCHQ_Relations.SCHQ_RelationsBase {
+public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext context) : SCHQ_Relations.SCHQ_RelationsBase {
 
-  private readonly RelationsContext _db = new();
+  private readonly RelationsContext _db = new(context.Database.GetConnectionString());
   private DateTime SyncTimestamp = DateTime.MinValue;
 
   #region Channels
