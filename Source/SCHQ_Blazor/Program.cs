@@ -17,7 +17,7 @@ builder.Services.AddRazorComponents()
 // Add services to the container.
 builder.Services.AddGrpc();
 
-// Create / migrate SQLite database
+// Create / migrate SQLite database (Connection-String: appsettings.Production.json)
 RelationsContext context = new(builder.Configuration.GetConnectionString("MySQL")!);
 if (context.Database.GetPendingMigrations().Any()) {
   /*
