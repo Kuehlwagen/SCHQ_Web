@@ -301,8 +301,9 @@ public static partial class HandleQuery {
     return url.StartsWith('/') ? $"https://robertsspaceindustries.com{url}" : url;
   }
 
-  private async static Task<string> GetImageBase64(string url) {
-    string rtnVal = string.Empty;
+#pragma warning disable IDE0051 // Nicht verwendete private Member entfernen
+  private async static Task<string> GetImageSource(string url) {
+    string rtnVal = url;
 
     using HttpClient client = new();
     try {
@@ -314,6 +315,7 @@ public static partial class HandleQuery {
 
     return rtnVal;
   }
+#pragma warning restore IDE0051 // Nicht verwendete private Member entfernen
 
 }
 
