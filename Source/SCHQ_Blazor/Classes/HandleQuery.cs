@@ -301,6 +301,20 @@ public static partial class HandleQuery {
     return url.StartsWith('/') ? $"https://robertsspaceindustries.com{url}" : url;
   }
 
+  private async static Task<string> GetImageBase64(string url) {
+    string rtnVal = string.Empty;
+
+    using HttpClient client = new();
+    try {
+      byte[] bytes = await client.GetByteArrayAsync(url);
+      if (bytes != null && bytes.Length > 0) {
+        rtnVal = $"data:image/jpeg;base64,{Convert.ToBase64String(bytes)}";
+      }
+    } catch { }
+
+    return rtnVal;
+  }
+
 }
 
 #region Serialization
