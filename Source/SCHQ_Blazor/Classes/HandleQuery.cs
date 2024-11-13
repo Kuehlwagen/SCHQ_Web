@@ -302,7 +302,7 @@ public static partial class HandleQuery {
   }
 
 #pragma warning disable IDE0051 // Nicht verwendete private Member entfernen
-  private async static Task<string> GetImageSource(string url) {
+  private async static Task<string?> GetImageSource(string url) {
     string rtnVal = url;
 
     using HttpClient client = new();
