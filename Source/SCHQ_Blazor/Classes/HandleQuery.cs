@@ -48,6 +48,8 @@ public static partial class HandleQuery {
 
   private static CancellationTokenSource? CancelToken;
 
+  private static readonly string DefaultAvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
+
   public static async Task<HandleInfo> GetHandleInfo(string handle) {
     handle = handle.Trim();
     if (CancelToken != null && !CancelToken.IsCancellationRequested) {
@@ -90,16 +92,16 @@ public static partial class HandleQuery {
           // Avatar
           MatchCollection mcAvatar = RgxAvatar.Matches(rtnVal.HttpResponse.Source);
           if (mcAvatar.Count == 1) {
-            rtnVal.Profile.AvatarUrl = CorrectUrl(mcAvatar[0].Groups[1].Value);
+            rtnVal.Profile.AvatarUrl = await GetImageSource(mcAvatar[0].Groups[1].Value);
           } else {
-            rtnVal.Profile.AvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
+            rtnVal.Profile.AvatarUrl = await GetImageSource(DefaultAvatarUrl);
           }
 
           // Display Title
           MatchCollection mcDisplayTitle = RgxDisplayTitle.Matches(rtnVal.HttpResponse.Source);
           if (mcDisplayTitle.Count == 1 && mcDisplayTitle[0].Groups.Count == 3) {
             rtnVal.Profile.DisplayTitle = CorrectText(mcDisplayTitle[0].Groups[2].Value);
-            rtnVal.Profile.DisplayTitleAvatarUrl = CorrectUrl(mcDisplayTitle[0].Groups[1].Value);
+            rtnVal.Profile.DisplayTitleAvatarUrl = await GetImageSource(mcDisplayTitle[0].Groups[1].Value);
           }
 
           // Organizations
@@ -108,7 +110,7 @@ public static partial class HandleQuery {
           // Handle live
           rtnVal.IsLive = isLiveTask.Result;
         } else {
-          rtnVal.Profile.AvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
+          rtnVal.Profile.AvatarUrl = await GetImageSource(DefaultAvatarUrl);
           Match matchError = RgxError.Match(rtnVal.HttpResponse.Source);
           if (matchError?.Groups.Count > 1) {
             rtnVal.HttpResponse.ErrorText = string.Join(" - ", [
@@ -154,7 +156,7 @@ public static partial class HandleQuery {
               reply.MainOrganization = new() {
                 Url = $"https://robertsspaceindustries.com/orgs/{mcMainOrganization[0].Groups[1].Value}",
                 Sid = CorrectText(mcMainOrganization[0].Groups[1].Value),
-                AvatarUrl = CorrectUrl(mcMainOrganization[0].Groups[2].Value),
+                AvatarUrl = await GetImageSource(mcMainOrganization[0].Groups[2].Value),
                 Members = Convert.ToInt32(mcMainOrganization[0].Groups[3].Value),
                 Name = CorrectText(mcMainOrganization[0].Groups[4].Value),
                 RankName = CorrectText(mcMainOrganization[0].Groups[5].Value),
@@ -181,7 +183,7 @@ public static partial class HandleQuery {
               reply.Affiliations.Add(new OrganizationInfo() {
                 Url = $"https://robertsspaceindustries.com/orgs/{mcOrganization[0].Groups[1].Value}",
                 Sid = CorrectText(mcOrganization[0].Groups[1].Value),
-                AvatarUrl = CorrectUrl(mcOrganization[0].Groups[2].Value),
+                AvatarUrl = await GetImageSource(mcOrganization[0].Groups[2].Value),
                 Members = Convert.ToInt32(mcOrganization[0].Groups[3].Value),
                 Name = CorrectText(mcOrganization[0].Groups[4].Value),
                 RankName = CorrectText(mcOrganization[0].Groups[5].Value.Replace("&", "&&")),
@@ -215,7 +217,7 @@ public static partial class HandleQuery {
       Match mOrg = RgxOrganizationOnly.Match(reply.HttpResponse.Source);
       if (mOrg?.Groups?.Count == 8) {
         reply.Organization = new() {
-          AvatarUrl = CorrectUrl(mOrg.Groups[1].Value),
+          AvatarUrl = await GetImageSource(mOrg.Groups[1].Value),
           Members = Convert.ToInt32(mOrg.Groups[2].Value),
           Name = mOrg.Groups[3].Value,
           Url = $"https://robertsspaceindustries.com/orgs/{mOrg.Groups[4].Value}",
