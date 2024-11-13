@@ -33,7 +33,7 @@ await context.Database.EnsureCreatedAsync();
 
 // Remove channels without password
 try {
-  Channel?[] channels = [.. context.Channels.Where(c => string.IsNullOrEmpty(c.Password))];
+  Channel?[] channels = [.. context.Channels!.Where(c => string.IsNullOrEmpty(c.Password))];
   if (channels?.Length > 0) {
     context.RemoveRange(channels!);
     context.SaveChanges();

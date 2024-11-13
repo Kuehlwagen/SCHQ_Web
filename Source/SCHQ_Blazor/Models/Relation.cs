@@ -8,8 +8,8 @@ namespace SCHQ_Blazor.Models;
 
 public class RelationsContext(string connectionString) : DbContext {
 
-  public DbSet<Relation> Relations { get; set; }
-  public DbSet<Channel> Channels { get; set; }
+  public DbSet<Relation>? Relations { get; set; }
+  public DbSet<Channel>? Channels { get; set; }
 
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     => optionsBuilder.UseMySQL(connectionString);
