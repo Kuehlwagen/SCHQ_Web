@@ -41,6 +41,7 @@ try {
 } catch (Exception) { }
 
 builder.Services.AddSingleton(context);
+builder.Services.AddTransient<SCHQ_Service>();
 
 var app = builder.Build();
 

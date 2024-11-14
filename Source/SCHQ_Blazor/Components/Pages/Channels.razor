@@ -1,15 +1,15 @@
 ﻿@page "/"
-@using Google.Protobuf.WellKnownTypes
-@using Grpc.Net.Client
 @using SCHQ_Blazor.Classes
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using System.Web
+@using SCHQ_Blazor.Services
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
+@inject SCHQ_Service SCHQ
 
 <PageTitle>SCHQ Web > @Localizer["Channels"]</PageTitle>
 
@@ -141,15 +141,7 @@
   }
 
   private async Task GetChannels() {
-    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
-    ChannelsReply reply = await gRPC_Client.GetChannelsAsync(new());
+    ChannelsReply reply = await SCHQ.GetChannels();
     channels = [.. reply?.Channels];
     localChannels = [];
     string? channelsJson = await LocalStorageService.GetValue(JS, "channels");

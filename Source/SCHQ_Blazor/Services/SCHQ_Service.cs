@@ -15,6 +15,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
   #region Channels
   public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
+    return AddChannel(request);
+  }
+
+  public Task<SuccessReply> AddChannel(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, Admin Password: {AdminPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
@@ -59,6 +63,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<ChannelsReply> GetChannels(Empty request, ServerCallContext context) {
+    return GetChannels();
+  }
+
+  public Task<ChannelsReply> GetChannels() {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetChannels Request]", guid);
     ChannelsReply rtnVal = new();
@@ -67,7 +75,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       IOrderedQueryable<Channel> results = from c in _db.Channels
                                            orderby c.Name
                                            select c;
-      foreach (Channel c in results.ToListAsync().Result) {
+      foreach (Channel c in results.ToList()) {
         rtnVal.Channels.Add(new ChannelInfo() {
           Name = c.Name,
           Description = c.Description ?? string.Empty,
@@ -85,6 +93,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<ChannelReply> GetChannel(ChannelNameRequest request, ServerCallContext context) {
+    return GetChannel(request);
+  }
+
+  public Task<ChannelReply> GetChannel(ChannelNameRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetChannel Request] Channel: {Channel}", guid, request.Channel);
     ChannelReply rtnVal = new();
@@ -115,6 +127,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<SuccessReply> UpdateChannel(UpdateChannelRequest request, ServerCallContext context) {
+    return UpdateChannel(request);
+  }
+
+  public Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No");
@@ -164,6 +180,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<SuccessReply> RemoveChannel(ChannelRequest request, ServerCallContext context) {
+    return RemoveChannel(request);
+  }
+
+  public Task<SuccessReply> RemoveChannel(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Admin Password: {AdminPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
@@ -203,6 +223,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
   #region Relations
   public override Task<SuccessReply> SetRelations(SetRelationsRequest request, ServerCallContext context) {
+    return SetRelations(request);
+  }
+
+  public Task<SuccessReply> SetRelations(SetRelationsRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetRelations Request] Channel: {Channel}, Password: {Password}, Relations: {Relations}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request?.Relations?.Count);
@@ -264,6 +288,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<SuccessReply> SetRelation(SetRelationRequest request, ServerCallContext context) {
+    return SetRelation(request);
+  }
+
+  public Task<SuccessReply> SetRelation(SetRelationRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}, Relation: {Relation}, Comment: {Comment}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Relation.Type, request.Relation.Name, request.Relation.Relation, request.Relation.Comment ?? "Empty");
@@ -320,6 +348,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<RelationsReply> GetRelations(ChannelRequest request, ServerCallContext context) {
+    return GetRelations(request);
+  }
+
+  public Task<RelationsReply> GetRelations(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetRelations Request] Channel: {Channel}, Password: {Password}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No");
@@ -335,7 +367,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
                                                 where rel.ChannelId == channel.Id
                                                 orderby rel.Type descending, rel.Name
                                                 select rel;
-          foreach (Relation rel in results.ToListAsync().Result) {
+          foreach (Relation rel in results.ToList()) {
             rtnVal.Relations.Add(new RelationInfo() {
               Type = rel.Type,
               Name = rel.Name,
@@ -359,6 +391,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
   }
 
   public override Task<RelationReply> GetRelation(RelationRequest request, ServerCallContext context) {
+    return GetRelation(request);
+  }
+
+  public Task<RelationReply> GetRelation(RelationRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Type, request.Name);
@@ -374,7 +410,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
           IQueryable<Relation> results = from rel in _db.Relations
                                          where rel.ChannelId == channel.Id && rel.Type == request.Type && rel.Name == request.Name
                                          select rel;
-          foreach (Relation rel in results.ToListAsync().Result) {
+          foreach (Relation rel in results.ToList()) {
             rtnVal = new RelationReply() {
               Found = true,
               Relation = rel.Value,
@@ -411,7 +447,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
                                                   orderby rel.Timestamp
                                                   select rel;
             if (await results.AnyAsync()) {
-              foreach (Relation rel in results.ToListAsync().Result) {
+              foreach (Relation rel in results.ToList()) {
                 // Reload() scheint nötig zu sein, da der Timestamp ansonsten den alten Wert enthält
                 _db.Entry(rel).Reload();
                 await responseStream.WriteAsync(new SyncRelationsReply() {

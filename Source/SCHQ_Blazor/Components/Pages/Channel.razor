@@ -1,5 +1,4 @@
 ﻿@page "/channel/{ChannelName}"
-@using Google.Protobuf.WellKnownTypes
 @using Grpc.Core
 @using Grpc.Net.Client
 @using Microsoft.Extensions.Caching.Memory
@@ -7,6 +6,7 @@
 @using System.Net
 @using System.Globalization
 @using System.Text.Json
+@using SCHQ_Blazor.Services
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
@@ -14,14 +14,18 @@
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
 @inject IMemoryCache Memory
+@inject SCHQ_Service SCHQ
 
 <PageTitle>SCHQ Web > @Localizer["Channel"]: @ChannelName</PageTitle>
 
 <h1 id="top">@ChannelName</h1>
 
-@if (relations == null) {
+@if (relations == null)
+{
   <p><em>@Localizer["Loading relations for channel"] <b>@ChannelName</b>...</em></p>
-} else {
+}
+else
+{
   <p>
     <div class="input-group">
       <div class="form-floating">
@@ -45,9 +49,12 @@
     <div class="input-group mb-1" id="QueryName" hidden="@(relations?.Length == 0 && QueryNameError != null)">
       <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive" title="@Localizer["Switch Type"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
-          @if (QueryNameType == RelationType.Handle) {
+          @if (QueryNameType == RelationType.Handle)
+          {
             <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-          } else {
+          }
+          else
+          {
             <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
           }
         </svg>
@@ -73,9 +80,12 @@
       </div>
       <button type="button" class="btn btn-sm btn-primary" @onclick="() => { HideFilter = !HideFilter; }" title="@Localizer["Filter"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
-          @if(HideFilter) {
+          @if (HideFilter)
+          {
             <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel" />
-          } else {
+          }
+          else
+          {
             <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel-fill" />
           }
         </svg>
@@ -151,7 +161,8 @@
       </button>
     </div>
     <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
-      @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
+      @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false)
+      {
         <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
         RelationInfo? relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid) ?? new() { Type = RelationType.Organization, Name = QueryHandleInfo?.Organizations?.MainOrganization?.Sid };
         RelationValue relValOrg = relOrg?.Relation ?? RelationValue.NotAssigned;
@@ -163,7 +174,8 @@
             <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@QueryHandleInfo?.Organizations?.MainOrganization?.Sid</span></b></div>
             <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
               @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
-              @for (int i = 0; i < 5; i++) {
+              @for (int i = 0; i < 5; i++)
+              {
                 <img width="20" height="20" src="images/rank_star_@(i < QueryHandleInfo?.Organizations?.MainOrganization?.RankStars ? "active" : "inactive").png" />
               }
             </div>
@@ -183,7 +195,9 @@
           <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(!SyncActive && relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
           <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(!SyncActive && relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
         </div>
-      } else {
+      }
+      else
+      {
         <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
           <div class="card-text small">
             @Localizer["REDACTED"] (@Localizer["Main Organization"])
@@ -191,9 +205,11 @@
         </div>
       }
     </div>
-    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? [])) {
+    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? []))
+    {
       <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-        @if (!aff.Redacted) {
+        @if (!aff.Redacted)
+        {
           RelationInfo? relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid) ?? new() { Type = RelationType.Organization, Name = aff.Sid };
           RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
           string? commentAff = relAff?.Comment ?? string.Empty;
@@ -205,7 +221,8 @@
               <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
               <div>
                 @Localizer["Rank"]: @aff.RankName<br />
-                @for (int i = 0; i < 5; i++) {
+                @for (int i = 0; i < 5; i++)
+                {
                   <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
                 }
               </div>
@@ -224,7 +241,9 @@
             <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(!SyncActive && relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
             <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(!SyncActive && relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
           </div>
-        } else {
+        }
+        else
+        {
           <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
             <div class="card-text small">
               @Localizer["REDACTED"] (@Localizer["Affiliation"])
@@ -243,14 +262,18 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
+      @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? [])
+      {
         <tr class="border-1">
           <td class="p-3 mb-2 @(GetRelationClassColors(relation, true))" style="transform: rotate(0);">
             <a href="javascript:void(0);" title="@(SyncActive ? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
               <svg class="bi" width="16" height="16" fill="white">
-                @if (relation.Type == RelationType.Handle) {
+                @if (relation.Type == RelationType.Handle)
+                {
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                } else {
+                }
+                else
+                {
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
                 }
               </svg>
@@ -268,9 +291,12 @@
           <td class="align-middle text-end">
             <button type="button" class="btn @(!SyncActive ? "btn-dark" : GetRelationClassColors(relation)) btn-sm p-2" @onclick="() => SetRelation(relation, !SyncActive ? RelationValue.NotAssigned : relation.Relation)" disabled="@(!SyncActive && relation.Relation == RelationValue.NotAssigned)" title="@(!SyncActive ? Localizer["Remove"] : Localizer["Push"])">
               <svg class="bi" width="12" height="12" fill="currentColor">
-                @if (!SyncActive) {
+                @if (!SyncActive)
+                {
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                } else {
+                }
+                else
+                {
                   <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pin-fill" />
                 }
               </svg>
@@ -295,19 +321,25 @@
   public bool? FilterBandit { get; set; } = true;
   public bool? FilterNotAssigned { get; set; } = false;
   public bool SyncActive { get; set; } = false;
-  public string SyncButtonClass {
-    get {
+  public string SyncButtonClass
+  {
+    get
+    {
       return SyncActive ? "btn btn-success" : "btn btn-danger";
     }
   }
   private string? _queryHandle = string.Empty;
-  public string? QueryName {
-    get {
+  public string? QueryName
+  {
+    get
+    {
       return _queryHandle;
     }
-    set {
+    set
+    {
       _queryHandle = value;
-      if (string.IsNullOrWhiteSpace(_queryHandle)) {
+      if (string.IsNullOrWhiteSpace(_queryHandle))
+      {
         QueryHandleInfo = null;
         QueryNameError = null;
         QueryNameType = RelationType.Handle;
@@ -318,8 +350,10 @@
   public HandleInfo? QueryHandleInfo { get; set; }
   public string? QueryNameError { get; set; }
   public RelationType QueryNameType { get; set; }
-  public string QueryNamePlaceholder {
-    get {
+  public string QueryNamePlaceholder
+  {
+    get
+    {
       return QueryNameType == RelationType.Handle ? @Localizer["Handle"] : @Localizer["SID"];
     }
   }
@@ -331,110 +365,124 @@
   private CancellationTokenSource? CTS;
   private DateTime SyncStart { get; set; } = DateTime.MinValue.ToUniversalTime();
 
-  protected async override Task OnInitializedAsync() {
+  protected async override Task OnInitializedAsync()
+  {
     MemoryCacheOptions = new MemoryCacheEntryOptions()
       .SetSlidingExpiration(TimeSpan.FromHours(Config.GetSection("MemoryCache").GetValue<int>("SlidingExpirationInHours")))
       .SetAbsoluteExpiration(TimeSpan.FromHours(Config.GetSection("MemoryCache").GetValue<int>("AbsoluteExpirationInHours")))
       .SetSize(1);
-    try {
+    try
+    {
       ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{ChannelName}", true);
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly)) {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly))
+      {
         FilterFriendly = friendly;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNeutral"), out bool neutral)) {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNeutral"), out bool neutral))
+      {
         FilterNeutral = neutral;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBogey"), out bool bogey)) {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBogey"), out bool bogey))
+      {
         FilterBogey = bogey;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit)) {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterBandit"), out bool bandit))
+      {
         FilterBandit = bandit;
       }
-      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned)) {
+      if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterNotAssigned"), out bool notAssigned))
+      {
         FilterNotAssigned = notAssigned;
       }
-    } catch { }
+    }
+    catch { }
     await GetRelations();
   }
 
-  private string? GetLocalizer(string? text) {
+  private string? GetLocalizer(string? text)
+  {
     return Localizer[text ?? string.Empty];
   }
 
-  private async Task GetRelations() {
+  private async Task GetRelations()
+  {
     QueryNameError = null;
-    if (!string.IsNullOrWhiteSpace(ChannelName)) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-      RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty });
+    if (!string.IsNullOrWhiteSpace(ChannelName))
+    {
+      RelationsReply reply = await SCHQ.GetRelations(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty });
       relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
-      if (!string.IsNullOrWhiteSpace(reply?.Info)) {
+      if (!string.IsNullOrWhiteSpace(reply?.Info))
+      {
         QueryNameError = reply.Info;
       }
       await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", ChannelPassword, true);
     }
   }
 
-  private void SetRelation(RelationInfo relation, RelationValue value) {
+  private async void SetRelation(RelationInfo relation, RelationValue value)
+  {
     QueryNameError = null;
-    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
-        HttpHandler = new SocketsHttpHandler() {
-          PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-          KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-          KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-          EnableMultipleHttp2Connections = true
-        }
-      }));
-    SuccessReply reply = gRPC_Client.SetRelation(new() {
+    SuccessReply reply = await SCHQ.SetRelation(new()
+      {
         Channel = ChannelName,
         Password = ChannelPassword ?? string.Empty,
-        Relation = new() {
+        Relation = new()
+        {
           Type = relation.Type,
           Name = relation.Name,
           Relation = value,
           Comment = relation.Comment
         }
       });
-    if (reply.Success && relations != null) {
-      if (relations.FirstOrDefault(r => r.Type == relation.Type && r.Name == relation.Name) is RelationInfo r) {
+    if (reply.Success && relations != null)
+    {
+      if (relations.FirstOrDefault(r => r.Type == relation.Type && r.Name == relation.Name) is RelationInfo r)
+      {
         r.Relation = value;
         r.Comment = relation.Comment;
-      } else {
+      }
+      else
+      {
         relation.Relation = value;
-        if (!SyncActive) {
+        if (!SyncActive)
+        {
           relations = [.. relations.Concat([relation]).OrderBy(r => r.Type).ThenBy(r => r.Name)];
         }
       }
       StateHasChanged();
-    } else {
+    }
+    else
+    {
       QueryNameError = reply.Info;
     }
   }
 
-  private async void SyncRelations() {
-    try {
-      if (SyncActive) {
-        if (CTS != null && !CTS.IsCancellationRequested) {
+  private async void SyncRelations()
+  {
+    try
+    {
+      if (SyncActive)
+      {
+        if (CTS != null && !CTS.IsCancellationRequested)
+        {
           CTS.Cancel(true);
         }
         SyncStart = DateTime.MinValue.ToUniversalTime();
         SyncActive = false;
         await GetRelations();
-      } else {
+      }
+      else
+      {
         SyncStart = DateTime.UtcNow;
         SyncActive = true;
         CTS = new();
         await GetRelations();
         StateHasChanged();
         SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-          new() {
-              HttpHandler = new SocketsHttpHandler() {
+          new()
+            {
+              HttpHandler = new SocketsHttpHandler()
+              {
                 PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
                 KeepAlivePingDelay = TimeSpan.FromSeconds(60),
                 KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
@@ -442,29 +490,38 @@
               }
             }));
         using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
-        try {
-          await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token)) {
-            if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r) {
+        try
+        {
+          await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token))
+          {
+            if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r)
+            {
               r.Relation = rel.Relation.Relation;
               r.Comment = rel.Relation.Comment;
               relations = relations?.Where(r => r.Type != rel.Relation.Type || r.Name != rel.Relation.Name).Prepend(rel.Relation).ToArray();
-            } else {
+            }
+            else
+            {
               relations = relations?.Prepend(rel.Relation).ToArray();
             }
             StateHasChanged();
           }
-        } catch { }
+        }
+        catch { }
         SyncActive = false;
         SyncStart = DateTime.UtcNow;
       }
       StateHasChanged();
-    } catch { }
+    }
+    catch { }
   }
 
-  public bool IsVisible(RelationInfo relation) {
+  public bool IsVisible(RelationInfo relation)
+  {
     return (string.IsNullOrWhiteSpace(QueryName) || relation.Type == QueryNameType && (relation.Name.Contains(QueryName, StringComparison.InvariantCultureIgnoreCase) ||
     (relation.Comment != null && relation.Comment.Contains(QueryName, StringComparison.InvariantCultureIgnoreCase)))) &&
-    (relation.Relation switch {
+    (relation.Relation switch
+    {
       RelationValue.Friendly => FilterFriendly,
       RelationValue.Neutral => FilterNeutral,
       RelationValue.Bogey => FilterBogey,
@@ -474,9 +531,11 @@
     } ?? false);
   }
 
-  public string GetRelationClassColors(RelationInfo relation, bool withSync = false) {
+  public string GetRelationClassColors(RelationInfo relation, bool withSync = false)
+  {
     string syncZusatz = withSync && SyncActive && relation.Timestamp?.ToDateTime() < SyncStart ? "-subtle" : string.Empty;
-    return relation?.Relation switch {
+    return relation?.Relation switch
+    {
       RelationValue.NotAssigned => $"bg-dark{syncZusatz} text-white",
       RelationValue.Friendly => $"bg-success{syncZusatz} text-white",
       RelationValue.Neutral => $"bg-secondary{syncZusatz} text-white",
@@ -486,50 +545,71 @@
     };
   }
 
-  public async void Query() {
+  public async void Query()
+  {
     QueryNameActive = true;
     Navigation.NavigateTo($"{Navigation.Uri}#top");
     QueryHandleInfo = null;
     CommentRelation = null;
     Comment = null;
-    if (QueryName != null) {
+    if (QueryName != null)
+    {
       QueryName = QueryName.Trim();
       string memoryKey = $"{QueryNameType}_{QueryName.ToLowerInvariant()}";
-      if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo)) {
-        if (QueryNameType == RelationType.Handle) {
+      if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo))
+      {
+        if (QueryNameType == RelationType.Handle)
+        {
           QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
-        } else {
+        }
+        else
+        {
           OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
-          if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-            QueryHandleInfo = new() {
-                Organizations = new() {
+          if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK)
+          {
+            QueryHandleInfo = new()
+              {
+                Organizations = new()
+                {
                   MainOrganization = orgInf.Organization
                 },
-                HttpResponse = new() {
+                HttpResponse = new()
+                {
                   StatusCode = HttpStatusCode.OK,
                   ErrorText = null,
                   Source = null
                 }
               };
-          } else {
-            QueryHandleInfo = new() {
+          }
+          else
+          {
+            QueryHandleInfo = new()
+              {
                 HttpResponse = orgInf?.HttpResponse
               };
           }
         }
-        if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+        if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK)
+        {
           QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
-          if (QueryNameType == RelationType.Handle) {
+          if (QueryNameType == RelationType.Handle)
+          {
             QueryName = QueryHandleInfo?.Profile?.Handle;
-          } else {
+          }
+          else
+          {
             QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
           }
           Memory.Set(memoryKey, QueryHandleInfo, MemoryCacheOptions);
-        } else {
+        }
+        else
+        {
           QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
           QueryHandleInfo = null;
         }
-      } else {
+      }
+      else
+      {
         QueryNameError = null;
         QueryName = QueryNameType == RelationType.Handle ? MemoryHandleInfo?.Profile?.Handle : MemoryHandleInfo?.Organizations?.MainOrganization?.Sid;
         QueryHandleInfo = MemoryHandleInfo;
@@ -539,27 +619,34 @@
     StateHasChanged();
   }
 
-  public void EnterQuery(KeyboardEventArgs e) {
-    if (e.Code == "Enter" || e.Code == "NumpadEnter" || e.Key == "Enter" || e.Key == "NumpadEnter") {
+  public void EnterQuery(KeyboardEventArgs e)
+  {
+    if (e.Code == "Enter" || e.Code == "NumpadEnter" || e.Key == "Enter" || e.Key == "NumpadEnter")
+    {
       Query();
     }
   }
 
-  public void EnterComment(KeyboardEventArgs e) {
-    if (e.Code == "Enter" || e.Code == "NumpadEnter" || e.Key == "Enter" || e.Key == "NumpadEnter") {
+  public void EnterComment(KeyboardEventArgs e)
+  {
+    if (e.Code == "Enter" || e.Code == "NumpadEnter" || e.Key == "Enter" || e.Key == "NumpadEnter")
+    {
       SaveComment();
     }
   }
 
-  public async void RelationCommentClick(RelationInfo relation) {
+  public async void RelationCommentClick(RelationInfo relation)
+  {
     CommentRelation = relation;
     Comment = relation.Comment;
     await Task.Run(async () => await ElementCommentRef.FocusAsync());
     await Task.Run(async () => await ElementCommentRef.FocusAsync());
   }
 
-  public void SaveComment() {
-    if (CommentRelation != null) {
+  public void SaveComment()
+  {
+    if (CommentRelation != null)
+    {
       CommentRelation.Comment = Comment ?? string.Empty;
       SetRelation(CommentRelation, CommentRelation.Relation);
       CommentRelation = null;
@@ -567,7 +654,8 @@
     }
   }
 
-  private void OnFocusIn(FocusEventArgs e) {
+  private void OnFocusIn(FocusEventArgs e)
+  {
     HideFilter = true;
   }
 

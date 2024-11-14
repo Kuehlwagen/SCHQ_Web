@@ -1,16 +1,16 @@
 ﻿@page "/addchannel"
-@using Google.Protobuf.WellKnownTypes
-@using Grpc.Net.Client
 @using SCHQ_Blazor.Classes
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using System.Web
+@using SCHQ_Blazor.Services
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
+@inject SCHQ_Service SCHQ
 
 <PageTitle>SCHQ Web > @Localizer["Add Channel"]</PageTitle>
 
@@ -161,15 +161,7 @@
     StateHasChanged();
     if (!string.IsNullOrWhiteSpace(Name)) {
       if (!IsLocalStorage) {
-        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri, new() {
-            HttpHandler = new SocketsHttpHandler() {
-              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-              EnableMultipleHttp2Connections = true
-            }
-          }));
-        SuccessReply reply = await gRPC_Client.AddChannelAsync(new() {
+        SuccessReply reply = await SCHQ.AddChannel(new() {
             Channel = Name,
             Description = Description,
             Password = Password,

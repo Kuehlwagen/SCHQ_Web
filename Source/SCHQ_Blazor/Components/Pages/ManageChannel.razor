@@ -1,17 +1,16 @@
 ﻿@page "/managechannel/{ChannelName}"
-@using Google.Protobuf.Collections
-@using Google.Protobuf.WellKnownTypes
-@using Grpc.Net.Client
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using SCHQ_Blazor.Classes
 @using System.Web
+@using SCHQ_Blazor.Services
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IJSRuntime JS
 @inject IConfiguration Config
 @inject NavigationManager Navigation
 @inject IStringLocalizer<Resource> Localizer
+@inject SCHQ_Service SCHQ
 
 <script>
   window.downloadFileFromStream = async (fileName, contentStreamReference) => {
@@ -135,16 +134,7 @@
   private string? ErrorText { get; set; }
 
   protected override async Task OnInitializedAsync() {
-    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-  new() {
-      HttpHandler = new SocketsHttpHandler() {
-        PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-        EnableMultipleHttp2Connections = true
-      }
-    }));
-    ChannelReply reply = await gRPC_Client.GetChannelAsync(new() { Channel = ChannelName });
+    ChannelReply reply = await SCHQ.GetChannel(new() { Channel = ChannelName });
     if (reply != null && reply.Found && reply.Channel?.Name == ChannelName) {
       ChannelInformation = reply?.Channel;
       Permissions = ChannelInformation?.Permissions.ToString();
@@ -156,16 +146,7 @@
 
   private async void Save() {
     ErrorText = null;
-    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-      new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-    SuccessReply reply = await gRPC_Client.UpdateChannelAsync(new() {
+    SuccessReply reply = await SCHQ.UpdateChannel(new() {
         Channel = ChannelName,
         Description = Description,
         AdminPassword = AdminPassword,
@@ -186,16 +167,7 @@
     ErrorText = null;
     bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{ChannelName}]:{Environment.NewLine}{Localizer["Do you really want to delete the channel?"]}");
     if (confirmed) {
-      SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-        new() {
-            HttpHandler = new SocketsHttpHandler() {
-              PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-              KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-              KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-              EnableMultipleHttp2Connections = true
-            }
-          }));
-      SuccessReply reply = await gRPC_Client.RemoveChannelAsync(new() { Channel = ChannelName, AdminPassword = AdminPassword ?? string.Empty });
+      SuccessReply reply = await SCHQ.RemoveChannel(new() { Channel = ChannelName, AdminPassword = AdminPassword ?? string.Empty });
       if (reply.Success) {
         await LocalStorageService.RemoveValue(JS, $"pwd{ChannelName}");
         Navigation.NavigateTo("/", true);
@@ -210,16 +182,7 @@
     ErrorText = null;
     IsBusy = true;
     StateHasChanged();
-    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-      new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
-    RelationsReply reply = await gRPC_Client.GetRelationsAsync(new() {
+    RelationsReply reply = await SCHQ.GetRelations(new() {
         Channel = ChannelName,
         Password = AdminPassword ?? string.Empty
       });
@@ -314,21 +277,12 @@
   private async Task<bool> SetRelations(List<RelationInfo> relations) {
     bool success = false;
 
-    SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-      new() {
-          HttpHandler = new SocketsHttpHandler() {
-            PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-            EnableMultipleHttp2Connections = true
-          }
-        }));
     SetRelationsRequest request = new() {
         Channel = ChannelName,
         Password = AdminPassword ?? string.Empty,
       };
     request.Relations.AddRange(relations);
-    SuccessReply reply = await gRPC_Client.SetRelationsAsync(request);
+    SuccessReply reply = await SCHQ.SetRelations(request);
     success = reply.Success;
     if (!success) {
       ErrorText = reply.Info ?? Localizer["Unknown error"];
