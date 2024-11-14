@@ -1,11 +1,11 @@
 ﻿@page "/channel/{ChannelName}"
-@using Grpc.Core
-@using Grpc.Net.Client
+@using Google.Protobuf.WellKnownTypes
 @using Microsoft.Extensions.Caching.Memory
 @using SCHQ_Blazor.Classes
 @using System.Net
 @using System.Globalization
 @using System.Text.Json
+@using SCHQ_Blazor.Models
 @using SCHQ_Blazor.Services
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
@@ -15,6 +15,7 @@
 @inject IStringLocalizer<Resource> Localizer
 @inject IMemoryCache Memory
 @inject SCHQ_Service SCHQ
+@inject RelationsContext DbContext;
 
 <PageTitle>SCHQ Web > @Localizer["Channel"]: @ChannelName</PageTitle>
 
@@ -478,33 +479,44 @@ else
         CTS = new();
         await GetRelations();
         StateHasChanged();
-        SCHQ_RelationsClient gRPC_Client = new(GrpcChannel.ForAddress(Navigation.BaseUri,
-          new()
-            {
-              HttpHandler = new SocketsHttpHandler()
-              {
-                PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
-                KeepAlivePingDelay = TimeSpan.FromSeconds(60),
-                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
-                EnableMultipleHttp2Connections = true
-              }
-            }));
-        using var streamingCall = gRPC_Client.SyncRelations(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty }, cancellationToken: CTS.Token);
+        DateTime syncTimestamp = DateTime.UtcNow;
         try
         {
-          await foreach (SyncRelationsReply rel in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: CTS.Token))
+          SCHQ_Blazor.Models.Channel? channel = DbContext.Channels!.FirstOrDefault(c => c.Name == ChannelName && (c.Permissions >= ChannelPermissions.Read || c.Password == Encryption.EncryptText(ChannelPassword)));
+          if (channel != null)
           {
-            if (relations?.FirstOrDefault(r => r.Type == rel.Relation.Type && r.Name == rel.Relation.Name) is RelationInfo r)
+            while (!CTS.IsCancellationRequested && channel?.Id > 0)
             {
-              r.Relation = rel.Relation.Relation;
-              r.Comment = rel.Relation.Comment;
-              relations = relations?.Where(r => r.Type != rel.Relation.Type || r.Name != rel.Relation.Name).Prepend(rel.Relation).ToArray();
+              IOrderedQueryable<Relation> results = from rel in DbContext.Relations
+                                                    where rel.ChannelId == channel.Id && rel.Timestamp > syncTimestamp
+                                                    orderby rel.Timestamp
+                                                    select rel;
+              if (results.Any())
+              {
+                foreach (Relation rel in results.ToList())
+                {
+                  // Reload() scheint nötig zu sein, da der Timestamp ansonsten den alten Wert enthält
+                  DbContext.Entry(rel).Reload();
+                  if (relations?.FirstOrDefault(r => r.Type == rel.Type && r.Name == rel.Name) is RelationInfo r)
+                  {
+                    r.Relation = rel.Value;
+                    r.Comment = rel.Comment;
+                    r.Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp();
+                    relations = relations?.Where(r => r.Type != rel.Type || r.Name != rel.Name).Prepend(r).ToArray();
+                  }
+                  else
+                  {
+                    relations = relations?.Prepend(new() { Type = rel.Type, Name = rel.Name, Relation = rel.Value, Comment = rel.Comment, Timestamp = rel.Timestamp.ToTimestamp() }).ToArray();
+                  }
+                  StateHasChanged();
+
+
+                  syncTimestamp = rel.Timestamp;
+                }
+              }
+              await Task.Delay(500);
+              channel = DbContext.Channels!.FirstOrDefault(c => c.Name == ChannelName);
             }
-            else
-            {
-              relations = relations?.Prepend(rel.Relation).ToArray();
-            }
-            StateHasChanged();
           }
         }
         catch { }
