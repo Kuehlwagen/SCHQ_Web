@@ -368,6 +368,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
                                                 orderby rel.Type descending, rel.Name
                                                 select rel;
           foreach (Relation rel in results.ToList()) {
+            _db.Entry(rel).Reload();
             rtnVal.Relations.Add(new RelationInfo() {
               Type = rel.Type,
               Name = rel.Name,
