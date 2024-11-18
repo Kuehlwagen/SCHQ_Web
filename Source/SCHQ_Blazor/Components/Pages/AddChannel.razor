@@ -43,6 +43,18 @@
   <p>
     <div class="input-group">
       <div class="form-floating">
+        <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
+          <option value="None" selected>@Localizer["None"]</option>
+          <option value="Read">@Localizer["Read"]</option>
+          <option value="Write">@Localizer["Write"]</option>
+        </select>
+        <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
+      </div>
+    </div>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
         <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
         <label for="floatingInputGroupPassword">@Localizer["Channel Password"]</label>
       </div>
@@ -58,18 +70,6 @@
   </p>
   <p hidden="@(Password != null && Password.Length > 0)">
     <div class="bg-warning text-dark px-2 rounded">@Localizer["Channels without password will be deleted on server restart."]</div>
-  </p>
-  <p>
-    <div class="input-group">
-      <div class="form-floating">
-        <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
-          <option value="None" selected>@Localizer["None"]</option>
-          <option value="Read">@Localizer["Read"]</option>
-          <option value="Write">@Localizer["Write"]</option>
-        </select>
-        <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
-      </div>
-    </div>
   </p>
   <p>
     <div class="input-group">

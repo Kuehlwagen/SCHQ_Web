@@ -411,9 +411,6 @@
   <data name="No admin password was given" xml:space="preserve">
     <value>Es wurde kein Adminpasswort angegeben</value>
   </data>
-  <data name="New Channel Name" xml:space="preserve">
-    <value>Neuer Kanalname</value>
-  </data>
   <data name="Channel Description" xml:space="preserve">
     <value>Kanalbeschreibung</value>
   </data>
@@ -428,5 +425,17 @@
   </data>
   <data name="Action" xml:space="preserve">
     <value>Aktion</value>
+  </data>
+  <data name="Authentication" xml:space="preserve">
+    <value>Authentifizierung</value>
+  </data>
+  <data name="Channel Information" xml:space="preserve">
+    <value>Kanalinformationen</value>
+  </data>
+  <data name="Change Admin Password" xml:space="preserve">
+    <value>Adminpasswort ändern</value>
+  </data>
+  <data name="Change Channel Password" xml:space="preserve">
+    <value>Kanalpasswort ändern</value>
   </data>
 </root>

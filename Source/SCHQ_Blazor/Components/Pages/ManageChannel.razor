@@ -33,53 +33,27 @@
 @if (string.IsNullOrWhiteSpace(ChannelName)) {
   <p>No channel name provided</p>
 } else {
-  <p>
+  <p class="pb-2">
+    <h5 class="mb-2 fw-bold">@Localizer["Authentication"]</h5>
     <div class="form-floating">
       <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
       <label for="floatingInputGroupChannelPassword">@Localizer["Admin Password"]*</label>
     </div>
   </p>
-  <p>
+  <p class="pb-2">
+    <h5 class="mb-2 fw-bold">@Localizer["Channel Information"]</h5>
     <div class="input-group">
-      <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInputGroupNewChannelName" placeholder="@Localizer["New Channel Name"]" @bind=NewChannelName @bind:event="oninput">
-        <label for="floatingInputGroupNewChannelName">@Localizer["New Channel Name"]</label>
+      <div class="form-floating mb-2">
+        <input type="text" class="form-control @(string.IsNullOrWhiteSpace(NewChannelName) ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelName" placeholder="@Localizer["Channel Name"]*" @bind=NewChannelName @bind:event="oninput">
+        <label for="floatingInputGroupNewChannelName">@Localizer["Channel Name"]*</label>
       </div>
     </div>
-  </p>
-  <p>
-    <div class="form-floating">
-      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewAdminPassword" placeholder="@Localizer["New Admin Password"]" @bind=NewAdminPassword @bind:event="oninput">
-      <label for="floatingInputGroupNewAdminPassword">@Localizer["New Admin Password"]</label>
-    </div>
-  </p>
-  <p>
-    <div class="form-floating">
-      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewAdminPassword" placeholder="@Localizer["Confirm New Admin Password"]" @bind=ConfirmNewAdminPassword @bind:event="oninput">
-      <label for="floatingInputGroupConfirmNewAdminPassword">@Localizer["Confirm New Admin Password"]</label>
-    </div>
-  </p>
-  <p>
-    <div class="input-group">
+    <div class="input-group mb-2">
       <div class="form-floating">
         <input type="text" class="form-control" id="floatingInputGroupDescription" placeholder="@Localizer["Channel Description"]" @bind=Description @bind:event="oninput">
         <label for="floatingInputGroupDescription">@Localizer["Channel Description"]</label>
       </div>
     </div>
-  </p>
-  <p>
-    <div class="form-floating">
-      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelPassword" placeholder="@Localizer["New Channel Password"]" @bind=NewPassword @bind:event="oninput">
-      <label for="floatingInputGroupNewChannelPassword">@Localizer["New Channel Password"]</label>
-    </div>
-  </p>
-  <p>
-    <div class="form-floating">
-      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewChannelPassword" placeholder="@Localizer["Confirm New Channel Password"]" @bind=ConfirmNewPassword @bind:event="oninput">
-      <label for="floatingInputGroupConfirmNewChannelPassword">@Localizer["Confirm New Channel Password"]</label>
-    </div>
-  </p>
-  <p>
     <div class="input-group">
       <div class="form-floating">
         <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
@@ -91,7 +65,32 @@
       </div>
     </div>
   </p>
+  <p class="pb-2">
+    <h5 class="mb-2 fw-bold">@Localizer["Change Admin Password"]</h5>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty) mb-2" id="floatingInputGroupNewAdminPassword" placeholder="@Localizer["New Admin Password"]" @bind=NewAdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupNewAdminPassword">@Localizer["New Admin Password"]</label>
+    </div>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewAdminPassword" placeholder="@Localizer["Confirm New Admin Password"]" @bind=ConfirmNewAdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupConfirmNewAdminPassword">@Localizer["Confirm New Admin Password"]</label>
+    </div>
+  </p>
   <p>
+    <h5 class="mb-2 fw-bold">@Localizer["Change Channel Password"]</h5>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty) mb-2" id="floatingInputGroupNewChannelPassword" placeholder="@Localizer["New Channel Password"]" @bind=NewPassword @bind:event="oninput">
+      <label for="floatingInputGroupNewChannelPassword">@Localizer["New Channel Password"]</label>
+    </div>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewChannelPassword" placeholder="@Localizer["Confirm New Channel Password"]" @bind=ConfirmNewPassword @bind:event="oninput">
+      <label for="floatingInputGroupConfirmNewChannelPassword">@Localizer["Confirm New Channel Password"]</label>
+    </div>
+  </p>
+  <p>
+    <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
+      <i>@ErrorText</i>
+    </div>
     <div class="btn-group">
       <button type="button" class="btn btn-primary" @onclick="Save" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
@@ -117,9 +116,6 @@
       </label>
     </div>
   </p>
-  <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
-    <i>@ErrorText</i>
-  </div>
   <InputFile OnChange="@Upload" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
 }
 
@@ -176,7 +172,7 @@
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private bool CheckButtonIsDisabled {
-    get { return NewPassword != ConfirmNewPassword || NewAdminPassword != ConfirmNewAdminPassword || NewChannelName == ChannelName || (AdminPassword!.Length > 0 && NewPassword == AdminPassword); }
+    get { return NewPassword != ConfirmNewPassword || NewAdminPassword != ConfirmNewAdminPassword || string.IsNullOrWhiteSpace(NewChannelName) || (AdminPassword!.Length > 0 && NewPassword == AdminPassword); }
   }
   private bool IsBusy { get; set; }
   private string? ErrorText { get; set; }
@@ -187,6 +183,7 @@
       ChannelInformation = reply?.Channel;
       Permissions = ChannelInformation?.Permissions.ToString();
       Description = reply?.Channel?.Description ?? string.Empty;
+      NewChannelName = ChannelName;
     }
     ButtonIsDisabled = CheckButtonIsDisabled;
     StateHasChanged();
@@ -206,7 +203,8 @@
         Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
       });
     if (reply.Success) {
-      await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", NewPassword, true);
+      await LocalStorageService.RemoveValue(JS, $"pwd{ChannelName}");
+      await LocalStorageService.SetValue(JS, $"pwd{NewChannelName}", NewPassword, true);
       Navigation.NavigateTo("/", true);
     } else {
       ErrorText = reply.Info;
