@@ -19,6 +19,7 @@ service SCHQ_Relations {
   rpc GetRelations (ChannelRequest) returns (RelationsReply);
   rpc GetRelation (RelationRequest) returns (RelationReply);
   rpc SyncRelations (ChannelRequest) returns (stream SyncRelationsReply);
+  rpc RemoveRelations (ChannelRequest) returns (SuccessReply);
 }
 
 message SuccessReply {

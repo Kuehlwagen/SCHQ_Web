@@ -30,9 +30,12 @@
 
 <h1>@ChannelName</h1>
 
-@if (string.IsNullOrWhiteSpace(ChannelName)) {
+@if (string.IsNullOrWhiteSpace(ChannelName))
+{
   <p>No channel name provided</p>
-} else {
+}
+else
+{
   <p class="pb-2">
     <h5 class="mb-2 fw-bold">@Localizer["Authentication"]</h5>
     <div class="form-floating">
@@ -91,18 +94,21 @@
     <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
       <i>@ErrorText</i>
     </div>
-    <div class="btn-group">
-      <button type="button" class="btn btn-primary" @onclick="Save" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
+    <div class="btn-group mb-2">
+      <button type="button" class="btn btn-primary" @onclick="UpdateChannel" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
         </svg>
+        @Localizer["Channel"]
       </button>
-      <button type="button" class="btn btn-danger" @onclick="Delete" title="@Localizer["Delete Channel"]">
+      <button type="button" class="btn btn-danger" @onclick="DeleteChannel" title="@Localizer["Delete Channel"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
         </svg>
       </button>
-      <button type="button" class="btn btn-primary" @onclick="Download" disabled="@IsBusy" title="@Localizer["Download Relations"]">
+    </div>
+    <div class="btn-group mb-2">
+      <button type="button" class="btn btn-primary" @onclick="DownloadRelations" disabled="@IsBusy" title="@Localizer["Download Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
         </svg>
@@ -111,21 +117,27 @@
       <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2");" for="input-file" disabled="@IsBusy" title="@Localizer["Upload Relations"]">
         <svg class="bi" width="16" height="16" fill="currentColor">
           <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
-        </svg>&nbsp;
-        @Localizer["Relations"]
+        </svg>
       </label>
+      <button type="button" class="btn btn-danger" @onclick="DeleteRelations" title="@Localizer["Delete Relations"]">
+        <svg class="bi" width="16" height="16" fill="currentColor">
+          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+        </svg>
+      </button>
     </div>
   </p>
-  <InputFile OnChange="@Upload" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
+  <InputFile OnChange="@UploadRelations" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
 }
 
 @code {
   [Parameter]
   public string? ChannelName { get; set; }
   private string? _newChannelName = string.Empty;
-  private string? NewChannelName {
+  private string? NewChannelName
+  {
     get { return _newChannelName; }
-    set {
+    set
+    {
       _newChannelName = value;
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
@@ -133,17 +145,21 @@
   public ChannelInfo? ChannelInformation { get; set; }
   private string? AdminPassword = string.Empty;
   private string? _newPassword = string.Empty;
-  private string? NewPassword {
+  private string? NewPassword
+  {
     get { return _newPassword; }
-    set {
+    set
+    {
       _newPassword = value;
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
   private string? _confirmNewPassword = string.Empty;
-  private string? ConfirmNewPassword {
+  private string? ConfirmNewPassword
+  {
     get { return _confirmNewPassword; }
-    set {
+    set
+    {
       _confirmNewPassword = value;
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
@@ -171,15 +187,18 @@
   private string? Description { get; set; }
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
-  private bool CheckButtonIsDisabled {
+  private bool CheckButtonIsDisabled
+  {
     get { return NewPassword != ConfirmNewPassword || NewAdminPassword != ConfirmNewAdminPassword || string.IsNullOrWhiteSpace(NewChannelName) || (AdminPassword!.Length > 0 && NewPassword == AdminPassword); }
   }
   private bool IsBusy { get; set; }
   private string? ErrorText { get; set; }
 
-  protected override async Task OnInitializedAsync() {
+  protected override async Task OnInitializedAsync()
+  {
     ChannelReply reply = await SCHQ.GetChannel(new() { Channel = ChannelName });
-    if (reply != null && reply.Found && reply.Channel?.Name == ChannelName) {
+    if (reply != null && reply.Found && reply.Channel?.Name == ChannelName)
+    {
       ChannelInformation = reply?.Channel;
       Permissions = ChannelInformation?.Permissions.ToString();
       Description = reply?.Channel?.Description ?? string.Empty;
@@ -189,9 +208,11 @@
     StateHasChanged();
   }
 
-  private async void Save() {
+  private async void UpdateChannel()
+  {
     ErrorText = null;
-    SuccessReply reply = await SCHQ.UpdateChannel(new() {
+    SuccessReply reply = await SCHQ.UpdateChannel(new()
+      {
         Channel = ChannelName,
         NewChannelName = NewChannelName,
         Description = Description,
@@ -202,113 +223,155 @@
         NewAdminPasswordConfirm = ConfirmNewAdminPassword,
         Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
       });
-    if (reply.Success) {
+    if (reply.Success)
+    {
       await LocalStorageService.RemoveValue(JS, $"pwd{ChannelName}");
       await LocalStorageService.SetValue(JS, $"pwd{NewChannelName}", NewPassword, true);
       Navigation.NavigateTo("/", true);
-    } else {
+    }
+    else
+    {
       ErrorText = reply.Info;
       StateHasChanged();
     }
   }
 
-  private async void Delete() {
+  private async void DeleteChannel()
+  {
     ErrorText = null;
     bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{ChannelName}]:{Environment.NewLine}{Localizer["Do you really want to delete the channel?"]}");
-    if (confirmed) {
+    if (confirmed)
+    {
       SuccessReply reply = await SCHQ.RemoveChannel(new() { Channel = ChannelName, AdminPassword = AdminPassword ?? string.Empty });
-      if (reply.Success) {
+      if (reply.Success)
+      {
         await LocalStorageService.RemoveValue(JS, $"pwd{ChannelName}");
         Navigation.NavigateTo("/", true);
-      } else {
+      }
+      else
+      {
         ErrorText = reply.Info;
         StateHasChanged();
       }
     }
   }
 
-  private async Task Download() {
+  private async Task DownloadRelations()
+  {
     ErrorText = null;
     IsBusy = true;
     StateHasChanged();
-    RelationsReply reply = await SCHQ.GetRelations(new() {
+    RelationsReply reply = await SCHQ.GetRelations(new()
+      {
         Channel = ChannelName,
         Password = AdminPassword ?? string.Empty
       });
-    if (reply?.Relations?.Count > 0) {
-      try {
+    if (reply?.Relations?.Count > 0)
+    {
+      try
+      {
         using MemoryStream relationsStream = new();
         JsonSerializer.Serialize<RelationInfo[]>(relationsStream, reply.Relations.ToArray() ?? [],
-          new JsonSerializerOptions() {
+          new JsonSerializerOptions()
+            {
               DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
               WriteIndented = true
             });
         using var streamRef = new DotNetStreamReference(relationsStream);
         streamRef.Stream.Position = 0;
         await JS.InvokeVoidAsync("downloadFileFromStream", $"SCHQ_Web_Relations_{ChannelName}_{DateTime.Now:yyyyMMdd_HHmmss}.json", streamRef);
-      } catch (Exception ex) {
+      }
+      catch (Exception ex)
+      {
         ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
       }
-    } else {
+    }
+    else
+    {
       ErrorText = !string.IsNullOrWhiteSpace(reply?.Info) ? reply.Info : Localizer["No relations found"];
     }
     IsBusy = false;
     StateHasChanged();
   }
 
-  private async Task Upload(InputFileChangeEventArgs e) {
+  private async Task UploadRelations(InputFileChangeEventArgs e)
+  {
     ErrorText = null;
     StateHasChanged();
-    try {
-      switch (e.File?.ContentType) {
-        case "application/json": {
+    try
+    {
+      switch (e.File?.ContentType)
+      {
+        case "application/json":
+          {
             string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
-            if (reader?.Length > 0) {
+            if (reader?.Length > 0)
+            {
               List<RelationInfo> relations = JsonSerializer.Deserialize<RelationInfo[]>(reader)?.Where(r => !string.IsNullOrWhiteSpace(r.Name)).ToList() ?? [];
-              if (relations?.Count > 0) {
-                if (await SetRelations(relations)) {
+              if (relations?.Count > 0)
+              {
+                if (await SetRelations(relations))
+                {
                   Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(ChannelName)}");
                 }
-              } else {
+              }
+              else
+              {
                 ErrorText = Localizer["No relations found"];
               }
-            } else {
+            }
+            else
+            {
               ErrorText = Localizer["File is empty"];
             }
             break;
           }
-        case "text/csv": {
+        case "text/csv":
+          {
             string reader = await new StreamReader(e.File.OpenReadStream()).ReadToEndAsync();
-            if (reader?.Length > 0) {
+            if (reader?.Length > 0)
+            {
               string[] fields;
               List<RelationInfo> relations = [];
               RelationInfo relation;
-              foreach (string line in reader.Split(Environment.NewLine)) {
+              foreach (string line in reader.Split(Environment.NewLine))
+              {
                 fields = line.Split(';');
-                if (!string.IsNullOrWhiteSpace(fields[0])) {
-                  relation = new() {
+                if (!string.IsNullOrWhiteSpace(fields[0]))
+                {
+                  relation = new()
+                    {
                       Name = fields[0]
                     };
-                  if (fields.Length > 1 && int.TryParse(fields[1], out int relVal)) {
+                  if (fields.Length > 1 && int.TryParse(fields[1], out int relVal))
+                  {
                     relation.Relation = (RelationValue)relVal;
                   }
-                  if (fields.Length > 2 && int.TryParse(fields[2], out int relType)) {
+                  if (fields.Length > 2 && int.TryParse(fields[2], out int relType))
+                  {
                     relation.Type = (RelationType)relType;
                   }
-                  if (fields.Length > 3 && fields[3] != null) {
+                  if (fields.Length > 3 && fields[3] != null)
+                  {
                     relation.Comment = fields[3];
                   }
                   relations.Add(relation);
                 }
               }
-              if (relations.Count > 0) {
-                if (await SetRelations(relations)) {
+              if (relations.Count > 0)
+              {
+                if (await SetRelations(relations))
+                {
                   Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(ChannelName)}");
                 }
-              } else {
+              }
+              else
+              {
                 ErrorText = Localizer["No relations found"];
               }
-            } else {
+            }
+            else
+            {
               ErrorText = Localizer["File is empty"];
             }
             break;
@@ -317,27 +380,51 @@
           ErrorText = $"{Localizer["File type not supported"]}: [{e.File?.ContentType}]";
           break;
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex)
+    {
       ErrorText = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
     }
     StateHasChanged();
   }
 
-  private async Task<bool> SetRelations(List<RelationInfo> relations) {
+  private async Task<bool> SetRelations(List<RelationInfo> relations)
+  {
     bool success = false;
 
-    SetRelationsRequest request = new() {
+    SetRelationsRequest request = new()
+      {
         Channel = ChannelName,
         Password = AdminPassword ?? string.Empty,
       };
     request.Relations.AddRange(relations);
     SuccessReply reply = await SCHQ.SetRelations(request);
     success = reply.Success;
-    if (!success) {
+    if (!success)
+    {
       ErrorText = reply.Info ?? Localizer["Unknown error"];
     }
 
     return success;
+  }
+
+  private async void DeleteRelations()
+  {
+    ErrorText = null;
+    bool confirmed = await JS.InvokeAsync<bool>("confirm", $"{Localizer["Channel"]} [{ChannelName}]:{Environment.NewLine}{Localizer["Do you really want to delete all relations?"]}");
+    if (confirmed)
+    {
+      SuccessReply reply = await SCHQ.RemoveRelations(new() { Channel = ChannelName, AdminPassword = AdminPassword ?? string.Empty });
+      if (reply.Success)
+      {
+        Navigation.NavigateTo($"/channel/{ChannelName}", true);
+      }
+      else
+      {
+        ErrorText = reply.Info;
+        StateHasChanged();
+      }
+    }
   }
 
 }

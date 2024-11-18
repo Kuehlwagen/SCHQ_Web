@@ -490,6 +490,47 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
     logger.LogInformation("[{Guid} SyncRelations End]", guid);
   }
+
+  public override Task<SuccessReply> RemoveRelations(ChannelRequest request, ServerCallContext context) {
+    return RemoveRelations(request);
+  }
+
+  public Task<SuccessReply> RemoveRelations(ChannelRequest request) {
+    Guid guid = Guid.NewGuid();
+    logger.LogInformation("[{Guid} RemoveRelations Request] Channel: {Channel}, Admin Password: {AdminPassword}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
+    SuccessReply rtnVal = new();
+
+    if (!string.IsNullOrWhiteSpace(request.Channel)) {
+      request.Channel = request.Channel.Trim();
+      request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
+      try {
+        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        if (channel != null) {
+          if (channel.AdminPassword == request.AdminPassword) {
+            _db.RemoveRange(_db.Relations!.Where(r => r.ChannelId == channel.Id));
+            rtnVal.Success = _db.SaveChanges() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["Access denied"];
+          }
+        } else {
+          rtnVal.Info = localizer["Channel not found"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+        logger.LogWarning("[{Guid} RemoveRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
+          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
+      }
+    } else {
+      rtnVal.Info = localizer["No channel name was given"];
+    }
+
+    logger.LogInformation("[{Guid} RemoveRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
+    return Task.FromResult(rtnVal);
+  }
   #endregion
 
 }
