@@ -384,14 +384,23 @@
   <data name="No relation name was given" xml:space="preserve">
     <value>Es wurde kein Beziehung-Name angegeben</value>
   </data>
+  <data name="New Admin Password" xml:space="preserve">
+    <value>Neues Adminpasswort</value>
+  </data>
+  <data name="Confirm New Admin Password" xml:space="preserve">
+    <value>Neues Adminpasswort wiederholen</value>
+  </data>
+  <data name="New admin passwords don't match" xml:space="preserve">
+    <value>Neue Adminpasswörter stimmen nicht überein</value>
+  </data>
   <data name="New Channel Password" xml:space="preserve">
     <value>Neues Kanalpasswort</value>
   </data>
   <data name="Confirm New Channel Password" xml:space="preserve">
     <value>Neues Kanalpasswort wiederholen</value>
   </data>
-  <data name="Passwords don't match" xml:space="preserve">
-    <value>Passwörter stimmen nicht überein</value>
+  <data name="New channel passwords don't match" xml:space="preserve">
+    <value>Neue Kanalpasswörter stimmen nicht überein</value>
   </data>
   <data name="Admin Password" xml:space="preserve">
     <value>Adminpasswort</value>
@@ -401,6 +410,9 @@
   </data>
   <data name="No admin password was given" xml:space="preserve">
     <value>Es wurde kein Adminpasswort angegeben</value>
+  </data>
+  <data name="New Channel Name" xml:space="preserve">
+    <value>Neuer Kanalname</value>
   </data>
   <data name="Channel Description" xml:space="preserve">
     <value>Kanalbeschreibung</value>

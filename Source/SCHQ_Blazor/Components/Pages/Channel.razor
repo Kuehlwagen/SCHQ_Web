@@ -509,8 +509,6 @@ else
                     relations = relations?.Prepend(new() { Type = rel.Type, Name = rel.Name, Relation = rel.Value, Comment = rel.Comment, Timestamp = rel.Timestamp.ToTimestamp() }).ToArray();
                   }
                   StateHasChanged();
-
-
                   syncTimestamp = rel.Timestamp;
                 }
               }

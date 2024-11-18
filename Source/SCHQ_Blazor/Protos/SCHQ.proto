@@ -99,11 +99,14 @@ message RelationInfo {
 
 message UpdateChannelRequest {
   string channel = 1;
-  string adminPassword = 2;
-  string newPassword = 3;
-  string newPasswordConfirm = 4;
-  ChannelPermissions permissions = 5;
-  google.protobuf.StringValue description = 6;
+  string newChannelName = 2;
+  string adminPassword = 3;
+  string newAdminPassword = 4;
+  string newAdminPasswordConfirm = 5;
+  string newPassword = 6;
+  string newPasswordConfirm = 7;
+  ChannelPermissions permissions = 8;
+  google.protobuf.StringValue description = 9;
 }
 
 enum ChannelPermissions {

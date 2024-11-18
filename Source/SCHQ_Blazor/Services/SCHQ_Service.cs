@@ -52,10 +52,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
             guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
       } else {
-        rtnVal.Info = "No admin password was given";
+        rtnVal.Info = localizer["No admin password was given"];
       }
     } else {
-      rtnVal.Info = "No channel name was given";
+      rtnVal.Info = localizer["No channel name was given"];
     }
 
     logger.LogInformation("[{Guid} AddChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
@@ -138,6 +138,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
+      request.NewChannelName = request.NewChannelName.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
         Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
@@ -147,7 +148,21 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               if (request.NewPassword == request.NewPasswordConfirm) {
                 channel.DecryptedPassword = request.NewPassword;
               } else {
-                rtnVal.Info = "Passwords don't match";
+                rtnVal.Info = localizer["New channel passwords don't match"];
+              }
+            }
+            if (string.IsNullOrWhiteSpace(rtnVal.Info) && !string.IsNullOrWhiteSpace(request.NewAdminPassword) && !string.IsNullOrWhiteSpace(request.NewAdminPasswordConfirm)) {
+              if (request.NewAdminPassword == request.NewAdminPasswordConfirm) {
+                channel.DecryptedAdminPassword = request.NewAdminPassword;
+              } else {
+                rtnVal.Info = localizer["New admin passwords don't match"];
+              }
+            }
+            if (string.IsNullOrWhiteSpace(rtnVal.Info) && !string.IsNullOrWhiteSpace(request.NewChannelName) && request.NewChannelName != channel.Name) {
+              if (!_db.Channels!.Any(c => c.Name!.Equals(request.NewChannelName, StringComparison.InvariantCultureIgnoreCase))) {
+                channel.Name = request.NewChannelName;
+              } else {
+                rtnVal.Info = localizer["Channel already exists"];
               }
             }
             if (string.IsNullOrWhiteSpace(rtnVal.Info)) {

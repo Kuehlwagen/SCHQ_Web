@@ -42,6 +42,26 @@
   <p>
     <div class="input-group">
       <div class="form-floating">
+        <input type="text" class="form-control" id="floatingInputGroupNewChannelName" placeholder="@Localizer["New Channel Name"]" @bind=NewChannelName @bind:event="oninput">
+        <label for="floatingInputGroupNewChannelName">@Localizer["New Channel Name"]</label>
+      </div>
+    </div>
+  </p>
+  <p>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupNewAdminPassword" placeholder="@Localizer["New Admin Password"]" @bind=NewAdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupNewAdminPassword">@Localizer["New Admin Password"]</label>
+    </div>
+  </p>
+  <p>
+    <div class="form-floating">
+      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupConfirmNewAdminPassword" placeholder="@Localizer["Confirm New Admin Password"]" @bind=ConfirmNewAdminPassword @bind:event="oninput">
+      <label for="floatingInputGroupConfirmNewAdminPassword">@Localizer["Confirm New Admin Password"]</label>
+    </div>
+  </p>
+  <p>
+    <div class="input-group">
+      <div class="form-floating">
         <input type="text" class="form-control" id="floatingInputGroupDescription" placeholder="@Localizer["Channel Description"]" @bind=Description @bind:event="oninput">
         <label for="floatingInputGroupDescription">@Localizer["Channel Description"]</label>
       </div>
@@ -106,6 +126,14 @@
 @code {
   [Parameter]
   public string? ChannelName { get; set; }
+  private string? _newChannelName = string.Empty;
+  private string? NewChannelName {
+    get { return _newChannelName; }
+    set {
+      _newChannelName = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
   public ChannelInfo? ChannelInformation { get; set; }
   private string? AdminPassword = string.Empty;
   private string? _newPassword = string.Empty;
@@ -116,7 +144,6 @@
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
-  private string? Description { get; set; }
   private string? _confirmNewPassword = string.Empty;
   private string? ConfirmNewPassword {
     get { return _confirmNewPassword; }
@@ -125,10 +152,31 @@
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
+  private string? _newAdminPassword = string.Empty;
+  private string? NewAdminPassword
+  {
+    get { return _newAdminPassword; }
+    set
+    {
+      _newAdminPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
+  private string? _confirmNewAdminPassword = string.Empty;
+  private string? ConfirmNewAdminPassword
+  {
+    get { return _confirmNewAdminPassword; }
+    set
+    {
+      _confirmNewAdminPassword = value;
+      ButtonIsDisabled = CheckButtonIsDisabled;
+    }
+  }
+  private string? Description { get; set; }
   private string? Permissions { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private bool CheckButtonIsDisabled {
-    get { return NewPassword != ConfirmNewPassword || (AdminPassword!.Length > 0 && NewPassword == AdminPassword); }
+    get { return NewPassword != ConfirmNewPassword || NewAdminPassword != ConfirmNewAdminPassword || NewChannelName == ChannelName || (AdminPassword!.Length > 0 && NewPassword == AdminPassword); }
   }
   private bool IsBusy { get; set; }
   private string? ErrorText { get; set; }
@@ -148,10 +196,13 @@
     ErrorText = null;
     SuccessReply reply = await SCHQ.UpdateChannel(new() {
         Channel = ChannelName,
+        NewChannelName = NewChannelName,
         Description = Description,
         AdminPassword = AdminPassword,
         NewPassword = NewPassword,
         NewPasswordConfirm = ConfirmNewPassword,
+        NewAdminPassword = NewAdminPassword,
+        NewAdminPasswordConfirm = ConfirmNewAdminPassword,
         Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
       });
     if (reply.Success) {
