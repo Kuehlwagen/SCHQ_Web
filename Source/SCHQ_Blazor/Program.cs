@@ -26,6 +26,8 @@ if (context.Database.GetPendingMigrations().Any()) {
     dotnet tool update --global dotnet-ef
     dotnet ef migrations add MigrationName
     dotnet ef migrations remove
+    dotnet ef database update <previous-migration-name>
+    dotnet ef database update 0
   */
   await context.Database.MigrateAsync();
 }
