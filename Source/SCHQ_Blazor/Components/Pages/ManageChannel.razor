@@ -312,7 +312,7 @@ else
               {
                 if (await SetRelations(relations))
                 {
-                  Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(ChannelName)}");
+                  Navigation.NavigateTo($"/channel/{Uri.EscapeDataString(ChannelName!)}");
                 }
               }
               else
@@ -362,7 +362,7 @@ else
               {
                 if (await SetRelations(relations))
                 {
-                  Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(ChannelName)}");
+                  Navigation.NavigateTo($"/channel/{Uri.EscapeDataString(ChannelName!)}");
                 }
               }
               else

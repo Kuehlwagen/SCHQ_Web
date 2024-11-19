@@ -170,7 +170,7 @@
           });
         if (reply.Success) {
           await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);
-          Navigation.NavigateTo($"/channel/{HttpUtility.UrlEncode(Name)}");
+          Navigation.NavigateTo($"/channel/{Uri.EscapeDataString(Name)}");
         } else {
           ErrorText = reply.Info;
           StateHasChanged();
@@ -184,7 +184,7 @@
         if (!channels.Any(c => c.Equals(Name, StringComparison.InvariantCultureIgnoreCase))) {
           channels = channels.Append(Name).ToArray();
           await LocalStorageService.SetValue(JS, "channels", JsonSerializer.Serialize(channels, new JsonSerializerOptions() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }));
-          Navigation.NavigateTo($"/localchannel/{HttpUtility.UrlEncode(Name)}");
+          Navigation.NavigateTo($"/localchannel/{Uri.EscapeDataString(Name)}");
         } else {
           ErrorText = Localizer["Channel already exists"];
           StateHasChanged();

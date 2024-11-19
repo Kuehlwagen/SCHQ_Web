@@ -183,11 +183,11 @@
   }
 
   private void ManageChannel(string channel) {
-    Navigation.NavigateTo($"managechannel/{HttpUtility.UrlEncode(channel)}", true);
+    Navigation.NavigateTo($"managechannel/{Uri.EscapeDataString(channel)}", true);
   }
 
   private void Relations(string channel) {
-    Navigation.NavigateTo($"channel/{HttpUtility.UrlEncode(channel)}", true);
+    Navigation.NavigateTo($"channel/{Uri.EscapeDataString(channel)}", true);
   }
 
   private void AddChannel() {
@@ -195,7 +195,7 @@
   }
 
   private void LocalStorage(string channel) {
-    Navigation.NavigateTo($"localchannel{(!string.IsNullOrWhiteSpace(channel) ? $"/{HttpUtility.UrlEncode(channel)}" : string.Empty)}", true);
+    Navigation.NavigateTo($"localchannel{(!string.IsNullOrWhiteSpace(channel) ? $"/{Uri.EscapeDataString(channel)}" : string.Empty)}", true);
   }
 
 }
