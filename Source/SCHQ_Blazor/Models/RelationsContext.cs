@@ -6,13 +6,10 @@ using DAS = System.ComponentModel.DataAnnotations.Schema;
 
 namespace SCHQ_Blazor.Models;
 
-public class RelationsContext(string connectionString) : DbContext {
+public class RelationsContext(DbContextOptions<RelationsContext> options) : DbContext(options) {
 
-  public DbSet<Relation>? Relations { get; set; }
-  public DbSet<Channel>? Channels { get; set; }
-
-  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseMySQL(connectionString);
+  public DbSet<Relation> Relations => Set<Relation>();
+  public DbSet<Channel> Channels => Set<Channel>();
 
   protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     => configurationBuilder.Properties<string>().UseCollation("NOCASE");

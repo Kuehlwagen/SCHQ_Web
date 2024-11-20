@@ -17,32 +17,10 @@ builder.Services.AddRazorComponents()
 // Add services to the container.
 builder.Services.AddGrpc();
 
-// Create / migrate SQLite database (Connection-String: appsettings.Production.json)
-RelationsContext context = new(builder.Configuration.GetConnectionString("MySQL")!);
-if (context.Database.GetPendingMigrations().Any()) {
-  /*
-    Developer-PowerShell:
-    dotnet add package Microsoft.EntityFrameworkCore.Design
-    dotnet tool update --global dotnet-ef
-    dotnet ef migrations add MigrationName
-    dotnet ef migrations remove
-    dotnet ef database update <previous-migration-name>
-    dotnet ef database update 0
-  */
-  await context.Database.MigrateAsync();
-}
-await context.Database.EnsureCreatedAsync();
+// Use MySQL database
+builder.Services.AddDbContext<RelationsContext>(options =>
+  options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-// Remove channels without password
-try {
-  Channel?[] channels = [.. context.Channels!.Where(c => string.IsNullOrEmpty(c.Password))];
-  if (channels?.Length > 0) {
-    context.RemoveRange(channels!);
-    context.SaveChanges();
-  }
-} catch (Exception) { }
-
-builder.Services.AddSingleton(context);
 builder.Services.AddTransient<SCHQ_Service>();
 
 var app = builder.Build();
@@ -57,6 +35,32 @@ var localizationOptions = new RequestLocalizationOptions()
   .AddSupportedCultures(supportedCultures)
   .AddSupportedUICultures(supportedCultures);
 app.UseRequestLocalization(localizationOptions);
+
+// Add / Update Database
+using var scope = app.Services.CreateScope();
+using var relationsContext = scope.ServiceProvider.GetService<RelationsContext>();
+if (relationsContext!.Database.GetPendingMigrations().Any()) {
+  /*
+    Developer-PowerShell:
+    dotnet add package Microsoft.EntityFrameworkCore.Design
+    dotnet tool update --global dotnet-ef
+    dotnet ef migrations add MigrationName
+    dotnet ef migrations remove
+    dotnet ef database update <previous-migration-name>
+    dotnet ef database update 0
+  */
+  await relationsContext.Database.MigrateAsync();
+}
+await relationsContext.Database.EnsureCreatedAsync();
+
+// Remove channels without password
+try {
+  Channel?[] channels = [.. relationsContext.Channels!.Where(c => string.IsNullOrEmpty(c.Password))];
+  if (channels?.Length > 0) {
+    relationsContext.RemoveRange(channels!);
+    relationsContext.SaveChanges();
+  }
+} catch (Exception) { }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {

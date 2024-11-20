@@ -8,9 +8,8 @@ using SCHQ_Blazor.Models;
 using SCHQ_Protos;
 
 namespace SCHQ_Blazor.Services;
-public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext context) : SCHQ_Relations.SCHQ_RelationsBase {
+public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext) : SCHQ_Relations.SCHQ_RelationsBase {
 
-  private readonly RelationsContext _db = new(context?.Database?.GetConnectionString() ?? string.Empty);
   private DateTime SyncTimestamp = DateTime.MinValue;
 
   #region Channels
@@ -28,9 +27,9 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       if (!string.IsNullOrWhiteSpace(request.AdminPassword)) {
         request.Channel = request.Channel.Trim();
         try {
-          if (!_db.Channels!.Any(c => c.Name != null && c.Name == request.Channel)) {
+          if (!dbContext.Channels!.Any(c => c.Name != null && c.Name == request.Channel)) {
             DateTime utcNow = DateTime.UtcNow;
-            _db.Add(new Channel() {
+            dbContext.Add(new Channel() {
               DateCreated = utcNow,
               Timestamp = utcNow,
               Name = request.Channel,
@@ -39,7 +38,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               DecryptedAdminPassword = request.AdminPassword,
               Permissions = request.Permissons
             });
-            rtnVal.Success = _db.SaveChanges() > 0;
+            rtnVal.Success = dbContext.SaveChanges() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
             }
@@ -72,7 +71,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
     ChannelsReply rtnVal = new();
 
     try {
-      IOrderedQueryable<Channel> results = from c in _db.Channels
+      IOrderedQueryable<Channel> results = from c in dbContext.Channels
                                            orderby c.Name
                                            select c;
       foreach (Channel c in results.ToList()) {
@@ -104,7 +103,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       try {
-        if (_db.Channels!.FirstOrDefault(c => c.Name == request.Channel) is Channel channel) {
+        if (dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel) is Channel channel) {
           rtnVal = new ChannelReply() {
             Found = true,
             Channel = new() {
@@ -141,7 +140,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.NewChannelName = request.NewChannelName.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
-        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
             if (!string.IsNullOrWhiteSpace(request.NewPassword) && !string.IsNullOrWhiteSpace(request.NewPasswordConfirm)) {
@@ -159,7 +158,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               }
             }
             if (string.IsNullOrWhiteSpace(rtnVal.Info) && !string.IsNullOrWhiteSpace(request.NewChannelName) && request.NewChannelName != channel.Name) {
-              if (!_db.Channels!.Any(c => c.Name!.Equals(request.NewChannelName, StringComparison.InvariantCultureIgnoreCase))) {
+              if (!dbContext.Channels!.Any(c => c.Name!.Equals(request.NewChannelName, StringComparison.InvariantCultureIgnoreCase))) {
                 channel.Name = request.NewChannelName;
               } else {
                 rtnVal.Info = localizer["Channel already exists"];
@@ -169,8 +168,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               channel.Permissions = request.Permissions;
               channel.Timestamp = DateTime.UtcNow;
               channel.Description = request.Description;
-              _db.Update(channel);
-              rtnVal.Success = _db.SaveChanges() > 0;
+              dbContext.Update(channel);
+              rtnVal.Success = dbContext.SaveChanges() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               }
@@ -208,11 +207,11 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.Channel = request.Channel.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
-        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
-            _db.Remove(channel);
-            rtnVal.Success = _db.SaveChanges() > 0;
+            dbContext.Remove(channel);
+            rtnVal.Success = dbContext.SaveChanges() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
             }
@@ -252,12 +251,12 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
         request.Channel = request.Channel.Trim();
         request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
         try {
-          Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+          Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
           if (channel != null) {
             if (channel.AdminPassword == request.Password) {
               List<Relation?> relations = [];
               foreach (RelationInfo relationInfo in request.Relations) {
-                Relation? relation = _db.Relations!.FirstOrDefault(r => r.Type == relationInfo.Type && r.ChannelId == channel.Id && r.Name == relationInfo.Name);
+                Relation? relation = dbContext.Relations!.FirstOrDefault(r => r.Type == relationInfo.Type && r.ChannelId == channel.Id && r.Name == relationInfo.Name);
                 DateTime utcNow = DateTime.UtcNow;
                 relation ??= new() {
                   ChannelId = channel.Id,
@@ -275,8 +274,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
                 }
                 relations.Add(relation);
               }
-              _db.UpdateRange(relations!);
-              rtnVal.Success = _db.SaveChanges() > 0;
+              dbContext.UpdateRange(relations!);
+              rtnVal.Success = dbContext.SaveChanges() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               }
@@ -318,10 +317,10 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
         request.Relation.Name = request.Relation.Name.Trim();
         request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
         try {
-          Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+          Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
           if (channel != null) {
             if (channel.Permissions >= ChannelPermissions.Write || channel.Password == request.Password) {
-              Relation? relation = _db.Relations!.FirstOrDefault(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
+              Relation? relation = dbContext.Relations!.FirstOrDefault(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
               DateTime utcNow = DateTime.UtcNow;
               relation ??= new() {
                 ChannelId = channel.Id,
@@ -335,8 +334,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               if (request.Relation.Comment != null) {
                 relation.Comment = request.Relation.Comment;
               }
-              _db.Update(relation);
-              rtnVal.Success = _db.SaveChanges() > 0;
+              dbContext.Update(relation);
+              rtnVal.Success = dbContext.SaveChanges() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               }
@@ -376,14 +375,14 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password));
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password));
         if (channel != null) {
-          IOrderedQueryable<Relation> results = from rel in _db.Relations
+          IOrderedQueryable<Relation> results = from rel in dbContext.Relations
                                                 where rel.ChannelId == channel.Id
                                                 orderby rel.Type descending, rel.Name
                                                 select rel;
           foreach (Relation rel in results.ToList()) {
-            _db.Entry(rel).Reload();
+            dbContext.Entry(rel).Reload();
             rtnVal.Relations.Add(new RelationInfo() {
               Type = rel.Type,
               Name = rel.Name,
@@ -421,9 +420,9 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.Name = request.Name.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
         if (channel != null) {
-          IQueryable<Relation> results = from rel in _db.Relations
+          IQueryable<Relation> results = from rel in dbContext.Relations
                                          where rel.ChannelId == channel.Id && rel.Type == request.Type && rel.Name == request.Name
                                          select rel;
           foreach (Relation rel in results.ToList()) {
@@ -455,17 +454,17 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       SyncTimestamp = DateTime.UtcNow;
       try {
-        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
         if (channel != null) {
           while (!context.CancellationToken.IsCancellationRequested && channel?.Id > 0) {
-            IOrderedQueryable<Relation> results = from rel in _db.Relations
+            IOrderedQueryable<Relation> results = from rel in dbContext.Relations
                                                   where rel.ChannelId == channel.Id && rel.Timestamp > SyncTimestamp
                                                   orderby rel.Timestamp
                                                   select rel;
             if (await results.AnyAsync()) {
               foreach (Relation rel in results.ToList()) {
                 // Reload() scheint nötig zu sein, da der Timestamp ansonsten den alten Wert enthält
-                _db.Entry(rel).Reload();
+                dbContext.Entry(rel).Reload();
                 await responseStream.WriteAsync(new SyncRelationsReply() {
                   Channel = request.Channel,
                   Relation = new RelationInfo() {
@@ -480,7 +479,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               }
             }
             await Task.Delay(500);
-            channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+            channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
           }
         }
       } catch (Exception ex) {
@@ -505,11 +504,11 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
       request.Channel = request.Channel.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
-        Channel? channel = _db.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
-            _db.RemoveRange(_db.Relations!.Where(r => r.ChannelId == channel.Id));
-            rtnVal.Success = _db.SaveChanges() > 0;
+            dbContext.RemoveRange(dbContext.Relations!.Where(r => r.ChannelId == channel.Id));
+            rtnVal.Success = dbContext.SaveChanges() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
             }
