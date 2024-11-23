@@ -83,3 +83,42 @@ app.MapRazorComponents<App>()
   .AddInteractiveWebAssemblyRenderMode();
 
 app.Run();
+
+/*
+server {
+        server_name     sctools.de;
+        location / {
+                proxy_pass              http://127.0.0.1:5555;
+                proxy_http_version      1.1;
+                proxy_set_header        Upgrade $http_upgrade;
+                proxy_set_header        Connection keep-alive;
+                proxy_set_header        Host $host;
+                proxy_cache_bypass      $http_upgrade;
+                proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header        X-Forwarded-Proto $scheme;
+                proxy_redirect          off;
+        }
+        location /schq.SCHQ_Relations {
+                grpc_pass               grpc://127.0.0.1:5556;
+        }
+        client_header_timeout   3h;
+        client_body_timeout     3h;
+        grpc_read_timeout       3h;
+        grpc_send_timeout       3h;
+        proxy_read_timeout      3h;
+        listen 443 http2 ssl; # managed by Certbot
+        ssl_certificate /etc/letsencrypt/live/sctools.de-0001/fullchain.pem; # managed by Certbot
+        ssl_certificate_key /etc/letsencrypt/live/sctools.de-0001/privkey.pem; # managed by Certbot
+        include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+        if ($host = sctools.de) {
+                return 301 https://$host$request_uri;
+        } # managed by Certbot
+        listen          80;
+        server_name     sctools.de;
+        return 404; # managed by Certbot
+}
+*/
