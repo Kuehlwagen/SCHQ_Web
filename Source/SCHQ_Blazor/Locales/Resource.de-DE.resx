@@ -286,7 +286,7 @@
     <value>Speichern</value>
   </data>
   <data name="Scouting" xml:space="preserve">
-    <value>Scouting</value>
+    <value>Erkundung</value>
   </data>
   <data name="Secured" xml:space="preserve">
     <value>Geschützt</value>
@@ -313,7 +313,7 @@
     <value>Vorgabe System</value>
   </data>
   <data name="Trading" xml:space="preserve">
-    <value>Trading</value>
+    <value>Handel</value>
   </data>
   <data name="Transport" xml:space="preserve">
     <value>Transport</value>
