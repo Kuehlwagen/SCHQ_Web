@@ -52,6 +52,14 @@
     </div>
   </p>
   <p>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="flexCheckIsPrivate" @bind=IsPrivate @bind:event="oninput">
+      <label class="form-check-label" for="flexCheckIsPrivate">
+        @Localizer["Private"]
+      </label>
+    </div>
+  </p>
+  <p>
     <div class="input-group">
       <div class="form-floating">
         <input type="password" class="form-control @(Password != ConfirmPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPassword" placeholder="@Localizer["Channel Password"]" @bind=Password @bind:event="oninput">
@@ -146,6 +154,7 @@
       ButtonIsDisabled = CheckButtonIsDisabled;
     }
   }
+  private bool IsPrivate { get; set; }
   private bool ButtonIsDisabled { get; set; } = true;
   private string? ErrorText { get; set; }
 
@@ -165,7 +174,8 @@
             Description = Description,
             Password = Password,
             AdminPassword = AdminPassword ?? string.Empty,
-            Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None
+            Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None,
+            Private = IsPrivate
           });
         if (reply.Success) {
           await LocalStorageService.SetValue(JS, $"pwd{Name}", Password, true);

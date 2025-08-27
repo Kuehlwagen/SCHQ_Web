@@ -52,4 +52,5 @@ public class Channel {
   }
   public string? AdminPassword { get; set; }
   public ChannelPermissions Permissions { get; set; }
+  public bool Private { get; set; }
 }

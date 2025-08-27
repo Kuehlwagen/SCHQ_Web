@@ -438,4 +438,7 @@
   <data name="Change Channel Password" xml:space="preserve">
     <value>Kanalpasswort ändern</value>
   </data>
+  <data name="Private" xml:space="preserve">
+    <value>Privat</value>
+  </data>
 </root>

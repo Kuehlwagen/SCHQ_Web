@@ -72,6 +72,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
     try {
       IOrderedQueryable<Channel> results = from c in dbContext.Channels
+                                           where !c.Private
                                            orderby c.Name
                                            select c;
       foreach (Channel c in results.ToList()) {
@@ -131,8 +132,8 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
 
   public Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No");
+    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}, Private: {Private}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No", request.Private);
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -168,6 +169,7 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
               channel.Permissions = request.Permissions;
               channel.Timestamp = DateTime.UtcNow;
               channel.Description = request.Description;
+              channel.Private = request.Private;
               dbContext.Update(channel);
               rtnVal.Success = dbContext.SaveChanges() > 0;
               if (!rtnVal.Success) {

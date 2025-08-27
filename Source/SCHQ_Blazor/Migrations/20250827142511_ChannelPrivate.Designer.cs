@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCHQ_Blazor.Models;
 
@@ -10,9 +11,11 @@ using SCHQ_Blazor.Models;
 namespace SCHQ_Blazor.Migrations
 {
     [DbContext(typeof(RelationsContext))]
-    partial class RelationsContextModelSnapshot : ModelSnapshot
+    [Migration("20250827142511_ChannelPrivate")]
+    partial class ChannelPrivate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

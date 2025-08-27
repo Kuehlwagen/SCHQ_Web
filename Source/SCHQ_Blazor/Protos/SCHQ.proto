@@ -41,6 +41,7 @@ message ChannelRequest {
   ChannelPermissions permissons = 3;
   string adminPassword = 4;
   google.protobuf.StringValue description = 5;
+  bool private = 6;
 }
 
 message ChannelReply {
@@ -88,6 +89,7 @@ message ChannelInfo {
   bool hasPassword = 2;
   ChannelPermissions permissions = 3;
   google.protobuf.StringValue description = 4;
+  bool private = 5;
 }
 
 message RelationInfo {
@@ -108,6 +110,7 @@ message UpdateChannelRequest {
   string newPasswordConfirm = 7;
   ChannelPermissions permissions = 8;
   google.protobuf.StringValue description = 9;
+  bool private = 10;
 }
 
 enum ChannelPermissions {

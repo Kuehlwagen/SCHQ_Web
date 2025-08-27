@@ -142,7 +142,7 @@
 
   private async Task GetChannels() {
     ChannelsReply reply = await SCHQ.GetChannels();
-    channels = [.. reply?.Channels];
+    channels = [.. reply?.Channels!];
     localChannels = [];
     string? channelsJson = await LocalStorageService.GetValue(JS, "channels");
     if (!string.IsNullOrWhiteSpace(channelsJson)) {
