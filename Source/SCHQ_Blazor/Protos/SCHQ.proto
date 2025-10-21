@@ -20,6 +20,7 @@ service SCHQ_Relations {
   rpc GetRelation (RelationRequest) returns (RelationReply);
   rpc SyncRelations (ChannelRequest) returns (stream SyncRelationsReply);
   rpc RemoveRelations (ChannelRequest) returns (SuccessReply);
+  rpc PushWebhook(WebhookRequest) returns (SuccessReply);
 }
 
 message SuccessReply {
@@ -111,6 +112,11 @@ message UpdateChannelRequest {
   ChannelPermissions permissions = 8;
   google.protobuf.StringValue description = 9;
   bool private = 10;
+}
+
+message WebhookRequest {
+  string url = 1;
+  string body = 2;
 }
 
 enum ChannelPermissions {

@@ -6,9 +6,14 @@ using SCHQ_Blazor.Classes;
 using SCHQ_Blazor.Locales;
 using SCHQ_Blazor.Models;
 using SCHQ_Protos;
+using System.Collections.Concurrent;
+using System.Net.Mime;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace SCHQ_Blazor.Services;
-public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext) : SCHQ_Relations.SCHQ_RelationsBase {
+public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext) : SCHQ_Relations.SCHQ_RelationsBase {
 
   private DateTime SyncTimestamp = DateTime.MinValue;
 
@@ -530,6 +535,61 @@ public class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resourc
     }
 
     logger.LogInformation("[{Guid} RemoveRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
+    return Task.FromResult(rtnVal);
+  }
+  #endregion
+
+  #region Webhooks
+  private static readonly Regex RgxDiscordWebhookUrl = RegexDiscordWebhookUrl();
+  [GeneratedRegex(@"^https:\/\/discord.com\/api\/webhooks\/\d+\/[a-zA-Z0-9_-]+$", RegexOptions.Compiled)]
+  private static partial Regex RegexDiscordWebhookUrl();
+
+  private static bool IsValidDiscordWebhookUrl(string url) => !string.IsNullOrWhiteSpace(url) && RgxDiscordWebhookUrl.IsMatch(url);
+
+  private static readonly ConcurrentDictionary<string, byte> DiscordWebhooks = [];
+
+  private async void RemoveDiscordWebhookLater(Guid guid, string key) {
+    await Task.Delay(TimeSpan.FromSeconds(30));
+    if (DiscordWebhooks.TryRemove(key, out _)) {
+      logger.LogInformation("[{Guid} PushWebhook Key Removed] Key: {Key}", guid, key);
+    } else {
+      logger.LogInformation("[{Guid} PushWebhook Key Not Removed] Key: {Key}", guid, key);
+    }
+  }
+
+  public override Task<SuccessReply> PushWebhook(WebhookRequest request, ServerCallContext context) {
+    Guid guid = Guid.NewGuid();
+    logger.LogInformation("[{Guid} PushWebhook Request] URL: {URL}, Body: {Body}", guid, request.Url, request.Body);
+    SuccessReply rtnVal = new();
+    
+    if (IsValidDiscordWebhookUrl(request.Url) && !string.IsNullOrWhiteSpace(request.Body)) {
+      try {
+        DiscordWebhook? webhook = JsonSerializer.Deserialize<DiscordWebhook?>(request.Body);
+        if (webhook != null && webhook.embeds?.Count == 2) {
+          string? key = $"{request.Url},{webhook.embeds[0].description},{webhook.embeds[1].description}";
+          if (DiscordWebhooks.TryAdd(key, 0)) {
+            logger.LogInformation("[{Guid} PushWebhook Key Added] Key: {Key}", guid, key);
+            Task.Run(() => RemoveDiscordWebhookLater(guid, key));
+            using HttpClient client = new();
+            HttpResponseMessage response = client.PostAsync(request.Url, new StringContent(request.Body, Encoding.UTF8, MediaTypeNames.Application.Json)).Result;
+            rtnVal.Success = response.IsSuccessStatusCode;
+            if (!rtnVal.Success) {
+              rtnVal.Info = $"{response.StatusCode} ({(int)response.StatusCode}): {response.Content.ReadAsStringAsync().Result}";
+            }
+          } else {
+            logger.LogInformation("[{Guid} PushWebhook Key Exists] Key: {Key}", guid, key);
+            rtnVal.Info = "Event already exists";
+          }
+        } else {
+          logger.LogInformation("[{Guid} PushWebhook Body Invalid] Body: {Body}", guid, request.Body);
+          rtnVal.Info = "Webhook body invalid";
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    }
+
+    logger.LogInformation("[{Guid} PushWebhook Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return Task.FromResult(rtnVal);
   }
   #endregion
