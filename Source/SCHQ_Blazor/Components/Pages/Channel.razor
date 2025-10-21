@@ -411,7 +411,7 @@ else
     if (!string.IsNullOrWhiteSpace(ChannelName))
     {
       RelationsReply reply = await SCHQ.GetRelations(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty });
-      relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)];
+      relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)!];
       if (!string.IsNullOrWhiteSpace(reply?.Info))
       {
         QueryNameError = reply.Info;

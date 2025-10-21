@@ -116,7 +116,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               Name = channel.Name,
               Description = channel.Description ?? string.Empty,
               HasPassword = channel.Password?.Length > 0,
-              Permissions = channel.Permissions
+              Permissions = channel.Permissions,
+              Private = channel.Private
             }
           };
         }
