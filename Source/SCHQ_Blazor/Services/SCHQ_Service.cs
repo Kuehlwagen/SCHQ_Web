@@ -24,8 +24,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
   public Task<SuccessReply> AddChannel(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, Admin Password: {AdminPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
+    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, Admin Password: {AdminPassword}, Private: {Private}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", request.Private ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -41,7 +41,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               Description = request.Description,
               DecryptedPassword = request.Password,
               DecryptedAdminPassword = request.AdminPassword,
-              Permissions = request.Permissons
+              Permissions = request.Permissons,
+              Private = request.Private
             });
             rtnVal.Success = dbContext.SaveChanges() > 0;
             if (!rtnVal.Success) {
