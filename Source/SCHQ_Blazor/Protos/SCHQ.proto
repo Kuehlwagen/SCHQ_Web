@@ -43,6 +43,7 @@ message ChannelRequest {
   string adminPassword = 4;
   google.protobuf.StringValue description = 5;
   bool private = 6;
+  string readOnlyPassword = 7;
 }
 
 message ChannelReply {
@@ -112,6 +113,8 @@ message UpdateChannelRequest {
   ChannelPermissions permissions = 8;
   google.protobuf.StringValue description = 9;
   bool private = 10;
+  string newReadOnlyPassword = 11;
+  string newReadOnlyPasswordConfirm = 12;
 }
 
 message WebhookRequest {

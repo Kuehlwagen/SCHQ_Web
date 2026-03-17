@@ -24,8 +24,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
   public Task<SuccessReply> AddChannel(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, Admin Password: {AdminPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
+    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, ReadOnlyPassword: {ReadOnlyPassword}, Admin Password: {AdminPassword}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.ReadOnlyPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -41,7 +41,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               Description = request.Description,
               DecryptedPassword = request.Password,
               DecryptedAdminPassword = request.AdminPassword,
-              Permissions = request.Permissons
+              Permissions = request.Permissons,
+              DecryptedReadOnlyPassword = request.ReadOnlyPassword
             });
             rtnVal.Success = dbContext.SaveChanges() > 0;
             if (!rtnVal.Success) {
@@ -138,8 +139,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
   public Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
     Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}, Private: {Private}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No", request.Private);
+    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}, New ReadOnlyPassword: {NewReadOnlyPassword}, Confirm New ReadOnlyPassword: {ConfirmNewReadOnlyPassword}, Private: {Private}",
+      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewReadOnlyPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewReadOnlyPasswordConfirm) ? "Yes" : "No", request.Private);
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -155,6 +156,13 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
                 channel.DecryptedPassword = request.NewPassword;
               } else {
                 rtnVal.Info = localizer["New channel passwords don't match"];
+              }
+            }
+            if (!string.IsNullOrWhiteSpace(request.NewReadOnlyPassword) && !string.IsNullOrWhiteSpace(request.NewReadOnlyPasswordConfirm)) {
+              if (request.NewReadOnlyPassword == request.NewReadOnlyPasswordConfirm) {
+                channel.DecryptedReadOnlyPassword = request.NewReadOnlyPassword;
+              } else {
+                rtnVal.Info = localizer["New channel R/O passwords don't match"];
               }
             }
             if (string.IsNullOrWhiteSpace(rtnVal.Info) && !string.IsNullOrWhiteSpace(request.NewAdminPassword) && !string.IsNullOrWhiteSpace(request.NewAdminPasswordConfirm)) {
@@ -383,7 +391,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password));
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
         if (channel != null) {
           IOrderedQueryable<Relation> results = from rel in dbContext.Relations
                                                 where rel.ChannelId == channel.Id
@@ -428,7 +436,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Name = request.Name.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
         if (channel != null) {
           IQueryable<Relation> results = from rel in dbContext.Relations
                                          where rel.ChannelId == channel.Id && rel.Type == request.Type && rel.Name == request.Name
@@ -462,7 +470,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       SyncTimestamp = DateTime.UtcNow;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password));
+        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
         if (channel != null) {
           while (!context.CancellationToken.IsCancellationRequested && channel?.Id > 0) {
             IOrderedQueryable<Relation> results = from rel in dbContext.Relations

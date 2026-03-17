@@ -482,7 +482,7 @@ else
         DateTime syncTimestamp = DateTime.UtcNow;
         try
         {
-          SCHQ_Blazor.Models.Channel? channel = DbContext.Channels!.FirstOrDefault(c => c.Name == ChannelName && (c.Permissions >= ChannelPermissions.Read || c.Password == Encryption.EncryptText(ChannelPassword)));
+          SCHQ_Blazor.Models.Channel? channel = DbContext.Channels!.FirstOrDefault(c => c.Name == ChannelName && (c.Permissions >= ChannelPermissions.Read || c.Password == Encryption.EncryptText(ChannelPassword) || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == Encryption.EncryptText(ChannelPassword))));
           if (channel != null)
           {
             while (!CTS.IsCancellationRequested && channel?.Id > 0)

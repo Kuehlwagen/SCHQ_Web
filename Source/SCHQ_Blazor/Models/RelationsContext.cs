@@ -50,6 +50,12 @@ public class Channel {
     get { return Encryption.DecryptText(AdminPassword); }
     set { AdminPassword = !string.IsNullOrEmpty(value) ? Encryption.EncryptText(value) : string.Empty; }
   }
+  public string? ReadOnlyPassword { get; set; }
+  [DAS.NotMapped]
+  public string? DecryptedReadOnlyPassword {
+    get { return Encryption.DecryptText(ReadOnlyPassword); }
+    set { ReadOnlyPassword = !string.IsNullOrEmpty(value) ? Encryption.EncryptText(value) : string.Empty; }
+  }
   public string? AdminPassword { get; set; }
   public ChannelPermissions Permissions { get; set; }
   public bool Private { get; set; }

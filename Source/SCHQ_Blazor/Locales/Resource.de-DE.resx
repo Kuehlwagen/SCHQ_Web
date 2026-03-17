@@ -441,4 +441,19 @@
   <data name="Private" xml:space="preserve">
     <value>Privat</value>
   </data>
+  <data name="R/O Password" xml:space="preserve">
+    <value>Lesezugriff Passwort</value>
+  </data>
+  <data name="Confirm R/O Password" xml:space="preserve">
+    <value>Lesezugriff Passwort bestätigen</value>
+  </data>
+  <data name="Change R/O Password" xml:space="preserve">
+    <value>Lesezugriff Passwort ändern</value>
+  </data>
+  <data name="New R/O Password" xml:space="preserve">
+    <value>Neues Lesezugriff Passwort</value>
+  </data>
+  <data name="Confirm New R/O Password" xml:space="preserve">
+    <value>Neues Lesezugriff Passwort bestätigen</value>
+  </data>
 </root>
