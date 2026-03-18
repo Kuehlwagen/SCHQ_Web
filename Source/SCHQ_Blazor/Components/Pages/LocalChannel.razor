@@ -12,6 +12,7 @@
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
 @inject IMemoryCache Memory
+@inject HandleQuery HandleQuery
 
 <script>
   window.downloadFileFromStream = async (fileName, contentStreamReference) => {
