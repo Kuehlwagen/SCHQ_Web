@@ -21,6 +21,7 @@ builder.Services.AddGrpc();
 builder.Services.AddDbContext<RelationsContext>(options =>
   options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
+builder.Services.AddSingleton<ChannelRelationsNotifier>();
 builder.Services.AddTransient<SCHQ_Service>();
 
 var app = builder.Build();

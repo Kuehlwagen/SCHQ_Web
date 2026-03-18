@@ -13,9 +13,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SCHQ_Blazor.Services;
-public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext) : SCHQ_Relations.SCHQ_RelationsBase {
-
-  private DateTime SyncTimestamp = DateTime.MinValue;
+public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext, ChannelRelationsNotifier notifier) : SCHQ_Relations.SCHQ_RelationsBase {
 
   #region Channels
   public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
@@ -294,6 +292,19 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               rtnVal.Success = dbContext.SaveChanges() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
+              } else {
+                foreach (Relation rel in relations.OfType<Relation>()) {
+                  notifier.Notify(request.Channel, new RelationChangedNotification {
+                    ChannelName = request.Channel,
+                    Relation = new RelationInfo {
+                      Type = rel.Type,
+                      Name = rel.Name,
+                      Relation = rel.Value,
+                      Comment = rel.Comment ?? string.Empty,
+                      Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp()
+                    }
+                  });
+                }
               }
             } else {
               rtnVal.Info = localizer["Access denied"];
@@ -354,6 +365,17 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               rtnVal.Success = dbContext.SaveChanges() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
+              } else {
+                notifier.Notify(request.Channel, new RelationChangedNotification {
+                  ChannelName = request.Channel,
+                  Relation = new RelationInfo {
+                    Type = relation.Type,
+                    Name = relation.Name,
+                    Relation = relation.Value,
+                    Comment = relation.Comment ?? string.Empty,
+                    Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp()
+                  }
+                });
               }
             } else {
               rtnVal.Info = localizer["Access denied"];
@@ -468,34 +490,22 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
-      SyncTimestamp = DateTime.UtcNow;
       try {
         Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
         if (channel != null) {
-          while (!context.CancellationToken.IsCancellationRequested && channel?.Id > 0) {
-            IOrderedQueryable<Relation> results = from rel in dbContext.Relations
-                                                  where rel.ChannelId == channel.Id && rel.Timestamp > SyncTimestamp
-                                                  orderby rel.Timestamp
-                                                  select rel;
-            if (await results.AnyAsync()) {
-              foreach (Relation rel in results.ToList()) {
-                // Reload() scheint nötig zu sein, da der Timestamp ansonsten den alten Wert enthält
-                dbContext.Entry(rel).Reload();
+          var reader = notifier.Subscribe(request.Channel);
+          try {
+            await foreach (var notification in reader.ReadAllAsync(context.CancellationToken)) {
+              if (notification.Relation != null) {
                 await responseStream.WriteAsync(new SyncRelationsReply() {
                   Channel = request.Channel,
-                  Relation = new RelationInfo() {
-                    Type = rel.Type,
-                    Name = rel.Name,
-                    Relation = rel.Value,
-                    Comment = rel.Comment ?? string.Empty,
-                    Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp()
-                  }
+                  Relation = notification.Relation
                 });
-                SyncTimestamp = rel.Timestamp;
               }
             }
-            await Task.Delay(500);
-            channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+          } catch (OperationCanceledException) { }
+          finally {
+            notifier.Unsubscribe(request.Channel, reader);
           }
         }
       } catch (Exception ex) {
@@ -527,6 +537,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
             rtnVal.Success = dbContext.SaveChanges() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
+            } else {
+              notifier.Notify(request.Channel, new RelationChangedNotification { ChannelName = request.Channel });
             }
           } else {
             rtnVal.Info = localizer["Access denied"];
