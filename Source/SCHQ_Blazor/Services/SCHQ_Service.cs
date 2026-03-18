@@ -13,14 +13,14 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SCHQ_Blazor.Services;
-public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext, ChannelRelationsNotifier notifier) : SCHQ_Relations.SCHQ_RelationsBase {
+public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext, ChannelRelationsNotifier notifier, IHttpClientFactory httpClientFactory) : SCHQ_Relations.SCHQ_RelationsBase {
 
   #region Channels
   public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
     return AddChannel(request);
   }
 
-  public Task<SuccessReply> AddChannel(ChannelRequest request) {
+  public async Task<SuccessReply> AddChannel(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, ReadOnlyPassword: {ReadOnlyPassword}, Admin Password: {AdminPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.ReadOnlyPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
@@ -30,7 +30,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       if (!string.IsNullOrWhiteSpace(request.AdminPassword)) {
         request.Channel = request.Channel.Trim();
         try {
-          if (!dbContext.Channels!.Any(c => c.Name != null && c.Name == request.Channel)) {
+          if (!await dbContext.Channels!.AnyAsync(c => c.Name != null && c.Name == request.Channel)) {
             DateTime utcNow = DateTime.UtcNow;
             dbContext.Add(new Channel() {
               DateCreated = utcNow,
@@ -42,7 +42,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               Permissions = request.Permissons,
               DecryptedReadOnlyPassword = request.ReadOnlyPassword
             });
-            rtnVal.Success = dbContext.SaveChanges() > 0;
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
             }
@@ -62,24 +62,24 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} AddChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<ChannelsReply> GetChannels(Empty request, ServerCallContext context) {
     return GetChannels();
   }
 
-  public Task<ChannelsReply> GetChannels() {
+  public async Task<ChannelsReply> GetChannels() {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetChannels Request]", guid);
     ChannelsReply rtnVal = new();
 
     try {
-      IOrderedQueryable<Channel> results = from c in dbContext.Channels
+      IOrderedQueryable<Channel> results = from c in dbContext.Channels!.AsNoTracking()
                                            where !c.Private
                                            orderby c.Name
                                            select c;
-      foreach (Channel c in results.ToList()) {
+      foreach (Channel c in await results.ToListAsync()) {
         rtnVal.Channels.Add(new ChannelInfo() {
           Name = c.Name,
           Description = c.Description ?? string.Empty,
@@ -93,14 +93,14 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} GetChannels Reply] Count: {Count}", guid, rtnVal.Channels.Count);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<ChannelReply> GetChannel(ChannelNameRequest request, ServerCallContext context) {
     return GetChannel(request);
   }
 
-  public Task<ChannelReply> GetChannel(ChannelNameRequest request) {
+  public async Task<ChannelReply> GetChannel(ChannelNameRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetChannel Request] Channel: {Channel}", guid, request.Channel);
     ChannelReply rtnVal = new();
@@ -108,7 +108,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       try {
-        if (dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel) is Channel channel) {
+        if (await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == request.Channel) is Channel channel) {
           rtnVal = new ChannelReply() {
             Found = true,
             Channel = new() {
@@ -128,14 +128,14 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
     logger.LogInformation("[{Guid} GetChannel Reply] Found: {Found}, Channel: {Channel}",
       guid, rtnVal.Found, rtnVal.Channel);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<SuccessReply> UpdateChannel(UpdateChannelRequest request, ServerCallContext context) {
     return UpdateChannel(request);
   }
 
-  public Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
+  public async Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}, New ReadOnlyPassword: {NewReadOnlyPassword}, Confirm New ReadOnlyPassword: {ConfirmNewReadOnlyPassword}, Private: {Private}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewReadOnlyPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewReadOnlyPasswordConfirm) ? "Yes" : "No", request.Private);
@@ -146,7 +146,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.NewChannelName = request.NewChannelName.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
             if (!string.IsNullOrWhiteSpace(request.NewPassword) && !string.IsNullOrWhiteSpace(request.NewPasswordConfirm)) {
@@ -171,7 +171,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               }
             }
             if (string.IsNullOrWhiteSpace(rtnVal.Info) && !string.IsNullOrWhiteSpace(request.NewChannelName) && request.NewChannelName != channel.Name) {
-              if (!dbContext.Channels!.Any(c => c.Name!.Equals(request.NewChannelName, StringComparison.InvariantCultureIgnoreCase))) {
+              if (!await dbContext.Channels!.AnyAsync(c => c.Name!.Equals(request.NewChannelName, StringComparison.InvariantCultureIgnoreCase))) {
                 channel.Name = request.NewChannelName;
               } else {
                 rtnVal.Info = localizer["Channel already exists"];
@@ -183,7 +183,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               channel.Description = request.Description;
               channel.Private = request.Private;
               dbContext.Update(channel);
-              rtnVal.Success = dbContext.SaveChanges() > 0;
+              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               }
@@ -204,14 +204,14 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} SetChannelNewPassword Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<SuccessReply> RemoveChannel(ChannelRequest request, ServerCallContext context) {
     return RemoveChannel(request);
   }
 
-  public Task<SuccessReply> RemoveChannel(ChannelRequest request) {
+  public async Task<SuccessReply> RemoveChannel(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Admin Password: {AdminPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
@@ -221,11 +221,11 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Channel = request.Channel.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
             dbContext.Remove(channel);
-            rtnVal.Success = dbContext.SaveChanges() > 0;
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
             }
@@ -245,7 +245,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} RemoveChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
   #endregion
 
@@ -254,7 +254,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     return SetRelations(request);
   }
 
-  public Task<SuccessReply> SetRelations(SetRelationsRequest request) {
+  public async Task<SuccessReply> SetRelations(SetRelationsRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetRelations Request] Channel: {Channel}, Password: {Password}, Relations: {Relations}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request?.Relations?.Count);
@@ -265,12 +265,12 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
         request.Channel = request.Channel.Trim();
         request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
         try {
-          Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+          Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
           if (channel != null) {
             if (channel.AdminPassword == request.Password) {
               List<Relation?> relations = [];
               foreach (RelationInfo relationInfo in request.Relations) {
-                Relation? relation = dbContext.Relations!.FirstOrDefault(r => r.Type == relationInfo.Type && r.ChannelId == channel.Id && r.Name == relationInfo.Name);
+                Relation? relation = await dbContext.Relations!.FirstOrDefaultAsync(r => r.Type == relationInfo.Type && r.ChannelId == channel.Id && r.Name == relationInfo.Name);
                 DateTime utcNow = DateTime.UtcNow;
                 relation ??= new() {
                   ChannelId = channel.Id,
@@ -289,7 +289,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
                 relations.Add(relation);
               }
               dbContext.UpdateRange(relations!);
-              rtnVal.Success = dbContext.SaveChanges() > 0;
+              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               } else {
@@ -325,14 +325,14 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} SetRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<SuccessReply> SetRelation(SetRelationRequest request, ServerCallContext context) {
     return SetRelation(request);
   }
 
-  public Task<SuccessReply> SetRelation(SetRelationRequest request) {
+  public async Task<SuccessReply> SetRelation(SetRelationRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} SetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}, Relation: {Relation}, Comment: {Comment}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Relation.Type, request.Relation.Name, request.Relation.Relation, request.Relation.Comment ?? "Empty");
@@ -344,10 +344,10 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
         request.Relation.Name = request.Relation.Name.Trim();
         request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
         try {
-          Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+          Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
           if (channel != null) {
             if (channel.Permissions >= ChannelPermissions.Write || channel.Password == request.Password) {
-              Relation? relation = dbContext.Relations!.FirstOrDefault(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
+              Relation? relation = await dbContext.Relations!.FirstOrDefaultAsync(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
               DateTime utcNow = DateTime.UtcNow;
               relation ??= new() {
                 ChannelId = channel.Id,
@@ -362,7 +362,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
                 relation.Comment = request.Relation.Comment;
               }
               dbContext.Update(relation);
-              rtnVal.Success = dbContext.SaveChanges() > 0;
+              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               } else {
@@ -396,14 +396,14 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} SetRelation Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<RelationsReply> GetRelations(ChannelRequest request, ServerCallContext context) {
     return GetRelations(request);
   }
 
-  public Task<RelationsReply> GetRelations(ChannelRequest request) {
+  public async Task<RelationsReply> GetRelations(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetRelations Request] Channel: {Channel}, Password: {Password}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No");
@@ -413,14 +413,13 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
+        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
         if (channel != null) {
-          IOrderedQueryable<Relation> results = from rel in dbContext.Relations
+          IOrderedQueryable<Relation> results = from rel in dbContext.Relations!.AsNoTracking()
                                                 where rel.ChannelId == channel.Id
                                                 orderby rel.Type descending, rel.Name
                                                 select rel;
-          foreach (Relation rel in results.ToList()) {
-            dbContext.Entry(rel).Reload();
+          foreach (Relation rel in await results.ToListAsync()) {
             rtnVal.Relations.Add(new RelationInfo() {
               Type = rel.Type,
               Name = rel.Name,
@@ -440,14 +439,14 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} GetRelations Reply] Count: {Count}", guid, rtnVal.Relations.Count);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override Task<RelationReply> GetRelation(RelationRequest request, ServerCallContext context) {
     return GetRelation(request);
   }
 
-  public Task<RelationReply> GetRelation(RelationRequest request) {
+  public async Task<RelationReply> GetRelation(RelationRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} GetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}",
       guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Type, request.Name);
@@ -458,12 +457,12 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Name = request.Name.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
+        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
         if (channel != null) {
-          IQueryable<Relation> results = from rel in dbContext.Relations
+          IQueryable<Relation> results = from rel in dbContext.Relations!.AsNoTracking()
                                          where rel.ChannelId == channel.Id && rel.Type == request.Type && rel.Name == request.Name
                                          select rel;
-          foreach (Relation rel in results.ToList()) {
+          foreach (Relation rel in await results.ToListAsync()) {
             rtnVal = new RelationReply() {
               Found = true,
               Relation = rel.Value,
@@ -479,7 +478,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
     logger.LogInformation("[{Guid} GetRelation Reply] Found: {Found}, Relation: {Relation}",
       guid, rtnVal.Found, rtnVal.Relation);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
 
   public override async Task SyncRelations(ChannelRequest request, IServerStreamWriter<SyncRelationsReply> responseStream, ServerCallContext context) {
@@ -520,7 +519,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     return RemoveRelations(request);
   }
 
-  public Task<SuccessReply> RemoveRelations(ChannelRequest request) {
+  public async Task<SuccessReply> RemoveRelations(ChannelRequest request) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} RemoveRelations Request] Channel: {Channel}, Admin Password: {AdminPassword}",
       guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
@@ -530,11 +529,11 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       request.Channel = request.Channel.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel);
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
             dbContext.RemoveRange(dbContext.Relations!.Where(r => r.ChannelId == channel.Id));
-            rtnVal.Success = dbContext.SaveChanges() > 0;
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
             } else {
@@ -556,7 +555,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} RemoveRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
   #endregion
 
@@ -569,7 +568,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
   private static readonly ConcurrentDictionary<string, byte> DiscordWebhooks = [];
 
-  private async void RemoveDiscordWebhookLater(Guid guid, string key) {
+  private async Task RemoveDiscordWebhookLater(Guid guid, string key) {
     await Task.Delay(TimeSpan.FromSeconds(30));
     if (DiscordWebhooks.TryRemove(key, out _)) {
       logger.LogInformation("[{Guid} PushWebhook Key Removed] Key: {Key}", guid, key);
@@ -578,11 +577,11 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
   }
 
-  public override Task<SuccessReply> PushWebhook(WebhookRequest request, ServerCallContext context) {
+  public override async Task<SuccessReply> PushWebhook(WebhookRequest request, ServerCallContext context) {
     Guid guid = Guid.NewGuid();
     logger.LogInformation("[{Guid} PushWebhook Request] URL: {URL}, Body: {Body}", guid, request.Url, request.Body);
     SuccessReply rtnVal = new();
-    
+
     if (IsValidDiscordWebhookUrl(request.Url) && !string.IsNullOrWhiteSpace(request.Body)) {
       try {
         DiscordWebhook? webhook = JsonSerializer.Deserialize<DiscordWebhook?>(request.Body);
@@ -590,12 +589,12 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
           string? key = $"{request.Url},{webhook.embeds[0].description},{webhook.embeds[1].description}";
           if (DiscordWebhooks.TryAdd(key, 0)) {
             logger.LogInformation("[{Guid} PushWebhook Key Added] Key: {Key}", guid, key);
-            Task.Run(() => RemoveDiscordWebhookLater(guid, key));
-            using HttpClient client = new();
-            HttpResponseMessage response = client.PostAsync(request.Url, new StringContent(request.Body, Encoding.UTF8, MediaTypeNames.Application.Json)).Result;
+            _ = RemoveDiscordWebhookLater(guid, key);
+            using HttpClient client = httpClientFactory.CreateClient();
+            HttpResponseMessage response = await client.PostAsync(request.Url, new StringContent(request.Body, Encoding.UTF8, MediaTypeNames.Application.Json));
             rtnVal.Success = response.IsSuccessStatusCode;
             if (!rtnVal.Success) {
-              rtnVal.Info = $"{response.StatusCode} ({(int)response.StatusCode}): {response.Content.ReadAsStringAsync().Result}";
+              rtnVal.Info = $"{response.StatusCode} ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync()}";
             }
           } else {
             logger.LogInformation("[{Guid} PushWebhook Key Exists] Key: {Key}", guid, key);
@@ -611,7 +610,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     }
 
     logger.LogInformation("[{Guid} PushWebhook Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
-    return Task.FromResult(rtnVal);
+    return rtnVal;
   }
   #endregion
 

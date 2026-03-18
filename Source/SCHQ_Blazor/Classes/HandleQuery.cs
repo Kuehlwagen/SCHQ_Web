@@ -48,6 +48,12 @@ public static partial class HandleQuery {
 
   private static CancellationTokenSource? CancelToken;
 
+  public static void Cancel() {
+    if (CancelToken != null && !CancelToken.IsCancellationRequested) {
+      CancelToken.Cancel();
+    }
+  }
+
   private static readonly string DefaultAvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
 
   public static async Task<HandleInfo> GetHandleInfo(string handle) {
