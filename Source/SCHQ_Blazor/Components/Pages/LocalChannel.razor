@@ -77,7 +77,7 @@
         <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
       </svg>
     </button>
-    <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; CommentRelation = null; Comment = null; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
+    <button type="button" class="btn btn-danger" @onclick="ClearQuery" disabled="@(!QueryNameActive && string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
       <svg class="bi" width="16" height="16" fill="currentColor">
         <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
       </svg>
@@ -331,6 +331,7 @@
   public ElementReference ElementCommentRef { get; set; }
 
   private RelationInfo[]? relations;
+  private CancellationTokenSource? QueryCTS;
 
   private string? ErrorText { get; set; }
 
@@ -415,6 +416,9 @@
   }
 
   public async void Query() {
+    QueryCTS?.Cancel();
+    QueryCTS = new CancellationTokenSource();
+    CancellationToken queryToken = QueryCTS.Token;
     ResetErrorText();
     QueryNameActive = true;
     Navigation.NavigateTo($"{Navigation.Uri}#top");
@@ -446,6 +450,14 @@
               };
           }
         }
+        if (queryToken.IsCancellationRequested) {
+          QueryName = string.Empty;
+          QueryHandleInfo = null;
+          QueryNameError = null;
+          QueryNameActive = false;
+          StateHasChanged();
+          return;
+        }
         if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
           QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
           if (QueryNameType == RelationType.Handle) {
@@ -466,6 +478,17 @@
     }
     QueryNameActive = false;
     StateHasChanged();
+  }
+
+  public void ClearQuery() {
+    if (QueryNameActive) {
+      HandleQuery.Cancel();
+      QueryCTS?.Cancel();
+    } else {
+      QueryName = string.Empty;
+      CommentRelation = null;
+      Comment = null;
+    }
   }
 
   public void EnterQuery(KeyboardEventArgs e) {
