@@ -83,6 +83,7 @@ if (app.Environment.IsDevelopment()) {
 app.UseHttpsRedirection();
 
 app.MapStaticAssets();
+builder.WebHost.UseStaticWebAssets();
 app.UseAntiforgery();
 
 app.MapControllers();
