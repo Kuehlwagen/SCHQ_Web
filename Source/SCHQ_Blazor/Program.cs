@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SCHQ_Blazor.Classes;
 using SCHQ_Blazor.Components;
 using SCHQ_Blazor.Models;
 using SCHQ_Blazor.Services;
@@ -21,6 +22,14 @@ builder.Services.AddGrpc();
 builder.Services.AddDbContext<RelationsContext>(options =>
   options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
+builder.Services.AddHttpClient("RSI", client => {
+  client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddHttpClient("Images", client => {
+  client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddScoped<HandleQuery>();
+builder.Services.AddSingleton<ChannelRelationsNotifier>();
 builder.Services.AddTransient<SCHQ_Service>();
 
 var app = builder.Build();

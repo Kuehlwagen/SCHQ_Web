@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 
 namespace SCHQ_Blazor.Classes;
-public static partial class HandleQuery {
+public partial class HandleQuery(IHttpClientFactory httpClientFactory) {
 
   #region Regex
   private static readonly Regex RgxIdCmHandleEnlistedFluency = RgxIdCmHandleEnlistedFluencyMethod();
@@ -46,16 +46,22 @@ public static partial class HandleQuery {
   }
   #endregion
 
-  private static CancellationTokenSource? CancelToken;
+  private CancellationTokenSource? _cancelToken;
+
+  public void Cancel() {
+    if (_cancelToken != null && !_cancelToken.IsCancellationRequested) {
+      _cancelToken.Cancel();
+    }
+  }
 
   private static readonly string DefaultAvatarUrl = "https://cdn.robertsspaceindustries.com/static/images/account/avatar_default_big.jpg";
 
-  public static async Task<HandleInfo> GetHandleInfo(string handle) {
+  public async Task<HandleInfo> GetHandleInfo(string handle) {
     handle = handle.Trim();
-    if (CancelToken != null && !CancelToken.IsCancellationRequested) {
-      CancelToken.Cancel();
+    if (_cancelToken != null && !_cancelToken.IsCancellationRequested) {
+      _cancelToken.Cancel();
     }
-    CancelToken = new();
+    _cancelToken = new();
     HandleInfo rtnVal = new() {
       Profile = new() {
         Handle = handle,
@@ -91,17 +97,22 @@ public static partial class HandleQuery {
 
           // Avatar
           MatchCollection mcAvatar = RgxAvatar.Matches(rtnVal.HttpResponse.Source);
-          if (mcAvatar.Count == 1) {
-            rtnVal.Profile.AvatarUrl = await GetImageSource(mcAvatar[0].Groups[1].Value);
-          } else {
-            rtnVal.Profile.AvatarUrl = await GetImageSource(DefaultAvatarUrl);
-          }
+          Task<string?> avatarTask = mcAvatar.Count == 1
+            ? GetImageSource(mcAvatar[0].Groups[1].Value)
+            : GetImageSource(DefaultAvatarUrl);
 
           // Display Title
           MatchCollection mcDisplayTitle = RgxDisplayTitle.Matches(rtnVal.HttpResponse.Source);
-          if (mcDisplayTitle.Count == 1 && mcDisplayTitle[0].Groups.Count == 3) {
+          bool hasDisplayTitle = mcDisplayTitle.Count == 1 && mcDisplayTitle[0].Groups.Count == 3;
+          Task<string?>? displayTitleAvatarTask = hasDisplayTitle
+            ? GetImageSource(mcDisplayTitle[0].Groups[1].Value)
+            : null;
+
+          await Task.WhenAll(displayTitleAvatarTask != null ? [avatarTask, displayTitleAvatarTask] : [avatarTask]);
+          rtnVal.Profile.AvatarUrl = avatarTask.Result;
+          if (hasDisplayTitle) {
             rtnVal.Profile.DisplayTitle = CorrectText(mcDisplayTitle[0].Groups[2].Value);
-            rtnVal.Profile.DisplayTitleAvatarUrl = await GetImageSource(mcDisplayTitle[0].Groups[1].Value);
+            rtnVal.Profile.DisplayTitleAvatarUrl = displayTitleAvatarTask!.Result;
           }
 
           // Organizations
@@ -138,7 +149,7 @@ public static partial class HandleQuery {
     return rtnVal;
   }
 
-  private static async Task<OrganizationsInfo> GetOrganizationsInfo(string handle) {
+  private async Task<OrganizationsInfo> GetOrganizationsInfo(string handle) {
     OrganizationsInfo reply = new();
 
     HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/citizens/{handle}/organizations");
@@ -208,7 +219,7 @@ public static partial class HandleQuery {
     return reply;
   }
 
-  public static async Task<OrganizationOnlyInfo> GetOrganizationInfo(string sid) {
+  public async Task<OrganizationOnlyInfo> GetOrganizationInfo(string sid) {
     OrganizationOnlyInfo reply = new() {
       HttpResponse = await GetRSISource($"https://robertsspaceindustries.com/orgs/{sid}", RsiSourceType.Organization)
     };
@@ -233,7 +244,7 @@ public static partial class HandleQuery {
     return reply;
   }
 
-  private static async Task<bool> CheckCommunityHubIsLive(string handle) {
+  private async Task<bool> CheckCommunityHubIsLive(string handle) {
     HttpInfo httpInfo = await GetRSISource($"https://robertsspaceindustries.com/community-hub/user/{handle}", RsiSourceType.CommunityHub);
     return httpInfo?.StatusCode == HttpStatusCode.OK && httpInfo.Source != null && httpInfo.Source.Contains("\"live\":true");
   }
@@ -242,14 +253,12 @@ public static partial class HandleQuery {
     return HttpUtility.HtmlDecode(text);
   }
 
-  private static async Task<HttpInfo> GetSource(string url) {
+  private async Task<HttpInfo> GetSource(string url) {
     HttpInfo rtnVal = new();
 
-    using HttpClient client = new() {
-      Timeout = TimeSpan.FromSeconds(10)
-    };
+    HttpClient client = httpClientFactory.CreateClient("RSI");
     try {
-      rtnVal.Source = await client.GetStringAsync(url, CancelToken?.Token ?? new()).ConfigureAwait(false);
+      rtnVal.Source = await client.GetStringAsync(url, _cancelToken?.Token ?? default).ConfigureAwait(false);
       rtnVal.StatusCode = HttpStatusCode.OK;
     } catch (HttpRequestException ex) {
       rtnVal.Source = string.Empty;
@@ -264,7 +273,7 @@ public static partial class HandleQuery {
     return rtnVal;
   }
 
-  private static async Task<HttpInfo> GetRSISource(string url, RsiSourceType sourceType = RsiSourceType.Default) {
+  private async Task<HttpInfo> GetRSISource(string url, RsiSourceType sourceType = RsiSourceType.Default) {
     HttpInfo rtnVal = await GetSource(url);
     if (rtnVal.StatusCode == HttpStatusCode.OK && rtnVal.Source != null) {
       int index = -1;
@@ -303,10 +312,10 @@ public static partial class HandleQuery {
     return url.StartsWith('/') ? $"https://robertsspaceindustries.com{url}" : url;
   }
 
-  private async static Task<string?> GetImageSource(string url) {
+  private async Task<string?> GetImageSource(string url) {
     string rtnVal = url;
 
-    using HttpClient client = new();
+    HttpClient client = httpClientFactory.CreateClient("Images");
     try {
       byte[] bytes = await client.GetByteArrayAsync(CorrectUrl(url));
       if (bytes != null && bytes.Length > 0) {

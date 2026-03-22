@@ -12,6 +12,7 @@
 @inject IJSRuntime JS
 @inject IStringLocalizer<Resource> Localizer
 @inject IMemoryCache Memory
+@inject HandleQuery HandleQuery
 
 <script>
   window.downloadFileFromStream = async (fileName, contentStreamReference) => {
@@ -47,19 +48,19 @@
       <label for="floatingInputGroupName" class="z-0">@QueryNamePlaceholder</label>
     </div>
     <div class="input-group-text bg-success p-2 z-1" hidden="@HideFilter">
-      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
+      <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
     </div>
     <div class="input-group-text bg-secondary p-2 z-1" hidden="@HideFilter">
-      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
+      <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
     </div>
     <div class="input-group-text bg-warning p-2 z-1" hidden="@HideFilter">
-      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
+      <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
     </div>
     <div class="input-group-text bg-danger p-2 z-1" hidden="@HideFilter">
-      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
+      <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
     </div>
     <div class="input-group-text bg-dark p-2 z-1" hidden="@HideFilter">
-      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Filter"]: @Localizer["Not Assigned"]">
+      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Filter"]: @Localizer["Not Assigned"]">
     </div>
     <button type="button" class="btn btn-sm btn-primary" @onclick="() => { HideFilter = !HideFilter; }" title="@Localizer["Filter"]">
       <svg class="bi" width="16" height="16" fill="currentColor">
@@ -76,7 +77,7 @@
         <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
       </svg>
     </button>
-    <button type="button" class="btn btn-danger" @onclick="() => { QueryName = string.Empty; CommentRelation = null; Comment = null; }" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
+    <button type="button" class="btn btn-danger" @onclick="ClearQuery" disabled="@(!QueryNameActive && string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
       <svg class="bi" width="16" height="16" fill="currentColor">
         <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
       </svg>
@@ -233,7 +234,7 @@
     </tr>
   </thead>
   <tbody>
-    @foreach (var relation in relations?.Where(r => IsVisible(r)) ?? []) {
+    @foreach (var relation in relations?.Where(r => IsVisible(r)).Skip((CurrentPage - 1) * PageSize).Take(PageSize) ?? []) {
       <tr class="border-1">
         <td class="p-3 mb-2 @(GetRelationClassColors(relation.Relation))" style="transform: rotate(0);">
           <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
@@ -266,6 +267,32 @@
     }
   </tbody>
 </table>
+@if (TotalPages > 1) {
+  <nav class="mt-2">
+    <ul class="pagination pagination-sm justify-content-center flex-wrap mb-1">
+      <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+        <a class="page-link" href="javascript:void(0);" @onclick="() => { if (CurrentPage > 1) CurrentPage--; }">
+          <svg class="bi" width="16" height="16" fill="currentColor">
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#chevron-left" />
+          </svg>
+        </a>
+      </li>
+      @for (int p = 1; p <= TotalPages; p++) {
+        int page = p;
+        <li class="page-item @(CurrentPage == page ? "active" : "")">
+          <a class="page-link" href="javascript:void(0);" @onclick="() => CurrentPage = page">@(page)</a>
+        </li>
+      }
+      <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+        <a class="page-link" href="javascript:void(0);" @onclick="() => { if (CurrentPage < TotalPages) CurrentPage++; }">
+          <svg class="bi" width="16" height="16" fill="currentColor">
+            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#chevron-right" />
+          </svg>
+        </a>
+      </li>
+    </ul>
+  </nav>
+}
 <div class="alert alert-danger mb-3" role="alert" hidden="@(ErrorText == null)" @onclick="ResetErrorText">
   <i>@ErrorText</i>
 </div>
@@ -309,6 +336,7 @@
     }
     set {
       _queryHandle = value;
+      CurrentPage = 1;
       if (string.IsNullOrWhiteSpace(_queryHandle)) {
         QueryHandleInfo = null;
         QueryNameError = null;
@@ -330,6 +358,10 @@
   public ElementReference ElementCommentRef { get; set; }
 
   private RelationInfo[]? relations;
+  private CancellationTokenSource? QueryCTS;
+  private int PageSize { get; } = 14;
+  private int CurrentPage { get; set; } = 1;
+  private int TotalPages => ((relations?.Count(r => IsVisible(r)) ?? 0) + PageSize - 1) / PageSize;
 
   private string? ErrorText { get; set; }
 
@@ -363,6 +395,7 @@
   }
 
   private async Task GetRelations() {
+    CurrentPage = 1;
     string? relationsJson = await LocalStorageService.GetValue(JS, $"relations{ChannelName}");
     if (!string.IsNullOrWhiteSpace(relationsJson)) {
       relations = JsonSerializer.Deserialize<RelationInfo[]>(relationsJson) ?? [];
@@ -414,8 +447,12 @@
   }
 
   public async void Query() {
+    QueryCTS?.Cancel();
+    QueryCTS = new CancellationTokenSource();
+    CancellationToken queryToken = QueryCTS.Token;
     ResetErrorText();
     QueryNameActive = true;
+    CurrentPage = 1;
     Navigation.NavigateTo($"{Navigation.Uri}#top");
     QueryHandleInfo = null;
     CommentRelation = null;
@@ -445,6 +482,14 @@
               };
           }
         }
+        if (queryToken.IsCancellationRequested) {
+          QueryName = string.Empty;
+          QueryHandleInfo = null;
+          QueryNameError = null;
+          QueryNameActive = false;
+          StateHasChanged();
+          return;
+        }
         if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
           QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
           if (QueryNameType == RelationType.Handle) {
@@ -465,6 +510,17 @@
     }
     QueryNameActive = false;
     StateHasChanged();
+  }
+
+  public void ClearQuery() {
+    if (QueryNameActive) {
+      HandleQuery.Cancel();
+      QueryCTS?.Cancel();
+    } else {
+      QueryName = string.Empty;
+      CommentRelation = null;
+      Comment = null;
+    }
   }
 
   public void EnterQuery(KeyboardEventArgs e) {
