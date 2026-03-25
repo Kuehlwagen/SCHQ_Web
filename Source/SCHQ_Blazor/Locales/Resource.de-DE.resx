@@ -456,4 +456,7 @@
   <data name="Confirm New R/O Password" xml:space="preserve">
     <value>Neues Lesezugriff Passwort bestätigen</value>
   </data>
+  <data name="Discord Webhook URL" xml:space="preserve">
+    <value>Discord Webhook-URL</value>
+  </data>
 </root>

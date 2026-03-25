@@ -13,7 +13,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SCHQ_Blazor.Services;
-public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer<Resource> localizer, RelationsContext dbContext, ChannelRelationsNotifier notifier, IHttpClientFactory httpClientFactory) : SCHQ_Relations.SCHQ_RelationsBase {
+
+public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, RelationsContext dbContext, ChannelRelationsNotifier notifier, IHttpClientFactory httpClientFactory) : SCHQ_Relations.SCHQ_RelationsBase {
 
   #region Channels
   public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
@@ -21,9 +22,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<SuccessReply> AddChannel(ChannelRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} AddChannel Request] Channel: {Channel}, Password: {Password}, ReadOnlyPassword: {ReadOnlyPassword}, Admin Password: {AdminPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.Password) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.ReadOnlyPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -40,7 +38,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               DecryptedPassword = request.Password,
               DecryptedAdminPassword = request.AdminPassword,
               Permissions = request.Permissons,
-              DecryptedReadOnlyPassword = request.ReadOnlyPassword
+              DecryptedReadOnlyPassword = request.ReadOnlyPassword,
+              DiscordWebhookUrl = request.DiscordWebhookUrl
             });
             rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
             if (!rtnVal.Success) {
@@ -51,8 +50,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
           }
         } catch (Exception ex) {
           rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-          logger.LogWarning("[{Guid} AddChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-            guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
       } else {
         rtnVal.Info = localizer["No admin password was given"];
@@ -61,7 +58,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       rtnVal.Info = localizer["No channel name was given"];
     }
 
-    logger.LogInformation("[{Guid} AddChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
 
@@ -70,8 +66,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<ChannelsReply> GetChannels() {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} GetChannels Request]", guid);
     ChannelsReply rtnVal = new();
 
     try {
@@ -87,12 +81,8 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
           Permissions = c.Permissions
         });
       }
-    } catch (Exception ex) {
-      logger.LogWarning("[{Guid} GetChannels Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-        guid, ex.Message, ex.InnerException?.Message ?? "Empty");
-    }
+    } catch { }
 
-    logger.LogInformation("[{Guid} GetChannels Reply] Count: {Count}", guid, rtnVal.Channels.Count);
     return rtnVal;
   }
 
@@ -101,8 +91,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<ChannelReply> GetChannel(ChannelNameRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} GetChannel Request] Channel: {Channel}", guid, request.Channel);
     ChannelReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -120,14 +108,9 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
             }
           };
         }
-      } catch (Exception ex) {
-        logger.LogWarning("[{Guid} GetChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
-      }
+      } catch { }
     }
 
-    logger.LogInformation("[{Guid} GetChannel Reply] Found: {Found}, Channel: {Channel}",
-      guid, rtnVal.Found, rtnVal.Channel);
     return rtnVal;
   }
 
@@ -136,9 +119,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SetChannelNewPassword Request] Channel: {Channel}, Admin Password: {AdminPassword}, New Password: {NewPassword}, Confirm New Password: {ConfirmNewPassword}, New ReadOnlyPassword: {NewReadOnlyPassword}, Confirm New ReadOnlyPassword: {ConfirmNewReadOnlyPassword}, Private: {Private}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewPasswordConfirm) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewReadOnlyPassword) ? "Yes" : "No", !string.IsNullOrWhiteSpace(request.NewReadOnlyPasswordConfirm) ? "Yes" : "No", request.Private);
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -182,6 +162,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               channel.Timestamp = DateTime.UtcNow;
               channel.Description = request.Description;
               channel.Private = request.Private;
+              channel.DiscordWebhookUrl = request.DiscordWebhookUrl;
               dbContext.Update(channel);
               rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
@@ -196,14 +177,11 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
         }
       } catch (Exception ex) {
         rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-        logger.LogWarning("[{Guid} SetChannelNewPassword Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     } else {
       rtnVal.Info = localizer["No channel name was given"];
     }
 
-    logger.LogInformation("[{Guid} SetChannelNewPassword Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
 
@@ -212,9 +190,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<SuccessReply> RemoveChannel(ChannelRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} RemoveChannel Request] Channel: {Channel}, Admin Password: {AdminPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -237,14 +212,11 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
         }
       } catch (Exception ex) {
         rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-        logger.LogWarning("[{Guid} RemoveChannel Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     } else {
       rtnVal.Info = localizer["No channel name was given"];
     }
 
-    logger.LogInformation("[{Guid} RemoveChannel Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
   #endregion
@@ -255,9 +227,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<SuccessReply> SetRelations(SetRelationsRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SetRelations Request] Channel: {Channel}, Password: {Password}, Relations: {Relations}",
-      guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request?.Relations?.Count);
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request?.Channel)) {
@@ -314,8 +283,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
           }
         } catch (Exception ex) {
           rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-          logger.LogWarning("[{Guid} SetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-            guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
       } else {
         rtnVal.Info = localizer["No relations were given"];
@@ -324,7 +291,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       rtnVal.Info = localizer["No channel name was given"];
     }
 
-    logger.LogInformation("[{Guid} SetRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
 
@@ -332,10 +298,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
     return SetRelation(request);
   }
 
-  public async Task<SuccessReply> SetRelation(SetRelationRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}, Relation: {Relation}, Comment: {Comment}",
-      guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Relation.Type, request.Relation.Name, request.Relation.Relation, request.Relation.Comment ?? "Empty");
+  public async Task<SuccessReply> SetRelation(SetRelationRequest request, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -354,6 +317,15 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
                 Type = request.Relation.Type,
                 Name = request.Relation.Name,
                 DateCreated = utcNow
+              };
+              DiscordWebhookRelationInfo webhookRelationInfo = new() {
+                WebhookUrl = channel.DiscordWebhookUrl,
+                Type = request.Relation.Type,
+                Name = request.Relation.Name,
+                OldRelation = relation.Value,
+                OldComment = relation.Comment ?? string.Empty,
+                NewRelation = request.Relation.Relation,
+                NewComment = request.Relation.Comment ?? string.Empty
               };
               relation.Timestamp = utcNow;
               relation.UpdateCount++;
@@ -376,6 +348,7 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
                     Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp()
                   }
                 });
+                PushRelationWebhook(webhookRelationInfo, handleInfo);
               }
             } else {
               rtnVal.Info = localizer["Access denied"];
@@ -385,8 +358,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
           }
         } catch (Exception ex) {
           rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-          logger.LogWarning("[{Guid} SetRelation Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-            guid, ex.Message, ex.InnerException?.Message ?? "Empty");
         }
       } else {
         rtnVal.Info = localizer["No relation name was given"];
@@ -395,7 +366,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       rtnVal.Info = localizer["No channel name was given"];
     }
 
-    logger.LogInformation("[{Guid} SetRelation Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
 
@@ -404,9 +374,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<RelationsReply> GetRelations(ChannelRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} GetRelations Request] Channel: {Channel}, Password: {Password}",
-      guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No");
     RelationsReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -433,12 +400,9 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
         }
       } catch (Exception ex) {
         rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-        logger.LogWarning("[{Guid} GetRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     }
 
-    logger.LogInformation("[{Guid} GetRelations Reply] Count: {Count}", guid, rtnVal.Relations.Count);
     return rtnVal;
   }
 
@@ -447,9 +411,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<RelationReply> GetRelation(RelationRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} GetRelation Request] Channel: {Channel}, Password: {Password}, Type: {Type}, Name: {Name}",
-      guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No", request.Type, request.Name);
     RelationReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel) && !string.IsNullOrWhiteSpace(request.Name)) {
@@ -470,22 +431,13 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
             };
           }
         }
-      } catch (Exception ex) {
-        logger.LogWarning("[{Guid} GetRelation Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
-      }
+      } catch { }
     }
 
-    logger.LogInformation("[{Guid} GetRelation Reply] Found: {Found}, Relation: {Relation}",
-      guid, rtnVal.Found, rtnVal.Relation);
     return rtnVal;
   }
 
   public override async Task SyncRelations(ChannelRequest request, IServerStreamWriter<SyncRelationsReply> responseStream, ServerCallContext context) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} SyncRelations Request] Channel: {Channel}, Password: {Password}",
-      guid, request.Channel, request.Password?.Length > 0 ? "Yes" : "No");
-
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
@@ -502,17 +454,13 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
                 });
               }
             }
-          } catch (OperationCanceledException) { }
-          finally {
+          } catch (OperationCanceledException) { } finally {
             notifier.Unsubscribe(request.Channel, reader);
           }
         }
-      } catch (Exception ex) {
-        logger.LogWarning("[{Guid} SyncRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}", guid, ex.Message, ex.InnerException?.Message ?? "Empty");
-      }
+      } catch { }
     }
 
-    logger.LogInformation("[{Guid} SyncRelations End]", guid);
   }
 
   public override Task<SuccessReply> RemoveRelations(ChannelRequest request, ServerCallContext context) {
@@ -520,9 +468,6 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
   }
 
   public async Task<SuccessReply> RemoveRelations(ChannelRequest request) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} RemoveRelations Request] Channel: {Channel}, Admin Password: {AdminPassword}",
-      guid, request.Channel, !string.IsNullOrWhiteSpace(request.AdminPassword) ? "Yes" : "No");
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
@@ -547,14 +492,11 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
         }
       } catch (Exception ex) {
         rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-        logger.LogWarning("[{Guid} RemoveRelations Exception] Message: {Message}, Inner Exception: {InnerExceptionMessage}",
-          guid, ex.Message, ex.InnerException?.Message ?? "Empty");
       }
     } else {
       rtnVal.Info = localizer["No channel name was given"];
     }
 
-    logger.LogInformation("[{Guid} RemoveRelations Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
   #endregion
@@ -568,28 +510,27 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
 
   private static readonly ConcurrentDictionary<string, byte> DiscordWebhooks = [];
 
-  private async Task RemoveDiscordWebhookLater(Guid guid, string key) {
+  private static async Task RemoveDiscordWebhookLater(string key) {
     await Task.Delay(TimeSpan.FromSeconds(30));
-    if (DiscordWebhooks.TryRemove(key, out _)) {
-      logger.LogInformation("[{Guid} PushWebhook Key Removed] Key: {Key}", guid, key);
-    } else {
-      logger.LogInformation("[{Guid} PushWebhook Key Not Removed] Key: {Key}", guid, key);
-    }
+    _ = DiscordWebhooks.TryRemove(key, out _);
   }
 
   public override async Task<SuccessReply> PushWebhook(WebhookRequest request, ServerCallContext context) {
-    Guid guid = Guid.NewGuid();
-    logger.LogInformation("[{Guid} PushWebhook Request] URL: {URL}, Body: {Body}", guid, request.Url, request.Body);
+    return await PushWebhook(request, true);
+  }
+
+  public async Task<SuccessReply> PushWebhook(WebhookRequest request, bool withWait = false) {
     SuccessReply rtnVal = new();
 
     if (IsValidDiscordWebhookUrl(request.Url) && !string.IsNullOrWhiteSpace(request.Body)) {
       try {
         DiscordWebhook? webhook = JsonSerializer.Deserialize<DiscordWebhook?>(request.Body);
-        if (webhook != null && webhook.embeds?.Count == 2) {
-          string? key = $"{request.Url},{webhook.embeds[0].description},{webhook.embeds[1].description}";
-          if (DiscordWebhooks.TryAdd(key, 0)) {
-            logger.LogInformation("[{Guid} PushWebhook Key Added] Key: {Key}", guid, key);
-            _ = RemoveDiscordWebhookLater(guid, key);
+        if (webhook != null) {
+          string? key = webhook?.embeds?.Count == 2 ? $"{request.Url},{webhook.embeds[0].description},{webhook.embeds[1].description}" : string.Empty;
+          if (!withWait || DiscordWebhooks.TryAdd(key, 0)) {
+            if (withWait) {
+              _ = RemoveDiscordWebhookLater(key);
+            }
             using HttpClient client = httpClientFactory.CreateClient();
             HttpResponseMessage response = await client.PostAsync(request.Url, new StringContent(request.Body, Encoding.UTF8, MediaTypeNames.Application.Json));
             rtnVal.Success = response.IsSuccessStatusCode;
@@ -597,11 +538,9 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
               rtnVal.Info = $"{response.StatusCode} ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync()}";
             }
           } else {
-            logger.LogInformation("[{Guid} PushWebhook Key Exists] Key: {Key}", guid, key);
             rtnVal.Info = "Event already exists";
           }
         } else {
-          logger.LogInformation("[{Guid} PushWebhook Body Invalid] Body: {Body}", guid, request.Body);
           rtnVal.Info = "Webhook body invalid";
         }
       } catch (Exception ex) {
@@ -609,9 +548,89 @@ public partial class SCHQ_Service(ILogger<SCHQ_Service> logger, IStringLocalizer
       }
     }
 
-    logger.LogInformation("[{Guid} PushWebhook Reply] Success: {Success}, Info: {Info}", guid, rtnVal.Success, rtnVal.Info);
     return rtnVal;
   }
+
+  private async void PushRelationWebhook(DiscordWebhookRelationInfo webhookRelationInfo, HandleInfo? handleInfo) {
+    if (webhookRelationInfo.OldRelation != webhookRelationInfo.NewRelation || webhookRelationInfo.OldComment != webhookRelationInfo.NewComment) {
+      string avatarUrl = HandleQuery.DefaultAvatarUrl;
+      if (webhookRelationInfo.Type == RelationType.Handle) {
+        if (!string.IsNullOrWhiteSpace(handleInfo?.Profile?.AvatarUrl)) {
+          avatarUrl = handleInfo.Profile.AvatarUrl;
+        }
+      } else {
+        if (handleInfo?.Organizations?.MainOrganization != null && !string.IsNullOrWhiteSpace(handleInfo.Organizations.MainOrganization.AvatarUrl)) {
+          avatarUrl = handleInfo.Organizations.MainOrganization.AvatarUrl;
+        } else if (handleInfo?.Organizations?.Affiliations?.Count > 0) {
+          OrganizationInfo? orgInfo = handleInfo.Organizations.Affiliations.FirstOrDefault(aff => aff?.Sid != null && aff.Sid.Equals(webhookRelationInfo.Name, StringComparison.OrdinalIgnoreCase));
+          if (!string.IsNullOrWhiteSpace(orgInfo?.AvatarUrl)) {
+            avatarUrl = orgInfo.AvatarUrl;
+          }
+        }
+      }
+      List<DiscordEmbedField> fields = [
+        new() {
+          name = "TYP",
+          value = $"{webhookRelationInfo.Type}"[..1].ToUpper(),
+          inline = true
+        }
+      ];
+      if (webhookRelationInfo.NewRelation != webhookRelationInfo.OldRelation) {
+        fields.AddRange(new() {
+          name = "ALT",
+          value = $"{webhookRelationInfo.OldRelation}"[..2].ToUpper(),
+          inline = true
+        },
+        new() {
+          name = "NEU",
+          value = $"{webhookRelationInfo.NewRelation}"[..2].ToUpper(),
+          inline = true
+        });
+      }
+      if (webhookRelationInfo.OldComment != webhookRelationInfo.NewComment) {
+        fields.Add(new() {
+          name = "KOMMENTAR ALT",
+          value = webhookRelationInfo.OldComment
+        });
+        fields.Add(new() {
+          name = "KOMMENTAR NEU",
+          value = webhookRelationInfo.NewComment
+        });
+      }
+      List<DiscordEmbed> embeds = [
+        new() {
+          author = new() {
+            name = webhookRelationInfo.Name,
+            url = webhookRelationInfo.Url,
+            icon_url = CorrectUrl(avatarUrl)
+          },
+          color = GetWebhookRelationColor(webhookRelationInfo.NewRelation ?? RelationValue.NotAssigned),
+          fields = fields
+        }
+      ];
+      DiscordWebhook webhook = new() {
+        embeds = embeds
+      };
+      await PushWebhook(new() {
+        Url = webhookRelationInfo.WebhookUrl,
+        Body = JsonSerializer.Serialize(webhook)
+      });
+    }
+  }
+
+  private static int? GetWebhookRelationColor(RelationValue relation) {
+    return relation switch {
+      RelationValue.Friendly => 5763719,
+      RelationValue.Neutral => 9807270,
+      RelationValue.Bogey => 15105570,
+      RelationValue.Bandit => 15548997,
+      _ => null
+    };
+  }
+  private static string CorrectUrl(string url) {
+    return url.StartsWith('/') ? $"https://robertsspaceindustries.com{url}" : url;
+  }
+
   #endregion
 
 }

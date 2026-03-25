@@ -20,7 +20,8 @@ builder.Services.AddGrpc();
 
 // Use MySQL database
 builder.Services.AddDbContext<RelationsContext>(options =>
-  options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!));
+  options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!)
+    .AddInterceptors(new MySqlGetLockInterceptor()));
 
 builder.Services.AddHttpClient("RSI", client => {
   client.Timeout = TimeSpan.FromSeconds(10);

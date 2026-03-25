@@ -20,7 +20,7 @@ public class RelationsContext(DbContextOptions<RelationsContext> options) : DbCo
 public class Relation {
   [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
   public int Id { get; set; }
-  public DateTime DateCreated {  get; set; }
+  public DateTime DateCreated { get; set; }
   public int UpdateCount { get; set; }
   public DateTime Timestamp { get; set; }
   public int ChannelId { get; set; }
@@ -59,4 +59,5 @@ public class Channel {
   public string? AdminPassword { get; set; }
   public ChannelPermissions Permissions { get; set; }
   public bool Private { get; set; }
+  public string? DiscordWebhookUrl { get; set; }
 }

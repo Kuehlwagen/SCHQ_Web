@@ -44,6 +44,7 @@ message ChannelRequest {
   google.protobuf.StringValue description = 5;
   bool private = 6;
   string readOnlyPassword = 7;
+  string discordWebhookUrl = 8;
 }
 
 message ChannelReply {
@@ -115,6 +116,7 @@ message UpdateChannelRequest {
   bool private = 10;
   string newReadOnlyPassword = 11;
   string newReadOnlyPasswordConfirm = 12;
+  string discordWebhookUrl = 13;
 }
 
 message WebhookRequest {

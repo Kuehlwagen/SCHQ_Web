@@ -132,7 +132,7 @@
                     }
                     <div>
                       <div>
-                        <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarUrl" /></a>
+                        <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarContent" /></a>
                       </div>
                       <div class="text-center" hidden="@(!QueryHandleInfo?.IsLive)">
                         <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
@@ -181,7 +181,7 @@
                   </div>
                   <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
                     @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
-                      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarUrl" /></a>
+                      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarContent" /></a>
                       RelationInfo? relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid) ?? new() { Type = RelationType.Organization, Name = QueryHandleInfo?.Organizations?.MainOrganization?.Sid };
                       RelationValue relValOrg = relOrg?.Relation ?? RelationValue.NotAssigned;
                       string? commentOrg = relOrg?.Comment ?? string.Empty;
@@ -226,7 +226,7 @@
                         RelationInfo? relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid) ?? new() { Type = RelationType.Organization, Name = aff.Sid };
                         RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
                         string? commentAff = relAff?.Comment ?? string.Empty;
-                        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarUrl" /></a>
+                        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarContent" /></a>
                         <div class="w-auto @(GetRelationClassColors(relAff!))">&nbsp;</div>
                         <div class="card-body m-1 p-1">
                           <div class="card-text small text-break">
@@ -530,7 +530,7 @@
           Relation = value,
           Comment = relation.Comment
         }
-      });
+      }, QueryHandleInfo);
       if (reply.Success && relations != null) {
         if (relations.FirstOrDefault(r => r.Type == relation.Type && r.Name == relation.Name) is RelationInfo r) {
           r.Relation = value;
