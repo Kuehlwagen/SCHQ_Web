@@ -86,14 +86,33 @@
                 </div>
               </div>
             </p>
-            <p>
-              <div class="input-group">
-                <div class="form-floating">
-                  <input type="url" class="form-control" id="floatingInputGroupDiscordWebhookUrl" placeholder="@Localizer["Discord Webhook URL"]" @bind=DiscordWebhookUrl @bind:event="oninput">
-                    <label for="floatingInputGroupDiscordWebhookUrl">@Localizer["Discord Webhook URL"]</label>
-                  </div>
-                </div>
+            @if (!IsAddMode) {
+              <h5 class="mb-2 fw-bold">@Localizer["Discord Webhook URL"]</h5>
+              <p>
+                @if (HasDiscordWebhookUrl) {
+                  <span class="badge text-bg-success mb-0">@Localizer["Webhook URL is configured"]</span>
+                } else {
+                  <span class="badge text-bg-secondary mb-0">@Localizer["No Webhook URL configured"]</span>
+                }
               </p>
+              <p>
+                <div class="input-group">
+                  <div class="form-floating">
+                    <input type="password" class="form-control" id="floatingInputGroupDiscordWebhookUrl" placeholder="@Localizer["New Discord Webhook URL"]" @bind=DiscordWebhookUrl @bind:event="oninput">
+                      <label for="floatingInputGroupDiscordWebhookUrl">@Localizer["New Discord Webhook URL"]</label>
+                    </div>
+                  </div>
+                </p>
+            } else {
+              <p>
+                <div class="input-group">
+                  <div class="form-floating">
+                    <input type="url" class="form-control" id="floatingInputGroupDiscordWebhookUrl" placeholder="@Localizer["Discord Webhook URL"]" @bind=DiscordWebhookUrl @bind:event="oninput">
+                      <label for="floatingInputGroupDiscordWebhookUrl">@Localizer["Discord Webhook URL"]</label>
+                    </div>
+                  </div>
+                </p>
+            }
             <p>
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="" id="flexCheckIsPrivate" @bind=IsPrivate @bind:event="oninput">
@@ -264,6 +283,7 @@
   }
   private string? Description { get; set; }
   private string? DiscordWebhookUrl { get; set; }
+  private bool HasDiscordWebhookUrl { get; set; }
   private string? Permissions { get; set; }
   private bool _isLocalStorage;
   private bool IsLocalStorage {
@@ -299,7 +319,8 @@
         Description = reply?.Channel?.Description ?? string.Empty;
         NewChannelName = ChannelName;
         IsPrivate = reply?.Channel?.Private ?? false;
-        DiscordWebhookUrl = reply?.Channel?.DiscordWebhookUrl ?? string.Empty;
+        HasDiscordWebhookUrl = !string.IsNullOrWhiteSpace(reply?.Channel?.DiscordWebhookUrl);
+        DiscordWebhookUrl = string.Empty;
       }
     }
     ButtonIsDisabled = CheckButtonIsDisabled;

@@ -459,4 +459,13 @@
   <data name="Discord Webhook URL" xml:space="preserve">
     <value>Discord Webhook-URL</value>
   </data>
+  <data name="Webhook URL is configured" xml:space="preserve">
+    <value>Webhook-URL konfiguriert</value>
+  </data>
+  <data name="No Webhook URL configured" xml:space="preserve">
+    <value>Keine Webhook-URL konfiguriert</value>
+  </data>
+  <data name="New Discord Webhook URL" xml:space="preserve">
+    <value>Neue Discord Webhook-URL</value>
+  </data>
 </root>
