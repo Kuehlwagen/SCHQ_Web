@@ -106,7 +106,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               HasPassword = channel.Password?.Length > 0,
               Permissions = channel.Permissions,
               Private = channel.Private,
-              DiscordWebhookUrl = channel.DiscordWebhookUrl
+              DiscordWebhookUrl = channel.DiscordWebhookUrl ?? string.Empty
             }
           };
         }
