@@ -299,6 +299,7 @@
         Description = reply?.Channel?.Description ?? string.Empty;
         NewChannelName = ChannelName;
         IsPrivate = reply?.Channel?.Private ?? false;
+        DiscordWebhookUrl = reply?.Channel?.DiscordWebhookUrl;
       }
     }
     ButtonIsDisabled = CheckButtonIsDisabled;

@@ -93,6 +93,7 @@ message ChannelInfo {
   ChannelPermissions permissions = 3;
   google.protobuf.StringValue description = 4;
   bool private = 5;
+  string discordWebhookUrl = 6;
 }
 
 message RelationInfo {

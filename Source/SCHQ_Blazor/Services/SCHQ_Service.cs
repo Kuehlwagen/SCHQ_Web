@@ -38,6 +38,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               DecryptedPassword = request.Password,
               DecryptedAdminPassword = request.AdminPassword,
               Permissions = request.Permissons,
+              Private = request.Private,
               DecryptedReadOnlyPassword = request.ReadOnlyPassword,
               DiscordWebhookUrl = request.DiscordWebhookUrl
             });
@@ -104,7 +105,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               Description = channel.Description ?? string.Empty,
               HasPassword = channel.Password?.Length > 0,
               Permissions = channel.Permissions,
-              Private = channel.Private
+              Private = channel.Private,
+              DiscordWebhookUrl = channel.DiscordWebhookUrl
             }
           };
         }
