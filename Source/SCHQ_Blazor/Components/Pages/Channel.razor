@@ -675,59 +675,63 @@
     QueryHandleInfo = null;
     CommentRelation = null;
     Comment = null;
-    if (QueryName != null) {
-      QueryName = QueryName.Trim();
-      string memoryKey = $"{QueryNameType}_{QueryName.ToLowerInvariant()}";
-      if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo)) {
-        if (QueryNameType == RelationType.Handle) {
-          QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
-        } else {
-          OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
-          if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-            QueryHandleInfo = new() {
-              Organizations = new() {
-                MainOrganization = orgInf.Organization
-              },
-              HttpResponse = new() {
-                StatusCode = HttpStatusCode.OK,
-                ErrorText = null,
-                Source = null
-              }
-            };
-          } else {
-            QueryHandleInfo = new() {
-              HttpResponse = orgInf?.HttpResponse
-            };
-          }
-        }
-        if (queryToken.IsCancellationRequested) {
-          QueryName = string.Empty;
-          QueryHandleInfo = null;
-          QueryNameError = null;
-          QueryNameActive = false;
-          StateHasChanged();
-          return;
-        }
-        if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
-          QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
+    try {
+      if (QueryName != null) {
+        QueryName = QueryName.Trim();
+        string memoryKey = $"{QueryNameType}_{QueryName.ToLowerInvariant()}";
+        if (!Memory.TryGetValue(memoryKey, out HandleInfo? MemoryHandleInfo)) {
           if (QueryNameType == RelationType.Handle) {
-            QueryName = QueryHandleInfo?.Profile?.Handle;
+            QueryHandleInfo = await HandleQuery.GetHandleInfo(QueryName);
           } else {
-            QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
+            OrganizationOnlyInfo? orgInf = await HandleQuery.GetOrganizationInfo(QueryName);
+            if (orgInf?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+              QueryHandleInfo = new() {
+                Organizations = new() {
+                  MainOrganization = orgInf.Organization
+                },
+                HttpResponse = new() {
+                  StatusCode = HttpStatusCode.OK,
+                  ErrorText = null,
+                  Source = null
+                }
+              };
+            } else {
+              QueryHandleInfo = new() {
+                HttpResponse = orgInf?.HttpResponse
+              };
+            }
           }
-          Memory.Set(memoryKey, QueryHandleInfo, MemoryCacheOptions);
+          if (queryToken.IsCancellationRequested) {
+            QueryName = string.Empty;
+            QueryHandleInfo = null;
+            QueryNameError = null;
+            return;
+          }
+          if (QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.OK) {
+            QueryNameError = QueryHandleInfo.HttpResponse.ErrorText;
+            if (QueryNameType == RelationType.Handle) {
+              QueryName = QueryHandleInfo?.Profile?.Handle;
+            } else {
+              QueryName = QueryHandleInfo?.Organizations?.MainOrganization?.Sid;
+            }
+            Memory.Set(memoryKey, QueryHandleInfo, MemoryCacheOptions);
+          } else {
+            QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
+            QueryHandleInfo = null;
+          }
         } else {
-          QueryNameError = QueryHandleInfo?.HttpResponse?.StatusCode == HttpStatusCode.NotFound ? QueryNameType == RelationType.Handle ? $"{Localizer["Handle not found"]}..." : $"{Localizer["Organization not found"]}..." : QueryHandleInfo?.HttpResponse?.ErrorText ?? $"{Localizer["An error occured"]}...";
-          QueryHandleInfo = null;
+          QueryNameError = null;
+          QueryName = QueryNameType == RelationType.Handle ? MemoryHandleInfo?.Profile?.Handle : MemoryHandleInfo?.Organizations?.MainOrganization?.Sid;
+          QueryHandleInfo = MemoryHandleInfo;
         }
-      } else {
-        QueryNameError = null;
-        QueryName = QueryNameType == RelationType.Handle ? MemoryHandleInfo?.Profile?.Handle : MemoryHandleInfo?.Organizations?.MainOrganization?.Sid;
-        QueryHandleInfo = MemoryHandleInfo;
       }
+    } catch (Exception ex) {
+      QueryNameError = $"{Localizer["Exception"]}: {ex.Message}, {Localizer["Inner Exception"]}: {ex.InnerException?.Message ?? Localizer["Empty"]}";
+      QueryHandleInfo = null;
+    } finally {
+      QueryNameActive = false;
+      StateHasChanged();
     }
-    QueryNameActive = false;
-    StateHasChanged();
   }
 
   public void EnterQuery(KeyboardEventArgs e) {
