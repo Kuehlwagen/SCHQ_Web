@@ -35,11 +35,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               Timestamp = utcNow,
               Name = request.Channel,
               Description = request.Description,
-              DecryptedPassword = request.Password,
               DecryptedAdminPassword = request.AdminPassword,
-              Permissions = request.Permissons,
               Private = request.Private,
-              DecryptedReadOnlyPassword = request.ReadOnlyPassword,
               DiscordWebhookUrl = request.DiscordWebhookUrl
             });
             rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
@@ -70,16 +67,16 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     ChannelsReply rtnVal = new();
 
     try {
-      IOrderedQueryable<Channel> results = from c in dbContext.Channels!.AsNoTracking()
-                                           where !c.Private
-                                           orderby c.Name
-                                           select c;
-      foreach (Channel c in await results.ToListAsync()) {
+      List<Channel> channels = await dbContext.Channels!.AsNoTracking()
+        .Include(c => c.Users)
+        .Where(c => !c.Private)
+        .OrderBy(c => c.Name)
+        .ToListAsync();
+      foreach (Channel c in channels) {
         rtnVal.Channels.Add(new ChannelInfo() {
           Name = c.Name,
           Description = c.Description ?? string.Empty,
-          HasPassword = c.Password?.Length > 0,
-          Permissions = c.Permissions
+          HasUsers = c.Users.Count != 0
         });
       }
     } catch { }
@@ -97,14 +94,13 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       try {
-        if (await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == request.Channel) is Channel channel) {
+        if (await dbContext.Channels!.AsNoTracking().Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel) is Channel channel) {
           rtnVal = new ChannelReply() {
             Found = true,
             Channel = new() {
               Name = channel.Name,
               Description = channel.Description ?? string.Empty,
-              HasPassword = channel.Password?.Length > 0,
-              Permissions = channel.Permissions,
+              HasUsers = channel.Users.Count != 0,
               Private = channel.Private,
               DiscordWebhookUrl = channel.DiscordWebhookUrl ?? string.Empty
             }
@@ -131,21 +127,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
         Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
         if (channel != null) {
           if (channel.AdminPassword == request.AdminPassword) {
-            if (!string.IsNullOrWhiteSpace(request.NewPassword) && !string.IsNullOrWhiteSpace(request.NewPasswordConfirm)) {
-              if (request.NewPassword == request.NewPasswordConfirm) {
-                channel.DecryptedPassword = request.NewPassword;
-              } else {
-                rtnVal.Info = localizer["New channel passwords don't match"];
-              }
-            }
-            if (!string.IsNullOrWhiteSpace(request.NewReadOnlyPassword) && !string.IsNullOrWhiteSpace(request.NewReadOnlyPasswordConfirm)) {
-              if (request.NewReadOnlyPassword == request.NewReadOnlyPasswordConfirm) {
-                channel.DecryptedReadOnlyPassword = request.NewReadOnlyPassword;
-              } else {
-                rtnVal.Info = localizer["New channel R/O passwords don't match"];
-              }
-            }
-            if (string.IsNullOrWhiteSpace(rtnVal.Info) && !string.IsNullOrWhiteSpace(request.NewAdminPassword) && !string.IsNullOrWhiteSpace(request.NewAdminPasswordConfirm)) {
+            if (!string.IsNullOrWhiteSpace(request.NewAdminPassword) && !string.IsNullOrWhiteSpace(request.NewAdminPasswordConfirm)) {
               if (request.NewAdminPassword == request.NewAdminPasswordConfirm) {
                 channel.DecryptedAdminPassword = request.NewAdminPassword;
               } else {
@@ -160,7 +142,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               }
             }
             if (string.IsNullOrWhiteSpace(rtnVal.Info)) {
-              channel.Permissions = request.Permissions;
               channel.Timestamp = DateTime.UtcNow;
               channel.Description = request.Description;
               channel.Private = request.Private;
@@ -220,6 +201,18 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     }
 
     return rtnVal;
+  }
+
+  public async Task<bool> ValidateAdminPassword(string? channelName, string? adminPassword) {
+    if (string.IsNullOrWhiteSpace(channelName) || string.IsNullOrWhiteSpace(adminPassword)) {
+      return false;
+    }
+    channelName = channelName.Trim();
+    string encryptedPassword = Encryption.EncryptText(adminPassword);
+    try {
+      return await dbContext.Channels!.AsNoTracking().AnyAsync(c => c.Name == channelName && c.AdminPassword == encryptedPassword);
+    } catch { }
+    return false;
   }
   #endregion
 
@@ -308,10 +301,11 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
         request.Channel = request.Channel.Trim();
         request.Relation.Name = request.Relation.Name.Trim();
         request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+        request.Username = request.Username?.Trim() ?? string.Empty;
         try {
-          Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
+          Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
           if (channel != null) {
-            if (channel.Permissions >= ChannelPermissions.Write || channel.Password == request.Password) {
+            if (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == request.Username && u.Password == request.Password)) {
               Relation? relation = await dbContext.Relations!.FirstOrDefaultAsync(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
               DateTime utcNow = DateTime.UtcNow;
               relation ??= new() {
@@ -322,6 +316,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               };
               DiscordWebhookRelationInfo webhookRelationInfo = new() {
                 WebhookUrl = channel.DiscordWebhookUrl,
+                Username = request.Username,
                 Type = request.Relation.Type,
                 Name = request.Relation.Name,
                 OldRelation = relation.Value,
@@ -381,9 +376,10 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+      request.Username = request.Username?.Trim() ?? string.Empty;
       try {
-        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.AdminPassword == request.Password || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
-        if (channel != null) {
+        Channel? channel = await dbContext.Channels!.AsNoTracking().Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
+        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
           IOrderedQueryable<Relation> results = from rel in dbContext.Relations!.AsNoTracking()
                                                 where rel.ChannelId == channel.Id
                                                 orderby rel.Type descending, rel.Name
@@ -419,9 +415,10 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       request.Channel = request.Channel.Trim();
       request.Name = request.Name.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+      request.Username = request.Username?.Trim() ?? string.Empty;
       try {
-        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
-        if (channel != null) {
+        Channel? channel = await dbContext.Channels!.AsNoTracking().Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
+        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
           IQueryable<Relation> results = from rel in dbContext.Relations!.AsNoTracking()
                                          where rel.ChannelId == channel.Id && rel.Type == request.Type && rel.Name == request.Name
                                          select rel;
@@ -443,9 +440,10 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
       request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+      request.Username = request.Username?.Trim() ?? string.Empty;
       try {
-        Channel? channel = dbContext.Channels!.FirstOrDefault(c => c.Name == request.Channel && (c.Permissions >= ChannelPermissions.Read || c.Password == request.Password || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == request.Password)));
-        if (channel != null) {
+        Channel? channel = dbContext.Channels!.Include(c => c.Users).FirstOrDefault(c => c.Name == request.Channel);
+        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
           var reader = notifier.Subscribe(request.Channel);
           try {
             await foreach (var notification in reader.ReadAllAsync(context.CancellationToken)) {
@@ -636,15 +634,16 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> AddRelationTag(string channelName, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
+  public async Task<SuccessReply> AddRelationTag(string channelName, string username, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
       channelName = channelName.Trim();
       name = name.Trim();
+      username = username?.Trim() ?? string.Empty;
       password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
       try {
-        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && (c.Permissions >= ChannelPermissions.Write || c.Password == password));
-        if (channel != null) {
+        Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
+        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
           Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
           if (tag != null) {
             Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
@@ -662,7 +661,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
                 rtnVal.Info = localizer["No entries written"];
               } else {
                 notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), TagId = tagId, TagAdded = true } });
-                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, handleInfo);
+                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = username, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, handleInfo);
               }
             } else {
               rtnVal.Success = true;
@@ -680,15 +679,16 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> RemoveRelationTag(string channelName, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
+  public async Task<SuccessReply> RemoveRelationTag(string channelName, string username, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
       channelName = channelName.Trim();
       name = name.Trim();
+      username = username?.Trim() ?? string.Empty;
       password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
       try {
-        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && (c.Permissions >= ChannelPermissions.Write || c.Password == password));
-        if (channel != null) {
+        Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
+        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
           Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
           if (relation != null) {
             Tag? tag = relation.Tags.FirstOrDefault(t => t.Id == tagId);
@@ -699,7 +699,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
                 rtnVal.Info = localizer["No entries written"];
               } else {
                 notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), TagId = tagId, TagAdded = false } });
-                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, handleInfo);
+                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = username, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, handleInfo);
               }
             } else {
               rtnVal.Success = true;
@@ -713,6 +713,122 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       } catch (Exception ex) {
         rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
       }
+    }
+    return rtnVal;
+  }
+  #endregion
+
+  #region Users
+  public async Task<List<User>> GetUsers(string channelName, string adminPassword) {
+    List<User> rtnVal = [];
+    if (!string.IsNullOrWhiteSpace(channelName)) {
+      channelName = channelName.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          rtnVal = await dbContext.Users!.AsNoTracking().Where(u => u.ChannelId == channel.Id).OrderBy(u => u.Username).ToListAsync();
+        }
+      } catch { }
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> AddUser(string channelName, string adminPassword, string username, string password, ChannelPermissions permissions) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(username)) {
+      channelName = channelName.Trim();
+      username = username.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          if (!await dbContext.Users!.AnyAsync(u => u.ChannelId == channel.Id && u.Username == username)) {
+            dbContext.Add(new User() {
+              ChannelId = channel.Id,
+              Username = username,
+              DecryptedPassword = password,
+              Permissions = permissions
+            });
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["User already exists"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    } else {
+      rtnVal.Info = localizer["No username was given"];
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> UpdateUser(string channelName, string adminPassword, int userId, string? newPassword, ChannelPermissions permissions) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName)) {
+      channelName = channelName.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          User? user = await dbContext.Users!.FirstOrDefaultAsync(u => u.Id == userId && u.ChannelId == channel.Id);
+          if (user != null) {
+            if (!string.IsNullOrWhiteSpace(newPassword)) {
+              user.DecryptedPassword = newPassword;
+            }
+            user.Permissions = permissions;
+            dbContext.Update(user);
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["User not found"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    } else {
+      rtnVal.Info = localizer["No channel name was given"];
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> RemoveUser(string channelName, string adminPassword, int userId) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName)) {
+      channelName = channelName.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          User? user = await dbContext.Users!.FirstOrDefaultAsync(u => u.Id == userId && u.ChannelId == channel.Id);
+          if (user != null) {
+            dbContext.Remove(user);
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["User not found"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    } else {
+      rtnVal.Info = localizer["No channel name was given"];
     }
     return rtnVal;
   }
@@ -832,6 +948,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
         }
       ];
       DiscordWebhook webhook = new() {
+        username = !string.IsNullOrWhiteSpace(webhookRelationInfo.Username) ? webhookRelationInfo.Username : null,
         embeds = embeds
       };
       await PushWebhook(new() {

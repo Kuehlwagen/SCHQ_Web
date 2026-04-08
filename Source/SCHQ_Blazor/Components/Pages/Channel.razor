@@ -2,6 +2,7 @@
 @page "/localchannel"
 @page "/localchannel/{ChannelName}"
 @using Google.Protobuf.WellKnownTypes
+@using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.Caching.Memory
 @using SCHQ_Blazor.Classes
 @using System.Net
@@ -10,6 +11,7 @@
 @using System.Text.Json.Serialization
 @using SCHQ_Blazor.Models
 @using SCHQ_Blazor.Services
+@using SCHQ_Protos
 @using static SCHQ_Protos.SCHQ_Relations
 @attribute [StreamRendering(false)]
 @inject IConfiguration Config
@@ -46,398 +48,406 @@
   <h1 id="top">@ChannelName</h1>
 }
 
-@if (!IsLocal && relations == null) {
+@if (!IsLocal && CurrentChannel == null && ErrorText == null) {
   <p><em>@Localizer["Loading relations for channel"] <b>@ChannelName</b>...</em></p>
+} else if (!IsLocal && CurrentChannel == null && ErrorText != null) {
+  <p><em>@ErrorText</em></p>
 } else {
   @if (!IsLocal) {
     <p>
       <div class="input-group">
         <div class="form-floating">
-          <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Channel Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
-            <label for="floatingInputGroupChannelPassword">@Localizer["Channel Password"]</label>
+          <input type="text" class="form-control" id="floatingInputGroupChannelUsername" placeholder="@Localizer["Username"]" @bind=ChannelUsername @bind:event="oninput" disabled="@(SyncActive)">
+            <label for="floatingInputGroupChannelUsername">@Localizer["Username"]</label>
           </div>
-          <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive" title="@Localizer["Refresh Relations"]">
-            <svg class="bi" width="16" height="16" fill="currentColor">
-              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-clockwise" />
-            </svg>
-          </button>
-          <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations" title="@Localizer["Sync Relations"]">
-            <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
-            <svg class="bi" width="16" height="16" fill="currentColor" hidden="@SyncActive">
-              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
-            </svg>
-          </button>
-        </div>
-      </p>
-    }
-    <p>
-      <div class="input-group mb-1" id="QueryName" hidden="@(!IsLocal && relations?.Length == 0 && QueryNameError != null)">
-        <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive" title="@Localizer["Switch Type"]">
-          <svg class="bi" width="16" height="16" fill="currentColor">
-            @if (QueryNameType == RelationType.Handle) {
-              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-            } else {
-              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-            }
-          </svg>
-        </button>
-        <div class="form-floating">
-          <input type="text" @onfocusin=OnFocusIn class="form-control z-0" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
-            <label for="floatingInputGroupName" class="z-0">@QueryNamePlaceholder</label>
-          </div>
-          <div class="input-group-text bg-success p-2 z-1" hidden="@HideFilter">
-            <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["User Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
+              <label for="floatingInputGroupChannelPassword">@Localizer["User Password"]</label>
             </div>
-            <div class="input-group-text bg-secondary p-2 z-1" hidden="@HideFilter">
-              <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
+            <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive" title="@Localizer["Refresh Relations"]">
+              <svg class="bi" width="16" height="16" fill="currentColor">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-clockwise" />
+              </svg>
+            </button>
+            <button class="@(SyncButtonClass)" type="button" @onclick="SyncRelations" title="@Localizer["Sync Relations"]">
+              <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!SyncActive)" />
+              <svg class="bi" width="16" height="16" fill="currentColor" hidden="@SyncActive">
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#arrow-repeat" />
+              </svg>
+            </button>
+          </div>
+        </p>
+      }
+      <p>
+        <div class="input-group mb-1" id="QueryName" hidden="@(!IsLocal && relations?.Length == 0 && QueryNameError != null)">
+          <button type="button" class="btn btn-primary" @onclick="() => QueryNameType = QueryNameType == RelationType.Handle ? RelationType.Organization : RelationType.Handle" disabled="@QueryNameActive" title="@Localizer["Switch Type"]">
+            <svg class="bi" width="16" height="16" fill="currentColor">
+              @if (QueryNameType == RelationType.Handle) {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+              } else {
+                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+              }
+            </svg>
+          </button>
+          <div class="form-floating">
+            <input type="text" @onfocusin=OnFocusIn class="form-control z-0" id="floatingInputGroupName" placeholder="@QueryNamePlaceholder" @bind=QueryName @bind:event="oninput" disabled="@QueryNameActive" @onkeydown="@EnterQuery">
+              <label for="floatingInputGroupName" class="z-0">@QueryNamePlaceholder</label>
+            </div>
+            <div class="input-group-text bg-success p-2 z-1" hidden="@HideFilter">
+              <input class="form-check-input mt-0 bg-success border-white" type="checkbox" value="" checked="@FilterFriendly" @onchange="@(async (args) => { FilterFriendly = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterFriendly", $"{FilterFriendly}"); })" title="@Localizer["Filter"]: @Localizer["Friendly"]">
               </div>
-              <div class="input-group-text bg-warning p-2 z-1" hidden="@HideFilter">
-                <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
+              <div class="input-group-text bg-secondary p-2 z-1" hidden="@HideFilter">
+                <input class="form-check-input mt-0 bg-secondary border-white" type="checkbox" value="" checked="@FilterNeutral" @onchange="@(async (args) => { FilterNeutral = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterNeutral", $"{FilterNeutral}"); })" title="@Localizer["Filter"]: @Localizer["Neutral"]">
                 </div>
-                <div class="input-group-text bg-danger p-2 z-1" hidden="@HideFilter">
-                  <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
+                <div class="input-group-text bg-warning p-2 z-1" hidden="@HideFilter">
+                  <input class="form-check-input mt-0 bg-warning border-white" type="checkbox" value="" checked="@FilterBogey" @onchange="@(async (args) => { FilterBogey = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterBogey", $"{FilterBogey}"); })" title="@Localizer["Filter"]: @Localizer["Bogey"]">
                   </div>
-                  <div class="input-group-text bg-dark p-2 z-1" hidden="@HideFilter">
-                    <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Filter"]: @Localizer["Not Assigned"]">
+                  <div class="input-group-text bg-danger p-2 z-1" hidden="@HideFilter">
+                    <input class="form-check-input mt-0 bg-danger border-white" type="checkbox" value="" checked="@FilterBandit" @onchange="@(async (args) => { FilterBandit = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterBandit", $"{FilterBandit}"); })" title="@Localizer["Filter"]: @Localizer["Bandit"]">
                     </div>
-                    <button type="button" class="btn btn-sm btn-primary" @onclick="() => { HideFilter = !HideFilter; }" title="@Localizer["Filter"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        @if (HideFilter) {
-                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel" />
-                        } else {
-                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel-fill" />
+                    <div class="input-group-text bg-dark p-2 z-1" hidden="@HideFilter">
+                      <input class="form-check-input mt-0 bg-dark border-white" type="checkbox" value="" checked="@FilterNotAssigned" @onchange="@(async (args) => { FilterNotAssigned = (bool?)args.Value; CurrentPage = 1; await LocalStorageService.SetValue(JS, "filterNotAssigned", $"{FilterNotAssigned}"); })" title="@Localizer["Filter"]: @Localizer["Not Assigned"]">
+                      </div>
+                      <button type="button" class="btn btn-sm btn-primary" @onclick="() => { HideFilter = !HideFilter; }" title="@Localizer["Filter"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          @if (HideFilter) {
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel" />
+                          } else {
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#funnel-fill" />
+                          }
+                        </svg>
+                      </button>
+                      <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
+                        <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
+                        </svg>
+                      </button>
+                      <button type="button" class="btn btn-danger" @onclick="ClearQuery" disabled="@(!QueryNameActive && string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                        </svg>
+                      </button>
+                    </div>
+                    @if (QueryNameError == null && ChannelTags.Count > 0) {
+                      <div class="d-flex flex-wrap gap-1 mb-1">
+                        @foreach (var tag in ChannelTags) {
+                          bool isFilterActive = FilterTags.Contains(tag.Id);
+                          <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isFilterActive ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleFilterTag(tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                         }
-                      </svg>
-                    </button>
-                    <button type="button" class="btn btn-primary" @onclick="Query" disabled="@(QueryNameActive || string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Search"]">
-                      <span class="spinner-border spinner-border-sm" aria-hidden="true" hidden="@(!QueryNameActive)" />
-                      <svg class="bi" width="16" height="16" fill="currentColor" hidden="@QueryNameActive">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#search" />
-                      </svg>
-                    </button>
-                    <button type="button" class="btn btn-danger" @onclick="ClearQuery" disabled="@(!QueryNameActive && string.IsNullOrWhiteSpace(QueryName))" title="@Localizer["Clear"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                      </svg>
-                    </button>
-                  </div>
-                  @if (QueryNameError == null && ChannelTags.Count > 0) {
-                    <div class="d-flex flex-wrap gap-1 mb-1">
-                      @foreach (var tag in ChannelTags) {
-                        bool isFilterActive = FilterTags.Contains(tag.Id);
-                        <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isFilterActive ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleFilterTag(tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
-                      }
-                    </div>
-                  }
-                  <div class="alert alert-danger mb-1" role="alert" hidden="@(QueryNameError == null)">
-                    <i>@QueryNameError</i>
-                  </div>
-                  <div class="card flex-row mb-1 mt-3" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
-                    @{
-                      RelationInfo? relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandleInfo?.Profile?.Handle) ?? new() { Type = RelationType.Handle, Name = QueryHandleInfo?.Profile?.Handle ?? string.Empty };
-                      RelationValue relValHandle = relHandle?.Relation ?? RelationValue.NotAssigned;
-                      string? commentHandle = relHandle?.Comment ?? string.Empty;
+                      </div>
                     }
-                    <div>
-                      <div>
-                        <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarContent" /></a>
-                      </div>
-                      <div class="text-center" hidden="@(!QueryHandleInfo?.IsLive)">
-                        <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
-                          <span class="badge bg-danger text-white w-100">LIVE</span>
-                        </a>
-                      </div>
+                    <div class="alert alert-danger mb-1" role="alert" hidden="@(QueryNameError == null)">
+                      <i>@QueryNameError</i>
                     </div>
-                    <div class="w-auto @(GetRelationClassColors(relHandle!))">&nbsp;</div>
-                    <div class="card-body m-1 p-1">
-                      <div class="card-text small text-break">
-                        <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
-                        <div hidden="@(QueryHandleInfo?.Profile?.CommunityMonicker == null)"><b><span>CM: </span><span class="user-select-all">@QueryHandleInfo?.Profile?.CommunityMonicker</span></b></div>
-                        <div hidden="@(QueryHandleInfo?.Profile?.Enlisted == DateTime.MinValue)">@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
-                        <div hidden="@(QueryHandleInfo?.Profile?.DisplayTitle == null)"><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
-                        <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
-                        @if (ChannelTags.Count > 0) {
-                          <div class="d-flex flex-wrap gap-1 mb-1">
-                            @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(t.Id))) {
-                              bool isSelected = GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(tag.Id);
-                              <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relHandle!.Type, relHandle!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
-                            }
-                          </div>
-                        }
-                        <div class="badge @GetRelationClassColors(relHandle!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relHandle!)">
-                          <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentHandle))">
-                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-                          </svg>
-                          @commentHandle
+                    <div class="card flex-row mb-1 mt-3" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
+                      @{
+                        RelationInfo? relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandleInfo?.Profile?.Handle) ?? new() { Type = RelationType.Handle, Name = QueryHandleInfo?.Profile?.Handle ?? string.Empty };
+                        RelationValue relValHandle = relHandle?.Relation ?? RelationValue.NotAssigned;
+                        string? commentHandle = relHandle?.Comment ?? string.Empty;
+                      }
+                      <div>
+                        <div>
+                          <a href="@QueryHandleInfo?.Profile?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Profile?.AvatarContent" /></a>
+                        </div>
+                        <div class="text-center" hidden="@(!QueryHandleInfo?.IsLive)">
+                          <a href="https://robertsspaceindustries.com/community-hub/user/@QueryHandleInfo?.Profile?.Handle" target="_blank">
+                            <span class="badge bg-danger text-white w-100">LIVE</span>
+                          </a>
                         </div>
                       </div>
-                    </div>
-                    <div class="btn-group-vertical" role="group">
-                      <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Friendly || IsLocal && relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-                      <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Neutral || IsLocal && relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-                      <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bogey || IsLocal && relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-                      <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bandit || IsLocal && relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
-                    </div>
-                  </div>
-                  <div class="input-group mb-1" id="commentSection" hidden="@(CommentRelation == null)">
-                    <div class="form-floating">
-                      <input type="text" @ref="ElementCommentRef" class="form-control" id="floatingInputGroupComment" placeholder="@($"{CommentRelation?.Name} {Localizer["Comment"]}")" @bind="Comment" @bind:event="oninput" @onkeydown="@EnterComment" onfocus="this.select();" />
-                      <label for="floatingInputGroupComment">@($"{CommentRelation?.Name} {Localizer["Comment"]}")</label>
-                    </div>
-                    <button class="btn btn-primary text-white" type="button" @onclick="SaveComment" title="@Localizer["Save"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-                      </svg>
-                    </button>
-                    <button type="button" class="btn btn-danger" @onclick="() => { CommentRelation = null; Comment = null; }" disabled="@QueryNameActive" title="@Localizer["Clear"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
-                    @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
-                      <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarContent" /></a>
-                      RelationInfo? relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid) ?? new() { Type = RelationType.Organization, Name = QueryHandleInfo?.Organizations?.MainOrganization?.Sid };
-                      RelationValue relValOrg = relOrg?.Relation ?? RelationValue.NotAssigned;
-                      string? commentOrg = relOrg?.Comment ?? string.Empty;
-                      <div class="w-auto @(GetRelationClassColors(relOrg!))">&nbsp;</div>
+                      <div class="w-auto @(GetRelationClassColors(relHandle!))">&nbsp;</div>
                       <div class="card-body m-1 p-1">
                         <div class="card-text small text-break">
-                          <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
-                          <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@QueryHandleInfo?.Organizations?.MainOrganization?.Sid</span></b></div>
-                          <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
-                            @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
-                            @for (int i = 0; i < 5; i++) {
-                              <img width="20" height="20" src="images/rank_star_@(i < QueryHandleInfo?.Organizations?.MainOrganization?.RankStars ? "active" : "inactive").png" />
-                            }
-                          </div>
-                          <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
-                          <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+                          <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Profile?.Handle</b></div>
+                          <div hidden="@(QueryHandleInfo?.Profile?.CommunityMonicker == null)"><b><span>CM: </span><span class="user-select-all">@QueryHandleInfo?.Profile?.CommunityMonicker</span></b></div>
+                          <div hidden="@(QueryHandleInfo?.Profile?.Enlisted == DateTime.MinValue)">@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
+                          <div hidden="@(QueryHandleInfo?.Profile?.DisplayTitle == null)"><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
+                          <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
                           @if (ChannelTags.Count > 0) {
                             <div class="d-flex flex-wrap gap-1 mb-1">
-                              @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(t.Id))) {
-                                bool isSelected = GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(tag.Id);
-                                <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relOrg!.Type, relOrg!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                              @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(t.Id))) {
+                                bool isSelected = GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(tag.Id);
+                                <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relHandle!.Type, relHandle!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                               }
                             </div>
                           }
-                          <div class="badge @GetRelationClassColors(relOrg!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relOrg!)">
-                            <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentOrg))">
+                          <div class="badge @GetRelationClassColors(relHandle!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relHandle!)">
+                            <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentHandle))">
                               <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
                             </svg>
-                            @commentOrg
+                            @commentHandle
                           </div>
                         </div>
                       </div>
                       <div class="btn-group-vertical" role="group">
-                        <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Friendly || IsLocal && relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-                        <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Neutral || IsLocal && relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-                        <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bogey || IsLocal && relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-                        <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bandit || IsLocal && relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+                        <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Friendly || IsLocal && relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+                        <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Neutral || IsLocal && relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+                        <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bogey || IsLocal && relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+                        <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bandit || IsLocal && relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
                       </div>
-                    } else {
-                      <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
-                        <div class="card-text small">
-                          @Localizer["REDACTED"] (@Localizer["Main Organization"])
-                        </div>
+                    </div>
+                    <div class="input-group mb-1" id="commentSection" hidden="@(CommentRelation == null)">
+                      <div class="form-floating">
+                        <input type="text" @ref="ElementCommentRef" class="form-control" id="floatingInputGroupComment" placeholder="@($"{CommentRelation?.Name} {Localizer["Comment"]}")" @bind="Comment" @bind:event="oninput" @onkeydown="@EnterComment" onfocus="this.select();" />
+                        <label for="floatingInputGroupComment">@($"{CommentRelation?.Name} {Localizer["Comment"]}")</label>
                       </div>
-                    }
-                  </div>
-                  @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? [])) {
-                    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
-                      @if (!aff.Redacted) {
-                        RelationInfo? relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid) ?? new() { Type = RelationType.Organization, Name = aff.Sid };
-                        RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
-                        string? commentAff = relAff?.Comment ?? string.Empty;
-                        <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarContent" /></a>
-                        <div class="w-auto @(GetRelationClassColors(relAff!))">&nbsp;</div>
+                      <button class="btn btn-primary text-white" type="button" @onclick="SaveComment" title="@Localizer["Save"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                        </svg>
+                      </button>
+                      <button type="button" class="btn btn-danger" @onclick="() => { CommentRelation = null; Comment = null; }" disabled="@QueryNameActive" title="@Localizer["Clear"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo?.Organizations?.MainOrganization == null)">
+                      @if (!QueryHandleInfo?.Organizations?.MainOrganization?.Redacted ?? false) {
+                        <a href="@QueryHandleInfo?.Organizations?.MainOrganization?.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@QueryHandleInfo?.Organizations?.MainOrganization?.AvatarContent" /></a>
+                        RelationInfo? relOrg = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == QueryHandleInfo?.Organizations?.MainOrganization?.Sid) ?? new() { Type = RelationType.Organization, Name = QueryHandleInfo?.Organizations?.MainOrganization?.Sid };
+                        RelationValue relValOrg = relOrg?.Relation ?? RelationValue.NotAssigned;
+                        string? commentOrg = relOrg?.Comment ?? string.Empty;
+                        <div class="w-auto @(GetRelationClassColors(relOrg!))">&nbsp;</div>
                         <div class="card-body m-1 p-1">
                           <div class="card-text small text-break">
-                            <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
-                            <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
-                            <div>
-                              @Localizer["Rank"]: @aff.RankName<br />
+                            <div class="h5 h4-sm mb-0 user-select-all"><b>@QueryHandleInfo?.Organizations?.MainOrganization?.Name</b></div>
+                            <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@QueryHandleInfo?.Organizations?.MainOrganization?.Sid</span></b></div>
+                            <div class="m-0 p-0" hidden="@(string.IsNullOrWhiteSpace(QueryHandleInfo?.Organizations?.MainOrganization?.RankName))">
+                              @Localizer["Rank"]: @QueryHandleInfo?.Organizations?.MainOrganization?.RankName<br />
                               @for (int i = 0; i < 5; i++) {
-                                <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
+                                <img width="20" height="20" src="images/rank_star_@(i < QueryHandleInfo?.Organizations?.MainOrganization?.RankStars ? "active" : "inactive").png" />
                               }
                             </div>
-                            <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+                            <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
+                            <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
                             @if (ChannelTags.Count > 0) {
                               <div class="d-flex flex-wrap gap-1 mb-1">
-                                @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relAff!.Type, relAff!.Name).Contains(t.Id))) {
-                                  bool isSelected = GetRelationTags(relAff!.Type, relAff!.Name).Contains(tag.Id);
-                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relAff!.Type, relAff!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                                @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(t.Id))) {
+                                  bool isSelected = GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(tag.Id);
+                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relOrg!.Type, relOrg!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                                 }
                               </div>
                             }
-                            <div class="badge @GetRelationClassColors(relAff!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
-                              <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
+                            <div class="badge @GetRelationClassColors(relOrg!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relOrg!)">
+                              <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentOrg))">
                                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
                               </svg>
-                              @commentAff
+                              @commentOrg
                             </div>
                           </div>
                         </div>
                         <div class="btn-group-vertical" role="group">
-                          <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Friendly || IsLocal && relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-                          <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Neutral || IsLocal && relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-                          <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bogey || IsLocal && relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-                          <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bandit || IsLocal && relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+                          <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Friendly || IsLocal && relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+                          <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Neutral || IsLocal && relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+                          <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bogey || IsLocal && relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+                          <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bandit || IsLocal && relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
                         </div>
                       } else {
                         <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
                           <div class="card-text small">
-                            @Localizer["REDACTED"] (@Localizer["Affiliation"])
+                            @Localizer["REDACTED"] (@Localizer["Main Organization"])
                           </div>
                         </div>
                       }
                     </div>
-                  }
-                </p>
-                <table class="table table-striped mt-0" hidden="@(IsLocal ? (relations == null || relations.Length == 0) : (relations?.Length == 0 && QueryNameError != null))">
-                  <thead>
-                    <tr>
-                      <th scope="col" width="1%">@Localizer["Type"]</th>
-                      <th scope="col">@Localizer["Name"]</th>
-                      <th scope="col" width="1%">@Localizer["Action"]</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @foreach (var relation in relations?.Where(r => IsVisible(r)).Skip((CurrentPage - 1) * PageSize).Take(PageSize) ?? []) {
-                      <tr class="border-1">
-                        <td class="p-3 mb-2 @(GetRelationClassColors(relation, !IsLocal))" style="transform: rotate(0);">
-                          @if (!IsLocal) {
-                            <a href="javascript:void(0);" title="@(SyncActive? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-                              <svg class="bi" width="16" height="16" fill="currentColor">
-                                @if (relation.Type == RelationType.Handle) {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                                } else {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                    @foreach (var aff in (QueryHandleInfo?.Organizations?.Affiliations ?? [])) {
+                      <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null)">
+                        @if (!aff.Redacted) {
+                          RelationInfo? relAff = relations?.FirstOrDefault(r => r.Type == RelationType.Organization && r.Name == aff.Sid) ?? new() { Type = RelationType.Organization, Name = aff.Sid };
+                          RelationValue relValAff = relAff?.Relation ?? RelationValue.NotAssigned;
+                          string? commentAff = relAff?.Comment ?? string.Empty;
+                          <a href="@aff.Url" target="_blank"><img class="card-img img-fluid" style="min-width:100px; max-width:100px" width="100" height="100" src="@aff.AvatarContent" /></a>
+                          <div class="w-auto @(GetRelationClassColors(relAff!))">&nbsp;</div>
+                          <div class="card-body m-1 p-1">
+                            <div class="card-text small text-break">
+                              <div class="h5 h4-sm mb-0 user-select-all"><b>@aff.Name</b></div>
+                              <div><b><span>@Localizer["SID"]: </span><span class="user-select-all">@aff.Sid</span></b></div>
+                              <div>
+                                @Localizer["Rank"]: @aff.RankName<br />
+                                @for (int i = 0; i < 5; i++) {
+                                  <img width="20" height="20" src="images/rank_star_@(i < aff.RankStars ? "active" : "inactive").png" />
                                 }
-                              </svg>
-                            </a>
-                          } else {
-                            <a href="javascript:void(0);" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-                              <svg class="bi" width="16" height="16" fill="currentColor">
-                                @if (relation.Type == RelationType.Handle) {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                                } else {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-                                }
-                              </svg>
-                            </a>
-                          }
-                        </td>
-                        <td class="align-middle" style="transform: rotate(0);">
-                          <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
-                          <div class="d-flex flex-wrap align-items-center gap-1">
-                            @if (ChannelTags.Count > 0) {
-                              @foreach (var tag in ChannelTags.Where(t => GetRelationTags(relation.Type, relation.Name).Contains(t.Id))) {
-                                <span class="badge text-bg-@(tag.Color.ToString().ToLower())" title="@tag.Description">@tag.Value</span>
+                              </div>
+                              <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+                              @if (ChannelTags.Count > 0) {
+                                <div class="d-flex flex-wrap gap-1 mb-1">
+                                  @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relAff!.Type, relAff!.Name).Contains(t.Id))) {
+                                    bool isSelected = GetRelationTags(relAff!.Type, relAff!.Name).Contains(tag.Id);
+                                    <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relAff!.Type, relAff!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                                  }
+                                </div>
                               }
-                            }
-                            <div class="badge @GetRelationClassColors(relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
-                              <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
-                                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-                              </svg>
-                              @relation.Comment
+                              <div class="badge @GetRelationClassColors(relAff!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
+                                <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                                </svg>
+                                @commentAff
+                              </div>
                             </div>
                           </div>
-                        </td>
-                        <td class="align-middle text-end">
-                          @if (IsLocal) {
-                            <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
-                              <svg class="bi" width="12" height="12" fill="currentColor">
-                                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                              </svg>
-                            </button>
-                          } else {
-                            <button type="button" class="btn @(!SyncActive ? "btn-dark" : GetRelationClassColors(relation)) btn-sm p-2" @onclick="() => SetRelation(relation, !SyncActive ? RelationValue.NotAssigned : relation.Relation)" disabled="@(!SyncActive && relation.Relation == RelationValue.NotAssigned)" title="@(!SyncActive ? Localizer["Remove"] : Localizer["Push"])">
-                              <svg class="bi" width="12" height="12" fill="currentColor">
-                                @if (!SyncActive) {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                                } else {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pin-fill" />
-                                }
-                              </svg>
-                            </button>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-                @if (TotalPages > 1) {
-                  <nav class="mt-2 mb-3">
-                    <ul class="pagination pagination-sm justify-content-center flex-wrap mb-1">
-                      <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
-                        <a class="page-link" href="javascript:void(0);" @onclick="() => { if (CurrentPage > 1) CurrentPage--; }">
-                          <svg class="bi" width="16" height="16" fill="currentColor">
-                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#chevron-left" />
-                          </svg>
-                        </a>
-                      </li>
-                      @{
-                        bool lastWasEllipsis = false;
-                      }
-                      @for (int p = 1; p <= TotalPages; p++) {
-                        int page = p;
-                        if (ShouldShowPage(page)) {
-                          lastWasEllipsis = false;
-                          <li class="page-item @(CurrentPage == page ? "active" : "")">
-                            <a class="page-link" href="javascript:void(0);" @onclick="() => CurrentPage = page">@(page)</a>
-                          </li>
-                        } else if (!lastWasEllipsis) {
-                          lastWasEllipsis = true;
-                          <li class="page-item disabled">
-                            <span class="page-link">&hellip;</span>
-                          </li>
+                          <div class="btn-group-vertical" role="group">
+                            <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Friendly || IsLocal && relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+                            <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Neutral || IsLocal && relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+                            <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bogey || IsLocal && relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+                            <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bandit || IsLocal && relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+                          </div>
+                        } else {
+                          <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
+                            <div class="card-text small">
+                              @Localizer["REDACTED"] (@Localizer["Affiliation"])
+                            </div>
+                          </div>
                         }
+                      </div>
+                    }
+                  </p>
+                  <table class="table table-striped mt-0" hidden="@(IsLocal ? (relations == null || relations.Length == 0) : (relations?.Length == 0 && QueryNameError != null))">
+                    <thead>
+                      <tr>
+                        <th scope="col" width="1%">@Localizer["Type"]</th>
+                        <th scope="col">@Localizer["Name"]</th>
+                        <th scope="col" width="1%">@Localizer["Action"]</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach (var relation in relations?.Where(r => IsVisible(r)).Skip((CurrentPage - 1) * PageSize).Take(PageSize) ?? []) {
+                        <tr class="border-1">
+                          <td class="p-3 mb-2 @(GetRelationClassColors(relation, !IsLocal))" style="transform: rotate(0);">
+                            @if (!IsLocal) {
+                              <a href="javascript:void(0);" title="@(SyncActive? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+                                <svg class="bi" width="16" height="16" fill="currentColor">
+                                  @if (relation.Type == RelationType.Handle) {
+                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                                  } else {
+                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                                  }
+                                </svg>
+                              </a>
+                            } else {
+                              <a href="javascript:void(0);" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+                                <svg class="bi" width="16" height="16" fill="currentColor">
+                                  @if (relation.Type == RelationType.Handle) {
+                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                                  } else {
+                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                                  }
+                                </svg>
+                              </a>
+                            }
+                          </td>
+                          <td class="align-middle" style="transform: rotate(0);">
+                            <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
+                            <div class="d-flex flex-wrap align-items-center gap-1">
+                              @if (ChannelTags.Count > 0) {
+                                @foreach (var tag in ChannelTags.Where(t => GetRelationTags(relation.Type, relation.Name).Contains(t.Id))) {
+                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower())" title="@tag.Description">@tag.Value</span>
+                                }
+                              }
+                              <div class="badge @GetRelationClassColors(relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
+                                <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                                </svg>
+                                @relation.Comment
+                              </div>
+                            </div>
+                          </td>
+                          <td class="align-middle text-end">
+                            @if (IsLocal) {
+                              <button type="button" class="btn btn-dark btn-sm p-2" @onclick="() => SetRelation(relation, RelationValue.NotAssigned)" disabled="@(relation.Relation == RelationValue.NotAssigned)" title="@Localizer["Remove"]">
+                                <svg class="bi" width="12" height="12" fill="currentColor">
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                                </svg>
+                              </button>
+                            } else {
+                              <button type="button" class="btn @(!SyncActive ? "btn-dark" : GetRelationClassColors(relation)) btn-sm p-2" @onclick="() => SetRelation(relation, !SyncActive ? RelationValue.NotAssigned : relation.Relation)" disabled="@(!SyncActive && relation.Relation == RelationValue.NotAssigned)" title="@(!SyncActive ? Localizer["Remove"] : Localizer["Push"])">
+                                <svg class="bi" width="12" height="12" fill="currentColor">
+                                  @if (!SyncActive) {
+                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                                  } else {
+                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pin-fill" />
+                                  }
+                                </svg>
+                              </button>
+                            }
+                          </td>
+                        </tr>
                       }
-                      <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
-                        <a class="page-link" href="javascript:void(0);" @onclick="() => { if (CurrentPage < TotalPages) CurrentPage++; }">
-                          <svg class="bi" width="16" height="16" fill="currentColor">
-                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#chevron-right" />
-                          </svg>
-                        </a>
-                      </li>
-                    </ul>
-                  </nav>
+                    </tbody>
+                  </table>
+                  @if (TotalPages > 1) {
+                    <nav class="mt-2 mb-3">
+                      <ul class="pagination pagination-sm justify-content-center flex-wrap mb-1">
+                        <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                          <a class="page-link" href="javascript:void(0);" @onclick="() => { if (CurrentPage > 1) CurrentPage--; }">
+                            <svg class="bi" width="16" height="16" fill="currentColor">
+                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#chevron-left" />
+                            </svg>
+                          </a>
+                        </li>
+                        @{
+                          bool lastWasEllipsis = false;
+                        }
+                        @for (int p = 1; p <= TotalPages; p++) {
+                          int page = p;
+                          if (ShouldShowPage(page)) {
+                            lastWasEllipsis = false;
+                            <li class="page-item @(CurrentPage == page ? "active" : "")">
+                              <a class="page-link" href="javascript:void(0);" @onclick="() => CurrentPage = page">@(page)</a>
+                            </li>
+                          } else if (!lastWasEllipsis) {
+                            lastWasEllipsis = true;
+                            <li class="page-item disabled">
+                              <span class="page-link">&hellip;</span>
+                            </li>
+                          }
+                        }
+                        <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                          <a class="page-link" href="javascript:void(0);" @onclick="() => { if (CurrentPage < TotalPages) CurrentPage++; }">
+                            <svg class="bi" width="16" height="16" fill="currentColor">
+                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#chevron-right" />
+                            </svg>
+                          </a>
+                        </li>
+                      </ul>
+                    </nav>
+                  }
+                  @if (IsLocal) {
+                    <div class="alert alert-danger mb-3" role="alert" hidden="@(ErrorText == null)" @onclick="ResetErrorText">
+                      <i>@ErrorText</i>
+                    </div>
+                    <div class="btn-group mb-3">
+                      <button type="button" class="btn btn-primary" @onclick="Download" hidden="@(relations == null || relations.Length == 0)" title="@Localizer["Download Relations"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+                        </svg>
+                        @Localizer["Relations"]
+                      </button>
+                      <label class="btn btn-primary@(relations == null || relations.Length == 0 ? " rounded" : string.Empty)" style="display: inline-flex; align-items: center; background-color: #1B6EC2" for="input-file" title="@Localizer["Upload Relations"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
+                        </svg>&nbsp;
+                        @Localizer["Relations"]
+                      </label>
+                      <button type="button" class="btn btn-danger" @onclick="Delete" hidden="@(relations == null || relations.Length == 0)" title="@Localizer["Delete Relations"]">
+                        <svg class="bi" width="16" height="16" fill="currentColor">
+                          <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                        </svg>
+                      </button>
+                    </div>
+                    <InputFile OnChange="@Upload" accept="application/json" id="input-file" multiple hidden />
+                  }
                 }
-                @if (IsLocal) {
-                  <div class="alert alert-danger mb-3" role="alert" hidden="@(ErrorText == null)" @onclick="ResetErrorText">
-                    <i>@ErrorText</i>
-                  </div>
-                  <div class="btn-group mb-3">
-                    <button type="button" class="btn btn-primary" @onclick="Download" hidden="@(relations == null || relations.Length == 0)" title="@Localizer["Download Relations"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
-                      </svg>
-                      @Localizer["Relations"]
-                    </button>
-                    <label class="btn btn-primary@(relations == null || relations.Length == 0 ? " rounded" : string.Empty)" style="display: inline-flex; align-items: center; background-color: #1B6EC2" for="input-file" title="@Localizer["Upload Relations"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
-                      </svg>&nbsp;
-                      @Localizer["Relations"]
-                    </label>
-                    <button type="button" class="btn btn-danger" @onclick="Delete" hidden="@(relations == null || relations.Length == 0)" title="@Localizer["Delete Relations"]">
-                      <svg class="bi" width="16" height="16" fill="currentColor">
-                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                      </svg>
-                    </button>
-                  </div>
-                  <InputFile OnChange="@Upload" accept="application/json" id="input-file" multiple hidden />
-                }
-              }
 
 @code {
   private MemoryCacheEntryOptions? MemoryCacheOptions { get; set; }
 
   [Parameter]
   public string? ChannelName { get; set; }
+  private string? ChannelUsername { get; set; }
   private string? ChannelPassword { get; set; }
+  private ChannelInfo? CurrentChannel { get; set; }
   private bool IsLocal => Navigation.Uri.Contains("/localchannel", StringComparison.OrdinalIgnoreCase);
   public bool HideFilter { get; set; } = true;
   public bool? FilterFriendly { get; set; } = true;
@@ -497,6 +507,7 @@
       .SetSize(1);
     try {
       if (!IsLocal) {
+        ChannelUsername = await LocalStorageService.GetValue(JS, $"user{ChannelName}");
         ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{ChannelName}", true);
       }
       if (bool.TryParse(await LocalStorageService.GetValue(JS, "filterFriendly"), out bool friendly)) {
@@ -532,15 +543,21 @@
       }
     } else {
       if (!string.IsNullOrWhiteSpace(ChannelName)) {
-        RelationsReply reply = await SCHQ.GetRelations(new() { Channel = ChannelName, Password = ChannelPassword ?? string.Empty });
-        relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)!];
-        if (!string.IsNullOrWhiteSpace(reply?.Info)) {
-          QueryNameError = reply.Info;
+        CurrentChannel = (await SCHQ.GetChannel(new() { Channel = ChannelName })).Channel;
+        if (CurrentChannel != null) {
+          RelationsReply reply = await SCHQ.GetRelations(new() { Channel = ChannelName, Username = ChannelUsername ?? string.Empty, Password = ChannelPassword ?? string.Empty });
+          relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)!];
+          if (!string.IsNullOrWhiteSpace(reply?.Info)) {
+            QueryNameError = reply.Info;
+          }
+          await LocalStorageService.SetValue(JS, $"user{ChannelName}", ChannelUsername);
+          await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", ChannelPassword, true);
+          ChannelTags = await SCHQ.GetTags(ChannelName);
+          var tagMap = await SCHQ.GetRelationTagIds(ChannelName);
+          RelationTags = tagMap.ToDictionary(kv => kv.Key, kv => new HashSet<int>(kv.Value));
+        } else {
+          ErrorText = Localizer["Channel not found"];
         }
-        await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", ChannelPassword, true);
-        ChannelTags = await SCHQ.GetTags(ChannelName);
-        var tagMap = await SCHQ.GetRelationTagIds(ChannelName);
-        RelationTags = tagMap.ToDictionary(kv => kv.Key, kv => new HashSet<int>(kv.Value));
       }
     }
   }
@@ -565,6 +582,7 @@
     } else {
       SuccessReply reply = await SCHQ.SetRelation(new() {
         Channel = ChannelName,
+        Username = ChannelUsername ?? string.Empty,
         Password = ChannelPassword ?? string.Empty,
         Relation = new() {
           Type = relation.Type,
@@ -586,6 +604,7 @@
         StateHasChanged();
       } else {
         QueryNameError = reply.Info;
+        StateHasChanged();
       }
     }
   }
@@ -606,7 +625,7 @@
         await GetRelations();
         StateHasChanged();
         try {
-          SCHQ_Blazor.Models.Channel? channel = DbContext.Channels!.FirstOrDefault(c => c.Name == ChannelName && (c.Permissions >= ChannelPermissions.Read || c.Password == Encryption.EncryptText(ChannelPassword) || (!string.IsNullOrWhiteSpace(c.ReadOnlyPassword) && c.ReadOnlyPassword == Encryption.EncryptText(ChannelPassword))));
+          SCHQ_Blazor.Models.Channel? channel = DbContext.Channels!.Include(c => c.Users).FirstOrDefault(c => c.Name == ChannelName && (!c.Users.Any() || c.AdminPassword == Encryption.EncryptText(ChannelPassword) || c.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == ChannelUsername && u.Password == Encryption.EncryptText(ChannelPassword))));
           if (channel != null) {
             var reader = Notifier.Subscribe(ChannelName!);
             try {
@@ -877,8 +896,8 @@
     string key = RelationKey(type, name);
     bool isSelected = RelationTags.TryGetValue(key, out var ids) && ids.Contains(tagId);
     SuccessReply reply = isSelected
-      ? await SCHQ.RemoveRelationTag(ChannelName ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId, QueryHandleInfo)
-      : await SCHQ.AddRelationTag(ChannelName ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId, QueryHandleInfo);
+      ? await SCHQ.RemoveRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId, QueryHandleInfo)
+      : await SCHQ.AddRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId, QueryHandleInfo);
     if (reply.Success) {
       if (!RelationTags.ContainsKey(key)) RelationTags[key] = [];
       if (isSelected) RelationTags[key].Remove(tagId);

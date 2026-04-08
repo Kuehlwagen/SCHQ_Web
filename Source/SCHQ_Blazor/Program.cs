@@ -63,9 +63,9 @@ if (relationsContext!.Database.GetPendingMigrations().Any()) {
 }
 await relationsContext.Database.EnsureCreatedAsync();
 
-// Remove channels without password
+// Remove channels without admin password
 try {
-  Channel?[] channels = [.. relationsContext.Channels!.Where(c => string.IsNullOrEmpty(c.Password))];
+  Channel?[] channels = [.. relationsContext.Channels!.Where(c => string.IsNullOrEmpty(c.AdminPassword))];
   if (channels?.Length > 0) {
     relationsContext.RemoveRange(channels!);
     relationsContext.SaveChanges();

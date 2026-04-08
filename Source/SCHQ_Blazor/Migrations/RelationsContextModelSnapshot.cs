@@ -59,19 +59,8 @@ namespace SCHQ_Blazor.Migrations
                         .HasColumnType("varchar(255)")
                         .UseCollation("NOCASE");
 
-                    b.Property<string>("Password")
-                        .HasColumnType("longtext")
-                        .UseCollation("NOCASE");
-
-                    b.Property<int>("Permissions")
-                        .HasColumnType("int");
-
                     b.Property<bool>("Private")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("ReadOnlyPassword")
-                        .HasColumnType("longtext")
-                        .UseCollation("NOCASE");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime(6)");
@@ -156,6 +145,34 @@ namespace SCHQ_Blazor.Migrations
                     b.ToTable("Tags");
                 });
 
+            modelBuilder.Entity("SCHQ_Blazor.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChannelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("longtext")
+                        .UseCollation("NOCASE");
+
+                    b.Property<int>("Permissions")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("varchar(255)")
+                        .UseCollation("NOCASE");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "ChannelId", "Username" }, "UsersIndex")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("RelationTag", b =>
                 {
                     b.HasOne("SCHQ_Blazor.Models.Relation", null)
@@ -191,9 +208,22 @@ namespace SCHQ_Blazor.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SCHQ_Blazor.Models.User", b =>
+                {
+                    b.HasOne("SCHQ_Blazor.Models.Channel", "Channel")
+                        .WithMany("Users")
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+                });
+
             modelBuilder.Entity("SCHQ_Blazor.Models.Channel", b =>
                 {
                     b.Navigation("Tags");
+
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

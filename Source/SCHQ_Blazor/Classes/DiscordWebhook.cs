@@ -40,6 +40,7 @@ public class DiscordEmbedFooter {
 
 public class DiscordWebhookRelationInfo {
   public string? WebhookUrl { get; set; }
+  public string? Username { get; set; }
   public RelationType? Type { get; set; }
   public string? Name { get; set; }
   public RelationValue? OldRelation { get; set; }

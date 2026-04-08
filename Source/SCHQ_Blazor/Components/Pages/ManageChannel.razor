@@ -52,7 +52,7 @@
       <p class="pb-2">
         <h5 class="mb-2 fw-bold">@Localizer["Authentication"]</h5>
         <div class="form-floating">
-          <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput">
+          <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput" @onblur="ValidateAdminPassword">
             <label for="floatingInputGroupChannelPassword">@Localizer["Admin Password"]*</label>
           </div>
         </p>
@@ -72,18 +72,6 @@
               <div class="form-floating">
                 <input type="text" class="form-control" id="floatingInputGroupDescription" placeholder="@Localizer["Channel Description"]" @bind=Description @bind:event="oninput">
                   <label for="floatingInputGroupDescription">@Localizer["Channel Description"]</label>
-                </div>
-              </div>
-            </p>
-            <p>
-              <div class="input-group">
-                <div class="form-floating">
-                  <select class="form-select" @bind=Permissions id="floatingInputGroupPermissions">
-                    <option value="None" selected>@Localizer["None"]</option>
-                    <option value="Read">@Localizer["Read"]</option>
-                    <option value="Write">@Localizer["Write"]</option>
-                  </select>
-                  <label for="floatingInputGroupPermissions">@Localizer["Channel Permissions"]*</label>
                 </div>
               </div>
             </p>
@@ -123,171 +111,206 @@
                     </div>
                   </p>
                   @if (!IsAddMode) {
-                    <h5 class="mb-2 fw-bold">@Localizer["Change Channel Password"]</h5>
+                    <h5 class="mb-2 fw-bold">@Localizer["Change Admin Password"]</h5>
                   }
                   <p>
                     <div class="form-floating mb-2">
-                      <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPassword" placeholder="@(IsAddMode? Localizer["Channel Password"] : Localizer["New Channel Password"])" @bind=NewPassword @bind:event="oninput">
-                        <label for="floatingInputGroupPassword">@(IsAddMode? Localizer["Channel Password"] : Localizer["New Channel Password"])</label>
+                      <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPassword" placeholder="@(IsAddMode? Localizer["Admin Password"] + "*" : Localizer["New Admin Password"])" @bind=NewAdminPassword @bind:event="oninput">
+                        <label for="floatingInputGroupAdminPassword">@(IsAddMode? Localizer["Admin Password"] + "*" : Localizer["New Admin Password"])</label>
                       </div>
                       <div class="form-floating">
-                        <input type="password" class="form-control @(NewPassword != ConfirmNewPassword ? "border-danger" : string.Empty)" id="floatingInputGroupPasswordConfirm" placeholder="@(IsAddMode? Localizer["Confirm Channel Password"] : Localizer["Confirm New Channel Password"])" @bind=ConfirmNewPassword @bind:event="oninput">
-                          <label for="floatingInputGroupPasswordConfirm">@(IsAddMode? Localizer["Confirm Channel Password"] : Localizer["Confirm New Channel Password"])</label>
+                        <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPasswordConfirm" placeholder="@(IsAddMode? Localizer["Confirm Admin Password"] + "*" : Localizer["Confirm New Admin Password"])" @bind=ConfirmNewAdminPassword @bind:event="oninput">
+                          <label for="floatingInputGroupAdminPasswordConfirm">@(IsAddMode? Localizer["Confirm Admin Password"] + "*" : Localizer["Confirm New Admin Password"])</label>
                         </div>
                       </p>
-                      @if (IsAddMode) {
-                        <p hidden="@(NewPassword != null && NewPassword.Length > 0)">
-                          <div class="bg-warning text-dark px-2 rounded">@Localizer["Channels without password will be deleted on server restart."]</div>
+                      @if (!IsAddMode && AdminPasswordCorrect) {
+                        <h5 class="mb-2 fw-bold">@Localizer["Tags"]</h5>
+                        @if (Tags.Count > 0) {
+                          <div class="mb-2 d-flex flex-wrap gap-2">
+                            @foreach (var tag in Tags) {
+                              @if (EditTagId == tag.Id) {
+                                <div class="input-group input-group-sm">
+                                  <input type="text" class="form-control" placeholder="@Localizer["Tag Value"]" @bind=EditTagValue @bind:event="oninput" />
+                                  <input type="text" class="form-control" placeholder="@Localizer["Description"]" @bind=EditTagDescription @bind:event="oninput" />
+                                  <div class="dropdown dropup @(EditTagColorOpen ? "show" : "")">
+                                    <button class="btn btn-sm text-bg-@(EditTagColor.ToString().ToLower()) dropdown-toggle h-100" type="button" @onclick="() => EditTagColorOpen = !EditTagColorOpen">
+                                      @Localizer["Color"]
+                                    </button>
+                                    <ul class="dropdown-menu p-1 @(EditTagColorOpen ? "show" : "")" style="min-width: 0; top: auto; bottom: 100%;">
+                                      @foreach (TagColor color in Enum.GetValues<TagColor>()) {
+                                        <li>
+                                          <button class="btn btn-sm w-100 text-start text-bg-@(color.ToString().ToLower()) @(EditTagColor == color ? "fw-bold" : string.Empty) mb-1" type="button" @onclick="() => { EditTagColor = color; EditTagColorOpen = false; }">@Localizer["Color"]</button>
+                                        </li>
+                                      }
+                                    </ul>
+                                  </div>
+                                  <button class="btn btn-success btn-sm" @onclick="() => SaveTag(tag.Id)" title="@Localizer["Save"]">
+                                    <svg class="bi" width="12" height="12" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
+                                    </svg>
+                                  </button>
+                                  <button class="btn btn-secondary btn-sm" @onclick="CancelEditTag" title="@Localizer["Cancel"]">
+                                    <svg class="bi" width="12" height="12" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              } else {
+                                <div class="d-inline-flex align-items-center gap-1">
+                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower())" title="@tag.Description">@tag.Value</span>
+                                  <button class="btn btn-outline-secondary btn-sm py-0 px-1" @onclick="() => StartEditTag(tag)" title="@Localizer["Edit"]">
+                                    <svg class="bi" width="10" height="10" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                                    </svg>
+                                  </button>
+                                  <button class="btn btn-outline-danger btn-sm py-0 px-1" @onclick="() => DeleteTag(tag.Id)" title="@Localizer["Delete"]">
+                                    <svg class="bi" width="10" height="10" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                        <p>
+                          <div class="input-group">
+                            <div class="form-floating">
+                              <input type="text" class="form-control" id="floatingInputGroupTagValue" placeholder="@Localizer["Tag Value"]" @bind=NewTagValue @bind:event="oninput" />
+                              <label for="floatingInputGroupTagValue">@Localizer["Tag Value"]</label>
+                            </div>
+                            <div class="form-floating">
+                              <input type="text" class="form-control" id="floatingInputGroupTagDescription" placeholder="@Localizer["Description"]" @bind=NewTagDescription @bind:event="oninput" />
+                              <label for="floatingInputGroupTagDescription">@Localizer["Description"]</label>
+                            </div>
+                            <div class="dropdown dropup @(NewTagColorOpen ? "show" : "")">
+                              <button class="btn text-bg-@(NewTagColor.ToString().ToLower()) dropdown-toggle h-100" type="button" @onclick="() => NewTagColorOpen = !NewTagColorOpen">
+                                @Localizer["Color"]
+                              </button>
+                              <ul class="dropdown-menu p-1 @(NewTagColorOpen ? "show" : "")" style="min-width: 0; top: auto; bottom: 100%;">
+                                @foreach (TagColor color in Enum.GetValues<TagColor>()) {
+                                  <li>
+                                    <button class="btn btn-sm w-100 text-start text-bg-@(color.ToString().ToLower()) @(NewTagColor == color ? "fw-bold" : string.Empty) mb-1" type="button" @onclick="() => { NewTagColor = color; NewTagColorOpen = false; }">@Localizer["Color"]</button>
+                                  </li>
+                                }
+                              </ul>
+                            </div>
+                            <button class="btn btn-primary" @onclick="AddTag" disabled="@string.IsNullOrWhiteSpace(NewTagValue)" title="@Localizer["Add Tag"]">
+                              <svg class="bi" width="16" height="16" fill="currentColor">
+                                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#plus-lg" />
+                              </svg>
+                            </button>
+                          </div>
+                        </p>
+                        <h5 class="mb-2 fw-bold">@Localizer["Users"]</h5>
+                        @if (Users.Count > 0) {
+                          <div class="mb-2 d-flex flex-wrap gap-2">
+                            @foreach (var user in Users) {
+                              @if (EditUserId == user.Id) {
+                                <div class="input-group input-group-sm">
+                                  <input type="password" class="form-control @(EditUserPassword != EditUserPasswordConfirm ? "border-danger" : string.Empty)" placeholder="@Localizer["User Password"]" @bind=EditUserPassword @bind:event="oninput" />
+                                  <input type="password" class="form-control @(EditUserPassword != EditUserPasswordConfirm ? "border-danger" : string.Empty)" placeholder="@Localizer["Confirm User Password"]" @bind=EditUserPasswordConfirm @bind:event="oninput" />
+                                  <select class="form-select" @bind=EditUserPermissions>
+                                    <option value="@ChannelPermissions.Read">@Localizer["Read"]</option>
+                                    <option value="@ChannelPermissions.Write">@Localizer["Write"]</option>
+                                  </select>
+                                  <button class="btn btn-success btn-sm" @onclick="() => SaveUser(user.Id)" disabled="@(EditUserPassword != EditUserPasswordConfirm)" title="@Localizer["Save"]">
+                                    <svg class="bi" width="12" height="12" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
+                                    </svg>
+                                  </button>
+                                  <button class="btn btn-secondary btn-sm" @onclick="CancelEditUser" title="@Localizer["Cancel"]">
+                                    <svg class="bi" width="12" height="12" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              } else {
+                                <div class="d-inline-flex align-items-center gap-1">
+                                  <span class="badge text-bg-@(user.Permissions == ChannelPermissions.Write ? "primary" : "secondary")" title="@(user.Permissions == ChannelPermissions.Write ? Localizer["Write"] : Localizer["Read"])">@user.Username</span>
+                                  <button class="btn btn-outline-secondary btn-sm py-0 px-1" @onclick="() => StartEditUser(user)" title="@Localizer["Edit"]">
+                                    <svg class="bi" width="10" height="10" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                                    </svg>
+                                  </button>
+                                  <button class="btn btn-outline-danger btn-sm py-0 px-1" @onclick="() => DeleteUser(user.Id)" title="@Localizer["Delete"]">
+                                    <svg class="bi" width="10" height="10" fill="currentColor">
+                                      <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                        <p>
+                          <div class="input-group">
+                            <div class="form-floating">
+                              <input type="text" class="form-control" id="floatingInputGroupUsername" placeholder="@Localizer["Username"]" @bind=NewUsername @bind:event="oninput" />
+                              <label for="floatingInputGroupUsername">@Localizer["Username"]</label>
+                            </div>
+                            <div class="form-floating">
+                              <input type="password" class="form-control @(NewUserPassword != NewUserPasswordConfirm ? "border-danger" : string.Empty)" id="floatingInputGroupUserPassword" placeholder="@Localizer["User Password"]" @bind=NewUserPassword @bind:event="oninput" />
+                              <label for="floatingInputGroupUserPassword">@Localizer["User Password"]</label>
+                            </div>
+                            <div class="form-floating">
+                              <input type="password" class="form-control @(NewUserPassword != NewUserPasswordConfirm ? "border-danger" : string.Empty)" id="floatingInputGroupUserPasswordConfirm" placeholder="@Localizer["Confirm User Password"]" @bind=NewUserPasswordConfirm @bind:event="oninput" />
+                              <label for="floatingInputGroupUserPasswordConfirm">@Localizer["Confirm User Password"]</label>
+                            </div>
+                            <select class="form-select" @bind=NewUserPermissions>
+                              <option value="@ChannelPermissions.Read">@Localizer["Read"]</option>
+                              <option value="@ChannelPermissions.Write">@Localizer["Write"]</option>
+                            </select>
+                            <button class="btn btn-primary" @onclick="AddUser" disabled="@(string.IsNullOrWhiteSpace(NewUsername) || string.IsNullOrWhiteSpace(NewUserPassword) || NewUserPassword != NewUserPasswordConfirm)" title="@Localizer["Add User"]">
+                              <svg class="bi" width="16" height="16" fill="currentColor">
+                                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#plus-lg" />
+                              </svg>
+                            </button>
+                          </div>
                         </p>
                       }
-                      @if (!IsAddMode) {
-                        <h5 class="mb-2 fw-bold">@Localizer["Change R/O Password"]</h5>
-                      }
-                      <p>
-                        <div class="form-floating mb-2">
-                          <input type="password" class="form-control @(NewReadOnlyPassword != ConfirmNewReadOnlyPassword ? "border-danger" : string.Empty)" id="floatingInputGroupReadOnlyPassword" placeholder="@(IsAddMode? Localizer["R/O Password"] : Localizer["New R/O Password"])" @bind=NewReadOnlyPassword @bind:event="oninput">
-                            <label for="floatingInputGroupReadOnlyPassword">@(IsAddMode? Localizer["R/O Password"] : Localizer["New R/O Password"])</label>
-                          </div>
-                          <div class="form-floating">
-                            <input type="password" class="form-control @(NewReadOnlyPassword != ConfirmNewReadOnlyPassword ? "border-danger" : string.Empty)" id="floatingInputGroupReadOnlyPasswordConfirm" placeholder="@(IsAddMode? Localizer["Confirm R/O Password"] : Localizer["Confirm New R/O Password"])" @bind=ConfirmNewReadOnlyPassword @bind:event="oninput">
-                              <label for="floatingInputGroupReadOnlyPasswordConfirm">@(IsAddMode? Localizer["Confirm R/O Password"] : Localizer["Confirm New R/O Password"])</label>
-                            </div>
-                          </p>
-                          @if (!IsAddMode) {
-                            <h5 class="mb-2 fw-bold">@Localizer["Change Admin Password"]</h5>
-                          }
-                          <p>
-                            <div class="form-floating mb-2">
-                              <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPassword" placeholder="@(IsAddMode? Localizer["Admin Password"] + "*" : Localizer["New Admin Password"])" @bind=NewAdminPassword @bind:event="oninput">
-                                <label for="floatingInputGroupAdminPassword">@(IsAddMode? Localizer["Admin Password"] + "*" : Localizer["New Admin Password"])</label>
-                              </div>
-                              <div class="form-floating">
-                                <input type="password" class="form-control @(NewAdminPassword != ConfirmNewAdminPassword ? "border-danger" : string.Empty)" id="floatingInputGroupAdminPasswordConfirm" placeholder="@(IsAddMode? Localizer["Confirm Admin Password"] + "*" : Localizer["Confirm New Admin Password"])" @bind=ConfirmNewAdminPassword @bind:event="oninput">
-                                  <label for="floatingInputGroupAdminPasswordConfirm">@(IsAddMode? Localizer["Confirm Admin Password"] + "*" : Localizer["Confirm New Admin Password"])</label>
-                                </div>
-                              </p>
-                              @if (!IsAddMode) {
-                                <h5 class="mb-2 fw-bold">@Localizer["Tags"]</h5>
-                                @if (Tags.Count > 0) {
-                                  <div class="mb-2 d-flex flex-wrap gap-2">
-                                    @foreach (var tag in Tags) {
-                                      @if (EditTagId == tag.Id) {
-                                        <div class="input-group input-group-sm">
-                                          <input type="text" class="form-control" placeholder="@Localizer["Tag Value"]" @bind=EditTagValue @bind:event="oninput" />
-                                          <input type="text" class="form-control" placeholder="@Localizer["Description"]" @bind=EditTagDescription @bind:event="oninput" />
-                                          <div class="dropdown dropup @(EditTagColorOpen ? "show" : "")">
-                                            <button class="btn btn-sm text-bg-@(EditTagColor.ToString().ToLower()) dropdown-toggle h-100" type="button" @onclick="() => EditTagColorOpen = !EditTagColorOpen">
-                                              @Localizer["Color"]
-                                            </button>
-                                            <ul class="dropdown-menu p-1 @(EditTagColorOpen ? "show" : "")" style="min-width: 0; top: auto; bottom: 100%;">
-                                              @foreach (TagColor color in Enum.GetValues<TagColor>()) {
-                                                <li>
-                                                  <button class="btn btn-sm w-100 text-start text-bg-@(color.ToString().ToLower()) @(EditTagColor == color ? "fw-bold" : string.Empty) mb-1" type="button" @onclick="() => { EditTagColor = color; EditTagColorOpen = false; }">@Localizer["Color"]</button>
-                                                </li>
-                                              }
-                                            </ul>
-                                          </div>
-                                          <button class="btn btn-success btn-sm" @onclick="() => SaveTag(tag.Id)" title="@Localizer["Save"]">
-                                            <svg class="bi" width="12" height="12" fill="currentColor">
-                                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
-                                            </svg>
-                                          </button>
-                                          <button class="btn btn-secondary btn-sm" @onclick="CancelEditTag" title="@Localizer["Cancel"]">
-                                            <svg class="bi" width="12" height="12" fill="currentColor">
-                                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                                            </svg>
-                                          </button>
-                                        </div>
-                                      } else {
-                                        <div class="d-inline-flex align-items-center gap-1">
-                                          <span class="badge text-bg-@(tag.Color.ToString().ToLower())" title="@tag.Description">@tag.Value</span>
-                                          <button class="btn btn-outline-secondary btn-sm py-0 px-1" @onclick="() => StartEditTag(tag)" title="@Localizer["Edit"]">
-                                            <svg class="bi" width="10" height="10" fill="currentColor">
-                                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-                                            </svg>
-                                          </button>
-                                          <button class="btn btn-outline-danger btn-sm py-0 px-1" @onclick="() => DeleteTag(tag.Id)" title="@Localizer["Delete"]">
-                                            <svg class="bi" width="10" height="10" fill="currentColor">
-                                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                                            </svg>
-                                          </button>
-                                        </div>
-                                      }
-                                    }
-                                  </div>
-                                }
-                                <p>
-                                  <div class="input-group">
-                                    <div class="form-floating">
-                                      <input type="text" class="form-control" id="floatingInputGroupTagValue" placeholder="@Localizer["Tag Value"]" @bind=NewTagValue @bind:event="oninput" />
-                                      <label for="floatingInputGroupTagValue">@Localizer["Tag Value"]</label>
-                                    </div>
-                                    <div class="form-floating">
-                                      <input type="text" class="form-control" id="floatingInputGroupTagDescription" placeholder="@Localizer["Description"]" @bind=NewTagDescription @bind:event="oninput" />
-                                      <label for="floatingInputGroupTagDescription">@Localizer["Description"]</label>
-                                    </div>
-                                    <div class="dropdown dropup @(NewTagColorOpen ? "show" : "")">
-                                      <button class="btn text-bg-@(NewTagColor.ToString().ToLower()) dropdown-toggle h-100" type="button" @onclick="() => NewTagColorOpen = !NewTagColorOpen">
-                                        @Localizer["Color"]
-                                      </button>
-                                      <ul class="dropdown-menu p-1 @(NewTagColorOpen ? "show" : "")" style="min-width: 0; top: auto; bottom: 100%;">
-                                        @foreach (TagColor color in Enum.GetValues<TagColor>()) {
-                                          <li>
-                                            <button class="btn btn-sm w-100 text-start text-bg-@(color.ToString().ToLower()) @(NewTagColor == color ? "fw-bold" : string.Empty) mb-1" type="button" @onclick="() => { NewTagColor = color; NewTagColorOpen = false; }">@Localizer["Color"]</button>
-                                          </li>
-                                        }
-                                      </ul>
-                                    </div>
-                                    <button class="btn btn-primary" @onclick="AddTag" disabled="@string.IsNullOrWhiteSpace(NewTagValue)" title="@Localizer["Add Tag"]">
-                                      <svg class="bi" width="16" height="16" fill="currentColor">
-                                        <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#plus-lg" />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </p>
-                              }
-                            </div>
-                            <p>
-                              <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
-                                <i>@ErrorText</i>
-                              </div>
-                            </p>
-                            @if (IsAddMode) {
-                              <p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">@Localizer["Add Channel"]</button></p>
-                            } else {
-                              <div class="btn-group mb-2">
-                                <button type="button" class="btn btn-primary" @onclick="UpdateChannel" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
-                                  <svg class="bi" width="16" height="16" fill="currentColor">
-                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
-                                  </svg>
-                                  @Localizer["Channel"]
-                                </button>
-                                <button type="button" class="btn btn-danger" @onclick="DeleteChannel" title="@Localizer["Delete Channel"]">
-                                  <svg class="bi" width="16" height="16" fill="currentColor">
-                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                                  </svg>
-                                </button>
-                              </div>
-                              <div class="btn-group mb-2">
-                                <button type="button" class="btn btn-primary" @onclick="DownloadRelations" disabled="@IsBusy" title="@Localizer["Download Relations"]">
-                                  <svg class="bi" width="16" height="16" fill="currentColor">
-                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
-                                  </svg>
-                                  @Localizer["Relations"]
-                                </button>
-                                <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2");" for="input-file" disabled="@IsBusy" title="@Localizer["Upload Relations"]">
-                                  <svg class="bi" width="16" height="16" fill="currentColor">
-                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
-                                  </svg>
-                                </label>
-                                <button type="button" class="btn btn-danger" @onclick="DeleteRelations" title="@Localizer["Delete Relations"]">
-                                  <svg class="bi" width="16" height="16" fill="currentColor">
-                                    <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
-                                  </svg>
-                                </button>
-                              </div>
-                              <InputFile OnChange="@UploadRelations" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
-                            }
+                    </div>
+                    <p>
+                      <div class="alert alert-danger" role="alert" hidden="@(ErrorText == null)">
+                        <i>@ErrorText</i>
+                      </div>
+                    </p>
+                    @if (IsAddMode) {
+                      <p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">@Localizer["Add Channel"]</button></p>
+                    } else {
+                      <div class="btn-group mb-2">
+                        <button type="button" class="btn btn-primary" @onclick="UpdateChannel" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
+                          <svg class="bi" width="16" height="16" fill="currentColor">
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#floppy2-fill" />
+                          </svg>
+                          @Localizer["Channel"]
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="DeleteChannel" title="@Localizer["Delete Channel"]">
+                          <svg class="bi" width="16" height="16" fill="currentColor">
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div class="btn-group mb-2">
+                        <button type="button" class="btn btn-primary" @onclick="DownloadRelations" disabled="@IsBusy" title="@Localizer["Download Relations"]">
+                          <svg class="bi" width="16" height="16" fill="currentColor">
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#download" />
+                          </svg>
+                          @Localizer["Relations"]
+                        </button>
+                        <label class="btn btn-primary" style="display: inline-flex; align-items: center; background-color: @(IsBusy ? "#61A1FE" : "#1B6EC2");" for="input-file" disabled="@IsBusy" title="@Localizer["Upload Relations"]">
+                          <svg class="bi" width="16" height="16" fill="currentColor">
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#upload" />
+                          </svg>
+                        </label>
+                        <button type="button" class="btn btn-danger" @onclick="DeleteRelations" title="@Localizer["Delete Relations"]">
+                          <svg class="bi" width="16" height="16" fill="currentColor">
+                            <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#x-lg" />
+                          </svg>
+                        </button>
+                      </div>
+                      <InputFile OnChange="@UploadRelations" accept="text/csv,application/json" id="input-file" disabled="@IsBusy" multiple hidden />
+                    }
 
 @code {
   [Parameter]
@@ -313,22 +336,7 @@
   }
   public ChannelInfo? ChannelInformation { get; set; }
   private string? AdminPassword = string.Empty;
-  private string? _newPassword = string.Empty;
-  private string? NewPassword {
-    get { return _newPassword; }
-    set {
-      _newPassword = value;
-      ButtonIsDisabled = CheckButtonIsDisabled;
-    }
-  }
-  private string? _confirmNewPassword = string.Empty;
-  private string? ConfirmNewPassword {
-    get { return _confirmNewPassword; }
-    set {
-      _confirmNewPassword = value;
-      ButtonIsDisabled = CheckButtonIsDisabled;
-    }
-  }
+  private bool AdminPasswordCorrect { get; set; }
   private string? _newAdminPassword = string.Empty;
   private string? NewAdminPassword {
     get { return _newAdminPassword; }
@@ -346,26 +354,9 @@
     }
   }
 
-  private string? _newReadOnlyPassword = string.Empty;
-  private string? NewReadOnlyPassword {
-    get { return _newReadOnlyPassword; }
-    set {
-      _newReadOnlyPassword = value;
-      ButtonIsDisabled = CheckButtonIsDisabled;
-    }
-  }
-  private string? _confirmNewReadOnlyPassword = string.Empty;
-  private string? ConfirmNewReadOnlyPassword {
-    get { return _confirmNewReadOnlyPassword; }
-    set {
-      _confirmNewReadOnlyPassword = value;
-      ButtonIsDisabled = CheckButtonIsDisabled;
-    }
-  }
   private string? Description { get; set; }
   private string? DiscordWebhookUrl { get; set; }
   private bool HasDiscordWebhookUrl { get; set; }
-  private string? Permissions { get; set; }
   private bool _isLocalStorage;
   private bool IsLocalStorage {
     get { return _isLocalStorage; }
@@ -379,13 +370,10 @@
   private bool CheckButtonIsDisabled {
     get {
       if (IsAddMode) {
-        return string.IsNullOrWhiteSpace(Name) || (!IsLocalStorage && (NewPassword != ConfirmNewPassword || string.IsNullOrWhiteSpace(NewAdminPassword) || NewAdminPassword != ConfirmNewAdminPassword || NewPassword == NewAdminPassword || NewReadOnlyPassword != ConfirmNewReadOnlyPassword));
+        return string.IsNullOrWhiteSpace(Name) || (!IsLocalStorage && (string.IsNullOrWhiteSpace(NewAdminPassword) || NewAdminPassword != ConfirmNewAdminPassword));
       }
-      return NewPassword != ConfirmNewPassword
-        || NewAdminPassword != ConfirmNewAdminPassword
-        || NewReadOnlyPassword != ConfirmNewReadOnlyPassword
-        || string.IsNullOrWhiteSpace(NewChannelName)
-        || (AdminPassword!.Length > 0 && NewPassword == AdminPassword);
+      return NewAdminPassword != ConfirmNewAdminPassword
+        || string.IsNullOrWhiteSpace(NewChannelName);
     }
   }
   private bool IsBusy { get; set; }
@@ -396,17 +384,25 @@
       ChannelReply reply = await SCHQ.GetChannel(new() { Channel = ChannelName });
       if (reply != null && reply.Found && reply.Channel?.Name == ChannelName) {
         ChannelInformation = reply?.Channel;
-        Permissions = ChannelInformation?.Permissions.ToString();
         Description = reply?.Channel?.Description ?? string.Empty;
         NewChannelName = ChannelName;
         IsPrivate = reply?.Channel?.Private ?? false;
         HasDiscordWebhookUrl = !string.IsNullOrWhiteSpace(reply?.Channel?.DiscordWebhookUrl);
         DiscordWebhookUrl = string.Empty;
       }
-      await LoadTags();
+      // await LoadTags();
+      // await LoadUsers();
     }
     ButtonIsDisabled = CheckButtonIsDisabled;
     StateHasChanged();
+  }
+
+  private async Task ValidateAdminPassword() {
+    AdminPasswordCorrect = await SCHQ.ValidateAdminPassword(ChannelName, AdminPassword);
+    if (AdminPasswordCorrect) {
+      if (Users?.Count == 0) await LoadUsers();
+      if (Tags?.Count == 0) await LoadTags();
+    }
   }
 
   private async void Add() {
@@ -417,15 +413,11 @@
         SuccessReply reply = await SCHQ.AddChannel(new() {
           Channel = Name,
           Description = Description,
-          Password = NewPassword,
           AdminPassword = NewAdminPassword ?? string.Empty,
-          Permissons = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None,
           Private = IsPrivate,
-          ReadOnlyPassword = NewReadOnlyPassword ?? string.Empty,
           DiscordWebhookUrl = DiscordWebhookUrl ?? string.Empty
         });
         if (reply.Success) {
-          await LocalStorageService.SetValue(JS, $"pwd{Name}", NewPassword, true);
           Navigation.NavigateTo($"/channel/{Uri.EscapeDataString(Name)}");
         } else {
           ErrorText = reply.Info;
@@ -456,19 +448,12 @@
       NewChannelName = NewChannelName,
       Description = Description,
       AdminPassword = AdminPassword,
-      NewPassword = NewPassword,
-      NewPasswordConfirm = ConfirmNewPassword,
       NewAdminPassword = NewAdminPassword,
       NewAdminPasswordConfirm = ConfirmNewAdminPassword,
-      NewReadOnlyPassword = NewReadOnlyPassword,
-      NewReadOnlyPasswordConfirm = ConfirmNewReadOnlyPassword,
-      Permissions = System.Enum.TryParse<ChannelPermissions>(Permissions, out ChannelPermissions cp) ? cp : ChannelPermissions.None,
       Private = IsPrivate,
       DiscordWebhookUrl = DiscordWebhookUrl ?? string.Empty
     });
     if (reply.Success) {
-      await LocalStorageService.RemoveValue(JS, $"pwd{ChannelName}");
-      await LocalStorageService.SetValue(JS, $"pwd{NewChannelName}", NewPassword, true);
       Navigation.NavigateTo("/", true);
     } else {
       ErrorText = reply.Info;
@@ -685,6 +670,72 @@
     } else {
       ErrorText = reply.Info;
       StateHasChanged();
+    }
+  }
+
+  private List<User> Users { get; set; } = [];
+  private string? NewUsername { get; set; }
+  private string? NewUserPassword { get; set; }
+  private string? NewUserPasswordConfirm { get; set; }
+  private ChannelPermissions NewUserPermissions { get; set; } = ChannelPermissions.Read;
+  private int EditUserId { get; set; }
+  private string? EditUserPassword { get; set; }
+  private string? EditUserPasswordConfirm { get; set; }
+  private ChannelPermissions EditUserPermissions { get; set; } = ChannelPermissions.Read;
+
+  private async Task LoadUsers() {
+    Users = await SCHQ.GetUsers(ChannelName ?? string.Empty, AdminPassword ?? string.Empty);
+    StateHasChanged();
+  }
+
+  private void StartEditUser(User user) {
+    EditUserId = user.Id;
+    EditUserPassword = string.Empty;
+    EditUserPasswordConfirm = string.Empty;
+    EditUserPermissions = user.Permissions;
+  }
+
+  private void CancelEditUser() {
+    EditUserId = 0;
+    EditUserPassword = null;
+    EditUserPasswordConfirm = null;
+    EditUserPermissions = ChannelPermissions.Read;
+  }
+
+  private async void SaveUser(int userId) {
+    SuccessReply reply = await SCHQ.UpdateUser(ChannelName ?? string.Empty, AdminPassword ?? string.Empty, userId, EditUserPassword, EditUserPermissions);
+    if (reply.Success) {
+      CancelEditUser();
+      await LoadUsers();
+    } else {
+      ErrorText = reply.Info;
+      StateHasChanged();
+    }
+  }
+
+  private async void DeleteUser(int userId) {
+    SuccessReply reply = await SCHQ.RemoveUser(ChannelName ?? string.Empty, AdminPassword ?? string.Empty, userId);
+    if (reply.Success) {
+      await LoadUsers();
+    } else {
+      ErrorText = reply.Info;
+      StateHasChanged();
+    }
+  }
+
+  private async void AddUser() {
+    if (!string.IsNullOrWhiteSpace(NewUsername)) {
+      SuccessReply reply = await SCHQ.AddUser(ChannelName ?? string.Empty, AdminPassword ?? string.Empty, NewUsername, NewUserPassword ?? string.Empty, NewUserPermissions);
+      if (reply.Success) {
+        NewUsername = null;
+        NewUserPassword = null;
+        NewUserPasswordConfirm = null;
+        NewUserPermissions = ChannelPermissions.Read;
+        await LoadUsers();
+      } else {
+        ErrorText = reply.Info;
+        StateHasChanged();
+      }
     }
   }
 

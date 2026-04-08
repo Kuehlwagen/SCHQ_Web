@@ -38,13 +38,12 @@ message ChannelsReply {
 
 message ChannelRequest {
   string channel = 1;
-  string password = 2;
-  ChannelPermissions permissons = 3;
+  string username = 2;
+  string password = 3;
   string adminPassword = 4;
   google.protobuf.StringValue description = 5;
   bool private = 6;
-  string readOnlyPassword = 7;
-  string discordWebhookUrl = 8;
+  string discordWebhookUrl = 7;
 }
 
 message ChannelReply {
@@ -56,12 +55,14 @@ message SetRelationsRequest {
   string channel = 1;
   string password = 2;
   repeated RelationInfo relations = 3;
+  string username = 4;
 }
 
 message SetRelationRequest {
   string channel = 1;
   string password = 2;
   RelationInfo relation = 3;
+  string username = 4;
 }
 
 message RelationsReply {
@@ -74,6 +75,7 @@ message RelationRequest {
   string password = 2;
   RelationType type = 3;
   string name = 4;
+  string username = 5;
 }
 
 message RelationReply {
@@ -89,11 +91,10 @@ message SyncRelationsReply {
 
 message ChannelInfo {
   string name = 1;
-  bool hasPassword = 2;
-  ChannelPermissions permissions = 3;
-  google.protobuf.StringValue description = 4;
-  bool private = 5;
-  string discordWebhookUrl = 6;
+  google.protobuf.StringValue description = 2;
+  bool private = 3;
+  string discordWebhookUrl = 4;
+  bool hasUsers = 5;
 }
 
 message RelationInfo {
@@ -112,14 +113,9 @@ message UpdateChannelRequest {
   string adminPassword = 3;
   string newAdminPassword = 4;
   string newAdminPasswordConfirm = 5;
-  string newPassword = 6;
-  string newPasswordConfirm = 7;
-  ChannelPermissions permissions = 8;
-  google.protobuf.StringValue description = 9;
-  bool private = 10;
-  string newReadOnlyPassword = 11;
-  string newReadOnlyPasswordConfirm = 12;
-  string discordWebhookUrl = 13;
+  google.protobuf.StringValue description = 6;
+  bool private = 7;
+  string discordWebhookUrl = 8;
 }
 
 message WebhookRequest {

@@ -489,4 +489,28 @@
   <data name="Color" xml:space="preserve">
     <value>Farbe</value>
   </data>
+  <data name="Users" xml:space="preserve">
+    <value>Benutzer</value>
+  </data>
+  <data name="Add User" xml:space="preserve">
+    <value>Benutzer hinzufügen</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Benutzername</value>
+  </data>
+  <data name="User Password" xml:space="preserve">
+    <value>Benutzerpasswort</value>
+  </data>
+  <data name="Confirm User Password" xml:space="preserve">
+    <value>Benutzerpasswort wiederholen</value>
+  </data>
+  <data name="User already exists" xml:space="preserve">
+    <value>Benutzer existiert bereits</value>
+  </data>
+  <data name="User not found" xml:space="preserve">
+    <value>Benutzer nicht gefunden</value>
+  </data>
+  <data name="No username was given" xml:space="preserve">
+    <value>Es wurde kein Benutzername angegeben</value>
+  </data>
 </root>
