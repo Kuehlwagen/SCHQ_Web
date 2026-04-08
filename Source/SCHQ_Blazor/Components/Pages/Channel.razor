@@ -121,7 +121,7 @@
                       </svg>
                     </button>
                   </div>
-                  @if (ChannelTags.Count > 0) {
+                  @if (QueryNameError == null && ChannelTags.Count > 0) {
                     <div class="d-flex flex-wrap gap-1 mb-1">
                       @foreach (var tag in ChannelTags) {
                         bool isFilterActive = FilterTags.Contains(tag.Id);
@@ -132,7 +132,7 @@
                   <div class="alert alert-danger mb-1" role="alert" hidden="@(QueryNameError == null)">
                     <i>@QueryNameError</i>
                   </div>
-                  <div class="card flex-row mb-1" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
+                  <div class="card flex-row mb-1 mt-3" style="background-color: #131A21; color: #39CED8" hidden="@(QueryHandleInfo == null || QueryHandleInfo.Profile == null)">
                     @{
                       RelationInfo? relHandle = relations?.FirstOrDefault(r => r.Type == RelationType.Handle && r.Name == QueryHandleInfo?.Profile?.Handle) ?? new() { Type = RelationType.Handle, Name = QueryHandleInfo?.Profile?.Handle ?? string.Empty };
                       RelationValue relValHandle = relHandle?.Relation ?? RelationValue.NotAssigned;
@@ -308,26 +308,26 @@
                       <tr class="border-1">
                         <td class="p-3 mb-2 @(GetRelationClassColors(relation, !IsLocal))" style="transform: rotate(0);">
                           @if (!IsLocal) {
-                                            <a href="javascript:void(0);" title="@(SyncActive? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-                                              <svg class="bi" width="16" height="16" fill="currentColor">
-                                                @if (relation.Type == RelationType.Handle) {
-                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                                                } else {
-                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-                                                }
-                                              </svg>
-                                            </a>
-                                          } else {
-                                            <a href="javascript:void(0);" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-                                              <svg class="bi" width="16" height="16" fill="currentColor">
-                                                @if (relation.Type == RelationType.Handle) {
-                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                                                } else {
-                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-                                                }
-                                              </svg>
-                                            </a>
-                                          }
+                            <a href="javascript:void(0);" title="@(SyncActive? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+                              <svg class="bi" width="16" height="16" fill="currentColor">
+                                @if (relation.Type == RelationType.Handle) {
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                                } else {
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                                }
+                              </svg>
+                            </a>
+                          } else {
+                            <a href="javascript:void(0);" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+                              <svg class="bi" width="16" height="16" fill="currentColor">
+                                @if (relation.Type == RelationType.Handle) {
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                                } else {
+                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                                }
+                              </svg>
+                            </a>
+                          }
                         </td>
                         <td class="align-middle" style="transform: rotate(0);">
                           <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
