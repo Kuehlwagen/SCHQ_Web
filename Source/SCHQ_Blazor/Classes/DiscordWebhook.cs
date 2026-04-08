@@ -46,6 +46,8 @@ public class DiscordWebhookRelationInfo {
   public RelationValue? NewRelation { get; set; }
   public string? OldComment { get; set; }
   public string? NewComment { get; set; }
+  public string? TagValue { get; set; }
+  public bool? TagAdded { get; set; }
   public string? Url => Type switch {
     RelationType.Organization => $"https://robertsspaceindustries.com/orgs/{Name}",
     RelationType.Handle => $"https://robertsspaceindustries.com/citizens/{Name}",

@@ -662,6 +662,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
                 rtnVal.Info = localizer["No entries written"];
               } else {
                 notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp(), TagId = tagId, TagAdded = true } });
+                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, null);
               }
             } else {
               rtnVal.Success = true;
@@ -698,6 +699,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
                 rtnVal.Info = localizer["No entries written"];
               } else {
                 notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp(), TagId = tagId, TagAdded = false } });
+                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, null);
               }
             } else {
               rtnVal.Success = true;
@@ -767,7 +769,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
   }
 
   private async void PushRelationWebhook(DiscordWebhookRelationInfo webhookRelationInfo, HandleInfo? handleInfo) {
-    if (webhookRelationInfo.OldRelation != webhookRelationInfo.NewRelation || webhookRelationInfo.OldComment != webhookRelationInfo.NewComment) {
+    if (webhookRelationInfo.OldRelation != webhookRelationInfo.NewRelation || webhookRelationInfo.OldComment != webhookRelationInfo.NewComment || webhookRelationInfo.TagAdded.HasValue) {
       string avatarUrl = HandleQuery.DefaultAvatarUrl;
       if (webhookRelationInfo.Type == RelationType.Handle) {
         if (!string.IsNullOrWhiteSpace(handleInfo?.Profile?.AvatarUrl)) {
@@ -810,6 +812,12 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
         fields.Add(new() {
           name = "KOMMENTAR NEU",
           value = webhookRelationInfo.NewComment
+        });
+      }
+      if (webhookRelationInfo.TagAdded.HasValue && !string.IsNullOrWhiteSpace(webhookRelationInfo.TagValue)) {
+        fields.Add(new() {
+          name = "TAG",
+          value = webhookRelationInfo.TagAdded.Value ? webhookRelationInfo.TagValue : $"~~{webhookRelationInfo.TagValue}~~"
         });
       }
       List<DiscordEmbed> embeds = [
