@@ -944,11 +944,13 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
             icon_url = CorrectUrl(avatarUrl)
           },
           color = GetWebhookRelationColor(webhookRelationInfo.NewRelation ?? RelationValue.NotAssigned),
-          fields = fields
+          fields = fields,
+          footer = new() {
+            text = !string.IsNullOrWhiteSpace(webhookRelationInfo.Username) ? $"Benutzer: {webhookRelationInfo.Username}" : null
+          }
         }
       ];
       DiscordWebhook webhook = new() {
-        username = !string.IsNullOrWhiteSpace(webhookRelationInfo.Username) ? webhookRelationInfo.Username : null,
         embeds = embeds
       };
       await PushWebhook(new() {
