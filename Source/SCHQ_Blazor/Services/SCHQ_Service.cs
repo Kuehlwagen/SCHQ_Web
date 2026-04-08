@@ -660,6 +660,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
+              } else {
+                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp(), TagId = tagId, TagAdded = true } });
               }
             } else {
               rtnVal.Success = true;
@@ -694,6 +696,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
+              } else {
+                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp(), TagId = tagId, TagAdded = false } });
               }
             } else {
               rtnVal.Success = true;

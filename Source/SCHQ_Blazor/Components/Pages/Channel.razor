@@ -615,13 +615,21 @@
                   relations = [];
                 } else {
                   RelationInfo rel = notification.Relation;
-                  if (relations?.FirstOrDefault(r => r.Type == rel.Type && r.Name == rel.Name) is RelationInfo r) {
-                    r.Relation = rel.Relation;
-                    r.Comment = rel.Comment;
-                    r.Timestamp = rel.Timestamp;
-                    relations = relations?.Where(r => r.Type != rel.Type || r.Name != rel.Name).Prepend(r).ToArray();
-                  } else {
-                    relations = relations?.Prepend(new() { Type = rel.Type, Name = rel.Name, Relation = rel.Relation, Comment = rel.Comment, Timestamp = rel.Timestamp }).ToArray();
+                  if (!string.IsNullOrWhiteSpace(rel.Name)) {
+                    if (rel.HasTagId) {
+                      string key = RelationKey(rel.Type, rel.Name);
+                      if (!RelationTags.ContainsKey(key)) RelationTags[key] = [];
+                      if (rel.TagAdded) RelationTags[key].Add(rel.TagId);
+                      else RelationTags[key].Remove(rel.TagId);
+                    }
+                    if (relations?.FirstOrDefault(r => r.Type == rel.Type && r.Name == rel.Name) is RelationInfo r) {
+                      r.Relation = rel.Relation;
+                      r.Comment = rel.Comment;
+                      r.Timestamp = rel.Timestamp;
+                      relations = relations?.Where(r => r.Type != rel.Type || r.Name != rel.Name).Prepend(r).ToArray();
+                    } else {
+                      relations = relations?.Prepend(new() { Type = rel.Type, Name = rel.Name, Relation = rel.Relation, Comment = rel.Comment, Timestamp = rel.Timestamp }).ToArray();
+                    }
                   }
                 }
                 StateHasChanged();
