@@ -305,7 +305,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
         try {
           Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
           if (channel != null) {
-            if (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == request.Username && u.Password == request.Password)) {
+            if (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == request.Username && u.Password == request.Password)) {
               Relation? relation = await dbContext.Relations!.FirstOrDefaultAsync(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
               DateTime utcNow = DateTime.UtcNow;
               relation ??= new() {
@@ -379,7 +379,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       request.Username = request.Username?.Trim() ?? string.Empty;
       try {
         Channel? channel = await dbContext.Channels!.AsNoTracking().Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
-        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
+        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
           IOrderedQueryable<Relation> results = from rel in dbContext.Relations!.AsNoTracking()
                                                 where rel.ChannelId == channel.Id
                                                 orderby rel.Type descending, rel.Name
@@ -418,7 +418,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       request.Username = request.Username?.Trim() ?? string.Empty;
       try {
         Channel? channel = await dbContext.Channels!.AsNoTracking().Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
-        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
+        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
           IQueryable<Relation> results = from rel in dbContext.Relations!.AsNoTracking()
                                          where rel.ChannelId == channel.Id && rel.Type == request.Type && rel.Name == request.Name
                                          select rel;
@@ -443,7 +443,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       request.Username = request.Username?.Trim() ?? string.Empty;
       try {
         Channel? channel = dbContext.Channels!.Include(c => c.Users).FirstOrDefault(c => c.Name == request.Channel);
-        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
+        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
           var reader = notifier.Subscribe(request.Channel);
           try {
             await foreach (var notification in reader.ReadAllAsync(context.CancellationToken)) {
@@ -643,7 +643,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
       try {
         Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
-        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
+        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
           Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
           if (tag != null) {
             Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
@@ -688,7 +688,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
       try {
         Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
-        if (channel != null && (channel.Users.Count == 0 || channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
+        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
           Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
           if (relation != null) {
             Tag? tag = relation.Tags.FirstOrDefault(t => t.Id == tagId);
