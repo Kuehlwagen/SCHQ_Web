@@ -11,7 +11,7 @@ public class RelationChangedNotification {
 
 public class ChannelRelationsNotifier {
   private readonly ConcurrentDictionary<string, List<Channel<RelationChangedNotification>>> _subscribers = new(StringComparer.OrdinalIgnoreCase);
-  private readonly object _lock = new();
+  private readonly Lock _lock = new();
 
   public ChannelReader<RelationChangedNotification> Subscribe(string channelName) {
     Channel<RelationChangedNotification> ch = Channel.CreateUnbounded<RelationChangedNotification>();
