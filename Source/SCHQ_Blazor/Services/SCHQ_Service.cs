@@ -945,9 +945,9 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
           },
           color = GetWebhookRelationColor(webhookRelationInfo.NewRelation ?? RelationValue.NotAssigned),
           fields = fields,
-          footer = new() {
-            text = !string.IsNullOrWhiteSpace(webhookRelationInfo.Username) ? $"Benutzer: {webhookRelationInfo.Username}" : null
-          }
+          footer = !string.IsNullOrWhiteSpace(webhookRelationInfo.Username) ? new() {
+            text = $"Benutzer: {webhookRelationInfo.Username}"
+          } : null
         }
       ];
       DiscordWebhook webhook = new() {
