@@ -636,7 +636,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> AddRelationTag(string channelName, string password, RelationType type, string name, int tagId) {
+  public async Task<SuccessReply> AddRelationTag(string channelName, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
       channelName = channelName.Trim();
@@ -661,8 +661,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               } else {
-                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp(), TagId = tagId, TagAdded = true } });
-                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, null);
+                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), TagId = tagId, TagAdded = true } });
+                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, handleInfo);
               }
             } else {
               rtnVal.Success = true;
@@ -680,7 +680,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> RemoveRelationTag(string channelName, string password, RelationType type, string name, int tagId) {
+  public async Task<SuccessReply> RemoveRelationTag(string channelName, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
       channelName = channelName.Trim();
@@ -698,8 +698,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               } else {
-                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp(), TagId = tagId, TagAdded = false } });
-                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, null);
+                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), TagId = tagId, TagAdded = false } });
+                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, handleInfo);
               }
             } else {
               rtnVal.Success = true;
