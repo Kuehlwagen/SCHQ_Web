@@ -10,9 +10,15 @@ public class RelationsContext(DbContextOptions<RelationsContext> options) : DbCo
 
   public DbSet<Relation> Relations => Set<Relation>();
   public DbSet<Channel> Channels => Set<Channel>();
+  public DbSet<Tag> Tags => Set<Tag>();
 
   protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     => configurationBuilder.Properties<string>().UseCollation("NOCASE");
+
+  protected override void OnModelCreating(ModelBuilder modelBuilder)
+    => modelBuilder.Entity<Relation>()
+      .HasMany(r => r.Tags)
+      .WithMany();
 
 }
 
@@ -29,6 +35,9 @@ public class Relation {
   public string? Name { get; set; }
   public RelationValue Value { get; set; }
   public string? Comment { get; set; }
+  public string? TagIds { get; set; }
+  public List<Tag> Tags { get; set; } = [];
+
 }
 
 [Table("Channels"), Index("Name", [], IsUnique = true, Name = "ChannelName"), PrimaryKey("Id")]
@@ -60,4 +69,22 @@ public class Channel {
   public ChannelPermissions Permissions { get; set; }
   public bool Private { get; set; }
   public string? DiscordWebhookUrl { get; set; }
+  public List<Tag> Tags { get; set; } = [];
+}
+
+[Table("Tags"), Index("ChannelId", ["Value"], IsUnique = true, Name = "ChannelTagIndex"), PrimaryKey("Id")]
+public class Tag {
+  public int Id { get; set; }
+  public int ChannelId { get; set; }
+  public string? Value { get; set; }
+  public string? Description { get; set; }
+  public TagColor Color { get; set; }
+}
+
+public enum TagColor {
+  Success,
+  Secondary,
+  Warning,
+  Danger,
+  Dark
 }

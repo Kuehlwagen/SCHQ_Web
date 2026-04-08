@@ -121,6 +121,14 @@
                       </svg>
                     </button>
                   </div>
+                  @if (ChannelTags.Count > 0) {
+                    <div class="d-flex flex-wrap gap-1 mb-1">
+                      @foreach (var tag in ChannelTags) {
+                        bool isFilterActive = FilterTags.Contains(tag.Id);
+                        <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isFilterActive ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleFilterTag(tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                      }
+                    </div>
+                  }
                   <div class="alert alert-danger mb-1" role="alert" hidden="@(QueryNameError == null)">
                     <i>@QueryNameError</i>
                   </div>
@@ -148,6 +156,14 @@
                         <div hidden="@(QueryHandleInfo?.Profile?.Enlisted == DateTime.MinValue)">@QueryHandleInfo?.Profile?.Enlisted.ToString("MMM d, yyyy") (@QueryHandleInfo?.Profile?.UeeCitizenRecord)</div>
                         <div hidden="@(QueryHandleInfo?.Profile?.DisplayTitle == null)"><img width="16" height="16" src="@QueryHandleInfo?.Profile?.DisplayTitleAvatarUrl" /> @QueryHandleInfo?.Profile?.DisplayTitle</div>
                         <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
+                        @if (ChannelTags.Count > 0) {
+                          <div class="d-flex flex-wrap gap-1 mb-1">
+                            @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(t.Id))) {
+                              bool isSelected = GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(tag.Id);
+                              <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relHandle!.Type, relHandle!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                            }
+                          </div>
+                        }
                         <div class="badge @GetRelationClassColors(relHandle!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relHandle!)">
                           <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentHandle))">
                             <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
@@ -157,10 +173,10 @@
                       </div>
                     </div>
                     <div class="btn-group-vertical" role="group">
-                      <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Friendly || IsLocal && relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-                      <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Neutral || IsLocal && relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-                      <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bogey || IsLocal && relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-                      <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bandit || IsLocal && relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+                      <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Friendly || IsLocal && relValHandle == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+                      <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Neutral || IsLocal && relValHandle == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+                      <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bogey || IsLocal && relValHandle == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+                      <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relHandle!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValHandle == RelationValue.Bandit || IsLocal && relValHandle == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
                     </div>
                   </div>
                   <div class="input-group mb-1" id="commentSection" hidden="@(CommentRelation == null)">
@@ -198,6 +214,14 @@
                           </div>
                           <div>@string.Join(", ", [GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.PrimaryActivity), GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.SecondaryActivity)])</div>
                           <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+                          @if (ChannelTags.Count > 0) {
+                            <div class="d-flex flex-wrap gap-1 mb-1">
+                              @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(t.Id))) {
+                                bool isSelected = GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(tag.Id);
+                                <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relOrg!.Type, relOrg!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                              }
+                            </div>
+                          }
                           <div class="badge @GetRelationClassColors(relOrg!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relOrg!)">
                             <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentOrg))">
                               <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
@@ -207,10 +231,10 @@
                         </div>
                       </div>
                       <div class="btn-group-vertical" role="group">
-                        <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Friendly || IsLocal && relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-                        <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Neutral || IsLocal && relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-                        <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bogey || IsLocal && relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-                        <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bandit || IsLocal && relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+                        <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Friendly || IsLocal && relValOrg == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+                        <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Neutral || IsLocal && relValOrg == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+                        <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bogey || IsLocal && relValOrg == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+                        <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relOrg!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValOrg == RelationValue.Bandit || IsLocal && relValOrg == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
                       </div>
                     } else {
                       <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
@@ -239,6 +263,14 @@
                               }
                             </div>
                             <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
+                            @if (ChannelTags.Count > 0) {
+                              <div class="d-flex flex-wrap gap-1 mb-1">
+                                @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relAff!.Type, relAff!.Name).Contains(t.Id))) {
+                                  bool isSelected = GetRelationTags(relAff!.Type, relAff!.Name).Contains(tag.Id);
+                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relAff!.Type, relAff!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                                }
+                              </div>
+                            }
                             <div class="badge @GetRelationClassColors(relAff!)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relAff!)">
                               <svg class="bi" width="12" height="12" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(commentAff))">
                                 <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
@@ -248,10 +280,10 @@
                           </div>
                         </div>
                         <div class="btn-group-vertical" role="group">
-                          <button type="button" class="btn btn-success btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Friendly || IsLocal && relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
-                          <button type="button" class="btn btn-secondary btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Neutral || IsLocal && relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
-                          <button type="button" class="btn btn-warning btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bogey || IsLocal && relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
-                          <button type="button" class="btn btn-danger btn-sm text-white mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bandit || IsLocal && relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
+                          <button type="button" class="btn btn-success btn-sm text-bg-success mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Friendly)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Friendly || IsLocal && relValAff == RelationValue.Friendly)" title="@Localizer["Friendly"]">FR</button>
+                          <button type="button" class="btn btn-secondary btn-sm text-bg-secondary mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Neutral)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Neutral || IsLocal && relValAff == RelationValue.Neutral)" title="@Localizer["Neutral"]">NE</button>
+                          <button type="button" class="btn btn-warning btn-sm text-bg-warning mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bogey)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bogey || IsLocal && relValAff == RelationValue.Bogey)" title="@Localizer["Bogey"]">BO</button>
+                          <button type="button" class="btn btn-danger btn-sm text-bg-danger mb-0" @onclick="() => SetRelation(relAff!, RelationValue.Bandit)" disabled="@(!IsLocal && !SyncActive && relValAff == RelationValue.Bandit || IsLocal && relValAff == RelationValue.Bandit)" title="@Localizer["Bandit"]">BA</button>
                         </div>
                       } else {
                         <div class="card-body m-1 p-1 bg-danger text-danger-emphasis">
@@ -276,34 +308,41 @@
                       <tr class="border-1">
                         <td class="p-3 mb-2 @(GetRelationClassColors(relation, !IsLocal))" style="transform: rotate(0);">
                           @if (!IsLocal) {
-                            <a href="javascript:void(0);" title="@(SyncActive? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-                              <svg class="bi" width="16" height="16" fill="white">
-                                @if (relation.Type == RelationType.Handle) {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                                } else {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-                                }
-                              </svg>
-                            </a>
-                          } else {
-                            <a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
-                              <svg class="bi" width="16" height="16" fill="white">
-                                @if (relation.Type == RelationType.Handle) {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
-                                } else {
-                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
-                                }
-                              </svg>
-                            </a>
-                          }
+                                            <a href="javascript:void(0);" title="@(SyncActive? DateTime.SpecifyKind(relation.Timestamp.ToDateTime(), DateTimeKind.Utc).ToLocalTime() : string.Empty)" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+                                              <svg class="bi" width="16" height="16" fill="currentColor">
+                                                @if (relation.Type == RelationType.Handle) {
+                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                                                } else {
+                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                                                }
+                                              </svg>
+                                            </a>
+                                          } else {
+                                            <a href="javascript:void(0);" class="text-reset link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">
+                                              <svg class="bi" width="16" height="16" fill="currentColor">
+                                                @if (relation.Type == RelationType.Handle) {
+                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#person" />
+                                                } else {
+                                                  <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#globe" />
+                                                }
+                                              </svg>
+                                            </a>
+                                          }
                         </td>
                         <td class="align-middle" style="transform: rotate(0);">
                           <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
-                          <div class="badge @GetRelationClassColors(relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
-                            <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
-                              <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
-                            </svg>
-                            @relation.Comment
+                          <div class="d-flex flex-wrap align-items-center gap-1">
+                            @if (ChannelTags.Count > 0) {
+                              @foreach (var tag in ChannelTags.Where(t => GetRelationTags(relation.Type, relation.Name).Contains(t.Id))) {
+                                <span class="badge text-bg-@(tag.Color.ToString().ToLower())" title="@tag.Description">@tag.Value</span>
+                              }
+                            }
+                            <div class="badge @GetRelationClassColors(relation)" role="button" title="@Localizer["Comment"]" @onclick="() => RelationCommentClick(relation!)">
+                              <svg class="bi" width="10" height="10" fill="currentColor" hidden="@(!string.IsNullOrWhiteSpace(relation.Comment))">
+                                <use xlink:href="/lib/bootstrap-icons/bootstrap-icons.svg#pencil-square" />
+                              </svg>
+                              @relation.Comment
+                            </div>
                           </div>
                         </td>
                         <td class="align-middle text-end">
@@ -499,6 +538,9 @@
           QueryNameError = reply.Info;
         }
         await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", ChannelPassword, true);
+        ChannelTags = await SCHQ.GetTags(ChannelName);
+        var tagMap = await SCHQ.GetRelationTagIds(ChannelName);
+        RelationTags = tagMap.ToDictionary(kv => kv.Key, kv => new HashSet<int>(kv.Value));
       }
     }
   }
@@ -606,18 +648,19 @@
       RelationValue.Bandit => FilterBandit,
       RelationValue.NotAssigned => FilterNotAssigned,
       _ => false
-    } ?? false);
+    } ?? false) &&
+    (FilterTags.Count == 0 || FilterTags.Any(tagId => GetRelationTags(relation.Type, relation.Name).Contains(tagId)));
   }
 
   public string GetRelationClassColors(RelationInfo relation, bool withSync = false) {
     string syncZusatz = withSync && SyncActive && relation.Timestamp?.ToDateTime() < SyncStart ? "-subtle" : string.Empty;
     return relation?.Relation switch {
-      RelationValue.NotAssigned => $"bg-dark{syncZusatz} text-white",
-      RelationValue.Friendly => $"bg-success{syncZusatz} text-white",
-      RelationValue.Neutral => $"bg-secondary{syncZusatz} text-white",
-      RelationValue.Bogey => $"bg-warning{syncZusatz} text-white",
-      RelationValue.Bandit => $"bg-danger{syncZusatz} text-white",
-      _ => "bg-transparent text-dark"
+      RelationValue.NotAssigned => $"bg-dark{syncZusatz} text-bg-dark",
+      RelationValue.Friendly => $"bg-success{syncZusatz} text-bg-success",
+      RelationValue.Neutral => $"bg-secondary{syncZusatz} text-bg-secondary",
+      RelationValue.Bogey => $"bg-warning{syncZusatz} text-bg-warning",
+      RelationValue.Bandit => $"bg-danger{syncZusatz} text-bg-danger",
+      _ => "bg-transparent text-bg-dark"
     };
   }
 
@@ -801,6 +844,37 @@
 
   private void OnFocusIn(FocusEventArgs e) {
     HideFilter = true;
+  }
+
+  private List<Tag> ChannelTags { get; set; } = [];
+  private Dictionary<string, HashSet<int>> RelationTags { get; set; } = [];
+  private HashSet<int> FilterTags { get; set; } = [];
+
+  private static string RelationKey(RelationType type, string? name) => $"{(int)type}|{name ?? string.Empty}";
+
+  private HashSet<int> GetRelationTags(RelationType type, string? name) =>
+    string.IsNullOrWhiteSpace(name) ? [] : (RelationTags.TryGetValue(RelationKey(type, name), out var ids) ? ids : []);
+
+  private void ToggleFilterTag(int tagId) {
+    if (!FilterTags.Remove(tagId)) FilterTags.Add(tagId);
+    CurrentPage = 1;
+  }
+
+  private async void ToggleRelationTag(RelationType type, string? name, int tagId) {
+    if (string.IsNullOrWhiteSpace(name)) return;
+    string key = RelationKey(type, name);
+    bool isSelected = RelationTags.TryGetValue(key, out var ids) && ids.Contains(tagId);
+    SuccessReply reply = isSelected
+      ? await SCHQ.RemoveRelationTag(ChannelName ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId)
+      : await SCHQ.AddRelationTag(ChannelName ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId);
+    if (reply.Success) {
+      if (!RelationTags.ContainsKey(key)) RelationTags[key] = [];
+      if (isSelected) RelationTags[key].Remove(tagId);
+      else RelationTags[key].Add(tagId);
+      StateHasChanged();
+    } else {
+      QueryNameError = reply.Info;
+    }
   }
 
 }

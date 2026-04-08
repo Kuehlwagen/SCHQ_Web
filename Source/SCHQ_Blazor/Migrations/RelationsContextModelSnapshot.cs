@@ -19,6 +19,21 @@ namespace SCHQ_Blazor.Migrations
                 .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("RelationTag", b =>
+                {
+                    b.Property<int>("RelationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RelationId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("RelationTag");
+                });
+
             modelBuilder.Entity("SCHQ_Blazor.Models.Channel", b =>
                 {
                     b.Property<int>("Id")
@@ -89,6 +104,10 @@ namespace SCHQ_Blazor.Migrations
                         .HasColumnType("varchar(255)")
                         .UseCollation("NOCASE");
 
+                    b.Property<string>("TagIds")
+                        .HasColumnType("longtext")
+                        .UseCollation("NOCASE");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime(6)");
 
@@ -109,6 +128,49 @@ namespace SCHQ_Blazor.Migrations
                     b.ToTable("Relations");
                 });
 
+            modelBuilder.Entity("SCHQ_Blazor.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChannelId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Color")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("varchar(255)")
+                        .UseCollation("NOCASE");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "ChannelId", "Value" }, "ChannelTagIndex")
+                        .IsUnique();
+
+                    b.ToTable("Tags");
+                });
+
+            modelBuilder.Entity("RelationTag", b =>
+                {
+                    b.HasOne("SCHQ_Blazor.Models.Relation", null)
+                        .WithMany()
+                        .HasForeignKey("RelationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SCHQ_Blazor.Models.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SCHQ_Blazor.Models.Relation", b =>
                 {
                     b.HasOne("SCHQ_Blazor.Models.Channel", "Channel")
@@ -118,6 +180,20 @@ namespace SCHQ_Blazor.Migrations
                         .IsRequired();
 
                     b.Navigation("Channel");
+                });
+
+            modelBuilder.Entity("SCHQ_Blazor.Models.Tag", b =>
+                {
+                    b.HasOne("SCHQ_Blazor.Models.Channel", null)
+                        .WithMany("Tags")
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SCHQ_Blazor.Models.Channel", b =>
+                {
+                    b.Navigation("Tags");
                 });
 #pragma warning restore 612, 618
         }

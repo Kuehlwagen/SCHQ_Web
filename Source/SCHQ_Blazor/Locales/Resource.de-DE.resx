@@ -468,4 +468,25 @@
   <data name="New Discord Webhook URL" xml:space="preserve">
     <value>Neue Discord Webhook-URL</value>
   </data>
+  <data name="Tag Value" xml:space="preserve">
+    <value>Tag-Wert</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="Add Tag" xml:space="preserve">
+    <value>Tag hinzufügen</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Farbe</value>
+  </data>
 </root>

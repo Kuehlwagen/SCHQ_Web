@@ -503,6 +503,215 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
   }
   #endregion
 
+  #region Tags
+  public async Task<List<Tag>> GetTags(string channelName) {
+    List<Tag> rtnVal = [];
+    if (!string.IsNullOrWhiteSpace(channelName)) {
+      channelName = channelName.Trim();
+      try {
+        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == channelName);
+        if (channel != null) {
+          rtnVal = await dbContext.Tags!.AsNoTracking().Where(t => t.ChannelId == channel.Id).OrderBy(t => t.Value).ToListAsync();
+        }
+      } catch { }
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> AddTag(string channelName, string adminPassword, string value, string? description, TagColor color) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(value)) {
+      channelName = channelName.Trim();
+      value = value.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          if (!await dbContext.Tags!.AnyAsync(t => t.ChannelId == channel.Id && t.Value == value)) {
+            dbContext.Add(new Tag() {
+              ChannelId = channel.Id,
+              Value = value,
+              Description = description,
+              Color = color
+            });
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["Tag already exists"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    } else {
+      rtnVal.Info = localizer["No tag value was given"];
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> UpdateTag(string channelName, string adminPassword, int tagId, string value, string? description, TagColor color) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(value)) {
+      channelName = channelName.Trim();
+      value = value.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
+          if (tag != null) {
+            tag.Value = value;
+            tag.Description = description;
+            tag.Color = color;
+            dbContext.Update(tag);
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["Tag not found"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    } else {
+      rtnVal.Info = localizer["No tag value was given"];
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> RemoveTag(string channelName, string adminPassword, int tagId) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName)) {
+      channelName = channelName.Trim();
+      adminPassword = !string.IsNullOrWhiteSpace(adminPassword) ? Encryption.EncryptText(adminPassword) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
+        if (channel != null) {
+          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
+          if (tag != null) {
+            dbContext.Remove(tag);
+            rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+            if (!rtnVal.Success) {
+              rtnVal.Info = localizer["No entries written"];
+            }
+          } else {
+            rtnVal.Info = localizer["Tag not found"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    } else {
+      rtnVal.Info = localizer["No channel name was given"];
+    }
+    return rtnVal;
+  }
+
+  public async Task<Dictionary<string, List<int>>> GetRelationTagIds(string channelName) {
+    Dictionary<string, List<int>> rtnVal = [];
+    if (!string.IsNullOrWhiteSpace(channelName)) {
+      channelName = channelName.Trim();
+      try {
+        Channel? channel = await dbContext.Channels!.AsNoTracking().FirstOrDefaultAsync(c => c.Name == channelName);
+        if (channel != null) {
+          var data = await dbContext.Relations!
+            .AsNoTracking()
+            .Where(r => r.ChannelId == channel.Id)
+            .Select(r => new { Key = $"{(int)r.Type}|{r.Name}", TagIds = r.Tags.Select(t => t.Id).ToList() })
+            .ToListAsync();
+          rtnVal = data.Where(r => r.TagIds.Count > 0).ToDictionary(r => r.Key, r => r.TagIds);
+        }
+      } catch { }
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> AddRelationTag(string channelName, string password, RelationType type, string name, int tagId) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
+      channelName = channelName.Trim();
+      name = name.Trim();
+      password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && (c.Permissions >= ChannelPermissions.Write || c.Password == password));
+        if (channel != null) {
+          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
+          if (tag != null) {
+            Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
+            if (relation == null) {
+              DateTime utcNow = DateTime.UtcNow;
+              relation = new() { ChannelId = channel.Id, Type = type, Name = name, DateCreated = utcNow, Timestamp = utcNow, Value = RelationValue.NotAssigned };
+              dbContext.Relations!.Add(relation);
+              await dbContext.SaveChangesAsync();
+              relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
+            }
+            if (relation != null && !relation.Tags.Any(t => t.Id == tagId)) {
+              relation.Tags.Add(tag);
+              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+              if (!rtnVal.Success) {
+                rtnVal.Info = localizer["No entries written"];
+              }
+            } else {
+              rtnVal.Success = true;
+            }
+          } else {
+            rtnVal.Info = localizer["Tag not found"];
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    }
+    return rtnVal;
+  }
+
+  public async Task<SuccessReply> RemoveRelationTag(string channelName, string password, RelationType type, string name, int tagId) {
+    SuccessReply rtnVal = new();
+    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
+      channelName = channelName.Trim();
+      name = name.Trim();
+      password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
+      try {
+        Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && (c.Permissions >= ChannelPermissions.Write || c.Password == password));
+        if (channel != null) {
+          Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
+          if (relation != null) {
+            Tag? tag = relation.Tags.FirstOrDefault(t => t.Id == tagId);
+            if (tag != null) {
+              relation.Tags.Remove(tag);
+              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+              if (!rtnVal.Success) {
+                rtnVal.Info = localizer["No entries written"];
+              }
+            } else {
+              rtnVal.Success = true;
+            }
+          } else {
+            rtnVal.Success = true;
+          }
+        } else {
+          rtnVal.Info = localizer["Access denied"];
+        }
+      } catch (Exception ex) {
+        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
+      }
+    }
+    return rtnVal;
+  }
+  #endregion
+
   #region Webhooks
   private static readonly Regex RgxDiscordWebhookUrl = RegexDiscordWebhookUrl();
   [GeneratedRegex(@"^https:\/\/discord.com\/api\/webhooks\/\d+\/[a-zA-Z0-9_-]+$", RegexOptions.Compiled)]
