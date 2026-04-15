@@ -901,9 +901,12 @@
     if (string.IsNullOrWhiteSpace(name)) return;
     string key = RelationKey(type, name);
     bool isSelected = RelationTags.TryGetValue(key, out var tags) && tags.Contains(tag);
-    SuccessReply reply = isSelected
-      ? await SCHQ.RemoveRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tag, QueryHandleInfo)
-      : await SCHQ.AddRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tag, QueryHandleInfo);
+    SuccessReply reply = await SCHQ.SetRelation(new() {
+      Channel = ChannelName,
+      Username = ChannelUsername ?? string.Empty,
+      Password = ChannelPassword ?? string.Empty,
+      Relation = new() { Type = type, Name = name, Tag = tag, TagAdded = !isSelected }
+    }, QueryHandleInfo);
     if (reply.Success) {
       if (!RelationTags.ContainsKey(key)) RelationTags[key] = [];
       if (isSelected) RelationTags[key].Remove(tag);

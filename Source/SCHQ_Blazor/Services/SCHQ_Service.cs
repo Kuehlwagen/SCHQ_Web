@@ -320,46 +320,93 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
           Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == request.Channel);
           if (channel != null) {
             if (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == request.Username && u.Password == request.Password)) {
-              Relation? relation = await dbContext.Relations!.FirstOrDefaultAsync(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
+              bool isTagOperation = !string.IsNullOrWhiteSpace(request.Relation.Tag);
+              Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.Type == request.Relation.Type && r.ChannelId == channel.Id && r.Name == request.Relation.Name);
               DateTime utcNow = DateTime.UtcNow;
-              relation ??= new() {
-                ChannelId = channel.Id,
-                Type = request.Relation.Type,
-                Name = request.Relation.Name,
-                DateCreated = utcNow
-              };
-              DiscordWebhookRelationInfo webhookRelationInfo = new() {
-                WebhookUrl = channel.DiscordWebhookUrl,
-                Username = request.Username,
-                Type = request.Relation.Type,
-                Name = request.Relation.Name,
-                OldRelation = relation.Value,
-                OldComment = relation.Comment ?? string.Empty,
-                NewRelation = request.Relation.Relation,
-                NewComment = request.Relation.Comment ?? string.Empty
-              };
-              relation.Timestamp = utcNow;
-              relation.UpdateCount++;
-              relation.Value = request.Relation.Relation;
-              if (request.Relation.Comment != null) {
-                relation.Comment = request.Relation.Comment;
-              }
-              dbContext.Update(relation);
-              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
-              if (!rtnVal.Success) {
-                rtnVal.Info = localizer["No entries written"];
-              } else {
-                notifier.Notify(request.Channel, new RelationChangedNotification {
-                  ChannelName = request.Channel,
-                  Relation = new RelationInfo {
-                    Type = relation.Type,
-                    Name = relation.Name ?? string.Empty,
-                    Relation = relation.Value,
-                    Comment = relation.Comment ?? string.Empty,
-                    Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp()
+              if (isTagOperation) {
+                Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Value == request.Relation.Tag && t.ChannelId == channel.Id);
+                if (tag != null) {
+                  if (request.Relation.TagAdded) {
+                    if (relation == null) {
+                      relation = new() { ChannelId = channel.Id, Type = request.Relation.Type, Name = request.Relation.Name, DateCreated = utcNow, Timestamp = utcNow, Value = RelationValue.NotAssigned };
+                      dbContext.Relations!.Add(relation);
+                      await dbContext.SaveChangesAsync();
+                      relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == request.Relation.Type && r.Name == request.Relation.Name);
+                    }
+                    if (relation != null && !relation.Tags.Any(t => t.Value == request.Relation.Tag)) {
+                      relation.Tags.Add(tag);
+                      rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+                      if (!rtnVal.Success) {
+                        rtnVal.Info = localizer["No entries written"];
+                      } else {
+                        notifier.Notify(request.Channel, new RelationChangedNotification { ChannelName = request.Channel, Relation = new RelationInfo { Type = request.Relation.Type, Name = request.Relation.Name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), Tag = tag.Value, TagAdded = true } });
+                        PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = request.Username, Type = request.Relation.Type, Name = request.Relation.Name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, handleInfo);
+                      }
+                    } else {
+                      rtnVal.Success = true;
+                    }
+                  } else {
+                    if (relation != null) {
+                      Tag? relTag = relation.Tags.FirstOrDefault(t => t.Value == request.Relation.Tag);
+                      if (relTag != null) {
+                        relation.Tags.Remove(relTag);
+                        rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+                        if (!rtnVal.Success) {
+                          rtnVal.Info = localizer["No entries written"];
+                        } else {
+                          notifier.Notify(request.Channel, new RelationChangedNotification { ChannelName = request.Channel, Relation = new RelationInfo { Type = request.Relation.Type, Name = request.Relation.Name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), Tag = relTag.Value, TagAdded = false } });
+                          PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = request.Username, Type = request.Relation.Type, Name = request.Relation.Name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = relTag.Value, TagAdded = false }, handleInfo);
+                        }
+                      } else {
+                        rtnVal.Success = true;
+                      }
+                    } else {
+                      rtnVal.Success = true;
+                    }
                   }
-                });
-                PushRelationWebhook(webhookRelationInfo, handleInfo);
+                } else {
+                  rtnVal.Info = localizer["Tag not found"];
+                }
+              } else {
+                relation ??= new() {
+                  ChannelId = channel.Id,
+                  Type = request.Relation.Type,
+                  Name = request.Relation.Name,
+                  DateCreated = utcNow
+                };
+                DiscordWebhookRelationInfo webhookRelationInfo = new() {
+                  WebhookUrl = channel.DiscordWebhookUrl,
+                  Username = request.Username,
+                  Type = request.Relation.Type,
+                  Name = request.Relation.Name,
+                  OldRelation = relation.Value,
+                  OldComment = relation.Comment ?? string.Empty,
+                  NewRelation = request.Relation.Relation,
+                  NewComment = request.Relation.Comment ?? string.Empty
+                };
+                relation.Timestamp = utcNow;
+                relation.UpdateCount++;
+                relation.Value = request.Relation.Relation;
+                if (request.Relation.Comment != null) {
+                  relation.Comment = request.Relation.Comment;
+                }
+                dbContext.Update(relation);
+                rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
+                if (!rtnVal.Success) {
+                  rtnVal.Info = localizer["No entries written"];
+                } else {
+                  notifier.Notify(request.Channel, new RelationChangedNotification {
+                    ChannelName = request.Channel,
+                    Relation = new RelationInfo {
+                      Type = relation.Type,
+                      Name = relation.Name ?? string.Empty,
+                      Relation = relation.Value,
+                      Comment = relation.Comment ?? string.Empty,
+                      Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp()
+                    }
+                  });
+                  PushRelationWebhook(webhookRelationInfo, handleInfo);
+                }
               }
             } else {
               rtnVal.Info = localizer["Access denied"];
@@ -604,89 +651,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
           rtnVal = data.Where(r => r.TagValues.Count > 0).ToDictionary(r => r.Key, r => r.TagValues);
         }
       } catch { }
-    }
-    return rtnVal;
-  }
-
-  public async Task<SuccessReply> AddRelationTag(string channelName, string username, string password, RelationType type, string name, string tagValue, HandleInfo? handleInfo = null) {
-    SuccessReply rtnVal = new();
-    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
-      channelName = channelName.Trim();
-      name = name.Trim();
-      username = username?.Trim() ?? string.Empty;
-      password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
-      try {
-        Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
-        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
-          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Value == tagValue && t.ChannelId == channel.Id);
-          if (tag != null) {
-            Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
-            if (relation == null) {
-              DateTime utcNow = DateTime.UtcNow;
-              relation = new() { ChannelId = channel.Id, Type = type, Name = name, DateCreated = utcNow, Timestamp = utcNow, Value = RelationValue.NotAssigned };
-              dbContext.Relations!.Add(relation);
-              await dbContext.SaveChangesAsync();
-              relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
-            }
-            if (relation != null && !relation.Tags.Any(t => t.Value == tagValue)) {
-              relation.Tags.Add(tag);
-              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
-              if (!rtnVal.Success) {
-                rtnVal.Info = localizer["No entries written"];
-              } else {
-                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), Tag = tag.Value, TagAdded = true } });
-                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = username, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, handleInfo);
-              }
-            } else {
-              rtnVal.Success = true;
-            }
-          } else {
-            rtnVal.Info = localizer["Tag not found"];
-          }
-        } else {
-          rtnVal.Info = localizer["Access denied"];
-        }
-      } catch (Exception ex) {
-        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-      }
-    }
-    return rtnVal;
-  }
-
-  public async Task<SuccessReply> RemoveRelationTag(string channelName, string username, string password, RelationType type, string name, string tagValue, HandleInfo? handleInfo = null) {
-    SuccessReply rtnVal = new();
-    if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
-      channelName = channelName.Trim();
-      name = name.Trim();
-      username = username?.Trim() ?? string.Empty;
-      password = !string.IsNullOrWhiteSpace(password) ? Encryption.EncryptText(password) : string.Empty;
-      try {
-        Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
-        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
-          Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
-          if (relation != null) {
-            Tag? tag = relation.Tags.FirstOrDefault(t => t.Value == tagValue);
-            if (tag != null) {
-              relation.Tags.Remove(tag);
-              rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
-              if (!rtnVal.Success) {
-                rtnVal.Info = localizer["No entries written"];
-              } else {
-                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), Tag = tag.Value, TagAdded = false } });
-                PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = username, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, handleInfo);
-              }
-            } else {
-              rtnVal.Success = true;
-            }
-          } else {
-            rtnVal.Success = true;
-          }
-        } else {
-          rtnVal.Info = localizer["Access denied"];
-        }
-      } catch (Exception ex) {
-        rtnVal.Info = $"{localizer["Exception"]}: {ex.Message}, {localizer["Inner Exception"]}: {ex.InnerException?.Message ?? localizer["Empty"]}";
-      }
     }
     return rtnVal;
   }
