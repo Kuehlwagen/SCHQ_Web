@@ -16,11 +16,51 @@ namespace SCHQ_Blazor.Services;
 
 public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, RelationsContext dbContext, ChannelRelationsNotifier notifier, IHttpClientFactory httpClientFactory) : SCHQ_Relations.SCHQ_RelationsBase {
 
-  #region Channels
-  public override Task<SuccessReply> AddChannel(ChannelRequest request, ServerCallContext context) {
-    return AddChannel(request);
+  #region gRPC Overrides
+  public override Task<ChannelsReply> GetChannels(Empty request, ServerCallContext context) {
+    return GetChannels();
   }
 
+  public override Task<SuccessReply> SetRelation(SetRelationRequest request, ServerCallContext context) {
+    return SetRelation(request);
+  }
+
+  public override Task<RelationsReply> GetRelations(ChannelRequest request, ServerCallContext context) {
+    return GetRelations(request);
+  }
+
+  public override async Task SyncRelations(ChannelRequest request, IServerStreamWriter<SyncRelationsReply> responseStream, ServerCallContext context) {
+    if (!string.IsNullOrWhiteSpace(request.Channel)) {
+      request.Channel = request.Channel.Trim();
+      request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
+      request.Username = request.Username?.Trim() ?? string.Empty;
+      try {
+        Channel? channel = dbContext.Channels!.Include(c => c.Users).FirstOrDefault(c => c.Name == request.Channel);
+        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
+          var reader = notifier.Subscribe(request.Channel);
+          try {
+            await foreach (var notification in reader.ReadAllAsync(context.CancellationToken)) {
+              if (notification.Relation != null) {
+                await responseStream.WriteAsync(new SyncRelationsReply() {
+                  Channel = request.Channel,
+                  Relation = notification.Relation
+                });
+              }
+            }
+          } catch (OperationCanceledException) { } finally {
+            notifier.Unsubscribe(request.Channel, reader);
+          }
+        }
+      } catch { }
+    }
+  }
+
+  public override async Task<SuccessReply> PushWebhook(WebhookRequest request, ServerCallContext context) {
+    return await PushWebhook(request, true);
+  }
+  #endregion
+
+  #region Implementation
   public async Task<SuccessReply> AddChannel(ChannelRequest request) {
     SuccessReply rtnVal = new();
 
@@ -59,10 +99,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public override Task<ChannelsReply> GetChannels(Empty request, ServerCallContext context) {
-    return GetChannels();
-  }
-
   public async Task<ChannelsReply> GetChannels() {
     ChannelsReply rtnVal = new();
 
@@ -82,10 +118,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     } catch { }
 
     return rtnVal;
-  }
-
-  public override Task<ChannelReply> GetChannel(ChannelNameRequest request, ServerCallContext context) {
-    return GetChannel(request);
   }
 
   public async Task<ChannelReply> GetChannel(ChannelNameRequest request) {
@@ -112,16 +144,12 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public override Task<SuccessReply> UpdateChannel(UpdateChannelRequest request, ServerCallContext context) {
-    return UpdateChannel(request);
-  }
-
   public async Task<SuccessReply> UpdateChannel(UpdateChannelRequest request) {
     SuccessReply rtnVal = new();
 
     if (!string.IsNullOrWhiteSpace(request.Channel)) {
       request.Channel = request.Channel.Trim();
-      request.NewChannelName = request.NewChannelName.Trim();
+      request.NewChannelName = request.NewChannelName?.Trim();
       request.AdminPassword = !string.IsNullOrWhiteSpace(request.AdminPassword) ? Encryption.EncryptText(request.AdminPassword) : string.Empty;
       try {
         Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == request.Channel);
@@ -168,10 +196,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public override Task<SuccessReply> RemoveChannel(ChannelRequest request, ServerCallContext context) {
-    return RemoveChannel(request);
-  }
-
   public async Task<SuccessReply> RemoveChannel(ChannelRequest request) {
     SuccessReply rtnVal = new();
 
@@ -213,12 +237,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       return await dbContext.Channels!.AsNoTracking().AnyAsync(c => c.Name == channelName && c.AdminPassword == encryptedPassword);
     } catch { }
     return false;
-  }
-  #endregion
-
-  #region Relations
-  public override Task<SuccessReply> SetRelations(SetRelationsRequest request, ServerCallContext context) {
-    return SetRelations(request);
   }
 
   public async Task<SuccessReply> SetRelations(SetRelationsRequest request) {
@@ -262,7 +280,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
                     ChannelName = request.Channel,
                     Relation = new RelationInfo {
                       Type = rel.Type,
-                      Name = rel.Name,
+                      Name = rel.Name ?? string.Empty,
                       Relation = rel.Value,
                       Comment = rel.Comment ?? string.Empty,
                       Timestamp = DateTime.SpecifyKind(rel.Timestamp, DateTimeKind.Utc).ToTimestamp()
@@ -287,10 +305,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     }
 
     return rtnVal;
-  }
-
-  public override Task<SuccessReply> SetRelation(SetRelationRequest request, ServerCallContext context) {
-    return SetRelation(request);
   }
 
   public async Task<SuccessReply> SetRelation(SetRelationRequest request, HandleInfo? handleInfo = null) {
@@ -339,7 +353,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
                   ChannelName = request.Channel,
                   Relation = new RelationInfo {
                     Type = relation.Type,
-                    Name = relation.Name,
+                    Name = relation.Name ?? string.Empty,
                     Relation = relation.Value,
                     Comment = relation.Comment ?? string.Empty,
                     Timestamp = DateTime.SpecifyKind(relation.Timestamp, DateTimeKind.Utc).ToTimestamp()
@@ -364,10 +378,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     }
 
     return rtnVal;
-  }
-
-  public override Task<RelationsReply> GetRelations(ChannelRequest request, ServerCallContext context) {
-    return GetRelations(request);
   }
 
   public async Task<RelationsReply> GetRelations(ChannelRequest request) {
@@ -404,10 +414,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public override Task<RelationReply> GetRelation(RelationRequest request, ServerCallContext context) {
-    return GetRelation(request);
-  }
-
   public async Task<RelationReply> GetRelation(RelationRequest request) {
     RelationReply rtnVal = new();
 
@@ -436,36 +442,6 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public override async Task SyncRelations(ChannelRequest request, IServerStreamWriter<SyncRelationsReply> responseStream, ServerCallContext context) {
-    if (!string.IsNullOrWhiteSpace(request.Channel)) {
-      request.Channel = request.Channel.Trim();
-      request.Password = !string.IsNullOrWhiteSpace(request.Password) ? Encryption.EncryptText(request.Password) : string.Empty;
-      request.Username = request.Username?.Trim() ?? string.Empty;
-      try {
-        Channel? channel = dbContext.Channels!.Include(c => c.Users).FirstOrDefault(c => c.Name == request.Channel);
-        if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Read && u.Username == request.Username && u.Password == request.Password))) {
-          var reader = notifier.Subscribe(request.Channel);
-          try {
-            await foreach (var notification in reader.ReadAllAsync(context.CancellationToken)) {
-              if (notification.Relation != null) {
-                await responseStream.WriteAsync(new SyncRelationsReply() {
-                  Channel = request.Channel,
-                  Relation = notification.Relation
-                });
-              }
-            }
-          } catch (OperationCanceledException) { } finally {
-            notifier.Unsubscribe(request.Channel, reader);
-          }
-        }
-      } catch { }
-    }
-
-  }
-
-  public override Task<SuccessReply> RemoveRelations(ChannelRequest request, ServerCallContext context) {
-    return RemoveRelations(request);
-  }
 
   public async Task<SuccessReply> RemoveRelations(ChannelRequest request) {
     SuccessReply rtnVal = new();
@@ -499,9 +475,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
 
     return rtnVal;
   }
-  #endregion
 
-  #region Tags
   public async Task<List<Tag>> GetTags(string channelName) {
     List<Tag> rtnVal = [];
     if (!string.IsNullOrWhiteSpace(channelName)) {
@@ -551,7 +525,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> UpdateTag(string channelName, string adminPassword, int tagId, string value, string? description, TagColor color) {
+  public async Task<SuccessReply> UpdateTag(string channelName, string adminPassword, int tag, string value, string? description, TagColor color) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(value)) {
       channelName = channelName.Trim();
@@ -560,12 +534,12 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       try {
         Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
         if (channel != null) {
-          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
-          if (tag != null) {
-            tag.Value = value;
-            tag.Description = description;
-            tag.Color = color;
-            dbContext.Update(tag);
+          Tag? foundTag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tag && t.ChannelId == channel.Id);
+          if (foundTag != null) {
+            foundTag.Value = value;
+            foundTag.Description = description;
+            foundTag.Color = color;
+            dbContext.Update(foundTag);
             rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
@@ -585,7 +559,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> RemoveTag(string channelName, string adminPassword, int tagId) {
+  public async Task<SuccessReply> RemoveTag(string channelName, string adminPassword, int tag) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName)) {
       channelName = channelName.Trim();
@@ -593,9 +567,9 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       try {
         Channel? channel = await dbContext.Channels!.FirstOrDefaultAsync(c => c.Name == channelName && c.AdminPassword == adminPassword);
         if (channel != null) {
-          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
-          if (tag != null) {
-            dbContext.Remove(tag);
+          Tag? foundTag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tag && t.ChannelId == channel.Id);
+          if (foundTag != null) {
+            dbContext.Remove(foundTag);
             rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
             if (!rtnVal.Success) {
               rtnVal.Info = localizer["No entries written"];
@@ -615,8 +589,8 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<Dictionary<string, List<int>>> GetRelationTagIds(string channelName) {
-    Dictionary<string, List<int>> rtnVal = [];
+  public async Task<Dictionary<string, List<string>>> GetRelationTagValues(string channelName) {
+    Dictionary<string, List<string>> rtnVal = [];
     if (!string.IsNullOrWhiteSpace(channelName)) {
       channelName = channelName.Trim();
       try {
@@ -625,16 +599,16 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
           var data = await dbContext.Relations!
             .AsNoTracking()
             .Where(r => r.ChannelId == channel.Id)
-            .Select(r => new { Key = $"{(int)r.Type}|{r.Name}", TagIds = r.Tags.Select(t => t.Id).ToList() })
+            .Select(r => new { Key = $"{(int)r.Type}|{r.Name}", TagValues = r.Tags.Select(t => t.Value!).ToList() })
             .ToListAsync();
-          rtnVal = data.Where(r => r.TagIds.Count > 0).ToDictionary(r => r.Key, r => r.TagIds);
+          rtnVal = data.Where(r => r.TagValues.Count > 0).ToDictionary(r => r.Key, r => r.TagValues);
         }
       } catch { }
     }
     return rtnVal;
   }
 
-  public async Task<SuccessReply> AddRelationTag(string channelName, string username, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
+  public async Task<SuccessReply> AddRelationTag(string channelName, string username, string password, RelationType type, string name, string tagValue, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
       channelName = channelName.Trim();
@@ -644,7 +618,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
       try {
         Channel? channel = await dbContext.Channels!.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == channelName);
         if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
-          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Id == tagId && t.ChannelId == channel.Id);
+          Tag? tag = await dbContext.Tags!.FirstOrDefaultAsync(t => t.Value == tagValue && t.ChannelId == channel.Id);
           if (tag != null) {
             Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
             if (relation == null) {
@@ -654,13 +628,13 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
               await dbContext.SaveChangesAsync();
               relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
             }
-            if (relation != null && !relation.Tags.Any(t => t.Id == tagId)) {
+            if (relation != null && !relation.Tags.Any(t => t.Value == tagValue)) {
               relation.Tags.Add(tag);
               rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               } else {
-                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), TagId = tagId, TagAdded = true } });
+                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), Tag = tag.Value, TagAdded = true } });
                 PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = username, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = true }, handleInfo);
               }
             } else {
@@ -679,7 +653,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     return rtnVal;
   }
 
-  public async Task<SuccessReply> RemoveRelationTag(string channelName, string username, string password, RelationType type, string name, int tagId, HandleInfo? handleInfo = null) {
+  public async Task<SuccessReply> RemoveRelationTag(string channelName, string username, string password, RelationType type, string name, string tagValue, HandleInfo? handleInfo = null) {
     SuccessReply rtnVal = new();
     if (!string.IsNullOrWhiteSpace(channelName) && !string.IsNullOrWhiteSpace(name)) {
       channelName = channelName.Trim();
@@ -691,14 +665,14 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
         if (channel != null && (channel.Users.Any(u => u.Permissions >= ChannelPermissions.Write && u.Username == username && u.Password == password))) {
           Relation? relation = await dbContext.Relations!.Include(r => r.Tags).FirstOrDefaultAsync(r => r.ChannelId == channel.Id && r.Type == type && r.Name == name);
           if (relation != null) {
-            Tag? tag = relation.Tags.FirstOrDefault(t => t.Id == tagId);
+            Tag? tag = relation.Tags.FirstOrDefault(t => t.Value == tagValue);
             if (tag != null) {
               relation.Tags.Remove(tag);
               rtnVal.Success = await dbContext.SaveChangesAsync() > 0;
               if (!rtnVal.Success) {
                 rtnVal.Info = localizer["No entries written"];
               } else {
-                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), TagId = tagId, TagAdded = false } });
+                notifier.Notify(channelName, new RelationChangedNotification { ChannelName = channelName, Relation = new RelationInfo { Type = type, Name = name, Relation = relation.Value, Comment = relation.Comment ?? string.Empty, Timestamp = DateTime.UtcNow.ToTimestamp(), Tag = tag.Value, TagAdded = false } });
                 PushRelationWebhook(new() { WebhookUrl = channel.DiscordWebhookUrl, Username = username, Type = type, Name = name, OldRelation = relation.Value, OldComment = relation.Comment ?? string.Empty, NewRelation = relation.Value, NewComment = relation.Comment ?? string.Empty, TagValue = tag.Value, TagAdded = false }, handleInfo);
               }
             } else {
@@ -716,9 +690,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     }
     return rtnVal;
   }
-  #endregion
 
-  #region Users
   public async Task<List<User>> GetUsers(string channelName, string adminPassword) {
     List<User> rtnVal = [];
     if (!string.IsNullOrWhiteSpace(channelName)) {
@@ -832,9 +804,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     }
     return rtnVal;
   }
-  #endregion
 
-  #region Webhooks
   private static readonly Regex RgxDiscordWebhookUrl = RegexDiscordWebhookUrl();
   [GeneratedRegex(@"^https:\/\/discord.com\/api\/webhooks\/\d+\/[a-zA-Z0-9_-]+$", RegexOptions.Compiled)]
   private static partial Regex RegexDiscordWebhookUrl();
@@ -848,9 +818,7 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
     _ = DiscordWebhooks.TryRemove(key, out _);
   }
 
-  public override async Task<SuccessReply> PushWebhook(WebhookRequest request, ServerCallContext context) {
-    return await PushWebhook(request, true);
-  }
+
 
   public async Task<SuccessReply> PushWebhook(WebhookRequest request, bool withWait = false) {
     SuccessReply rtnVal = new();
@@ -885,6 +853,9 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
   }
 
   private async void PushRelationWebhook(DiscordWebhookRelationInfo webhookRelationInfo, HandleInfo? handleInfo) {
+    if (string.IsNullOrWhiteSpace(webhookRelationInfo.WebhookUrl)) {
+      return;
+    }
     if (webhookRelationInfo.OldRelation != webhookRelationInfo.NewRelation || webhookRelationInfo.OldComment != webhookRelationInfo.NewComment || webhookRelationInfo.TagAdded.HasValue) {
       string avatarUrl = HandleQuery.DefaultAvatarUrl;
       if (webhookRelationInfo.Type == RelationType.Handle) {
@@ -972,7 +943,53 @@ public partial class SCHQ_Service(IStringLocalizer<Resource> localizer, Relation
   private static string CorrectUrl(string url) {
     return url.StartsWith('/') ? $"https://robertsspaceindustries.com{url}" : url;
   }
-
   #endregion
 
+}
+
+public class ChannelNameRequest {
+  public string? Channel { get; set; } = string.Empty;
+}
+
+public enum ChannelPermissions {
+  None = 0,
+  Read = 1,
+  Write = 2
+}
+
+public class SetRelationsRequest {
+  public string? Channel { get; set; } = string.Empty;
+  public string? Password { get; set; } = string.Empty;
+  public List<RelationInfo> Relations { get; set; } = [];
+  public string? Username { get; set; } = string.Empty;
+}
+
+public class ChannelReply {
+  public bool Found { get; set; }
+  public ChannelInfo? Channel { get; set; }
+}
+
+public class UpdateChannelRequest {
+  public string? Channel { get; set; } = string.Empty;
+  public string? NewChannelName { get; set; } = string.Empty;
+  public string? AdminPassword { get; set; } = string.Empty;
+  public string? NewAdminPassword { get; set; } = string.Empty;
+  public string? NewAdminPasswordConfirm { get; set; } = string.Empty;
+  public string? Description { get; set; }
+  public bool Private { get; set; }
+  public string? DiscordWebhookUrl { get; set; } = string.Empty;
+}
+
+public class RelationRequest {
+  public string? Channel { get; set; } = string.Empty;
+  public string? Password { get; set; } = string.Empty;
+  public RelationType Type { get; set; }
+  public string? Name { get; set; } = string.Empty;
+  public string? Username { get; set; } = string.Empty;
+}
+
+public class RelationReply {
+  public bool Found { get; set; }
+  public RelationValue Relation { get; set; }
+  public Timestamp? Timestamp { get; set; }
 }

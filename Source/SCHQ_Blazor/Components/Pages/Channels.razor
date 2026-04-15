@@ -129,7 +129,7 @@
     <p>
       <div class="input-group">
         <div class="form-floating">
-          <input type="text" class="form-control" id="floatingInputChannel" placeholder="@Localizer["Channel"]" @bind=ChannelName @bind:event="oninput">
+          <input type="text" class="form-control" id="floatingInputChannel" placeholder="@Localizer["Channel"]" @bind=ChannelName @bind:event="oninput" @onkeydown="OnChannelNameKeyDown">
             <label for="floatingInputChannel">@Localizer["Channel"]</label>
           </div>
           <button disabled="@ChannelNameInactive" class="btn btn-primary" type="button" @onclick="async () => Relations(ChannelName)" title="@Localizer["Relations"]">
@@ -215,6 +215,10 @@
 
   private void Relations(string channel) {
     Navigation.NavigateTo($"channel/{Uri.EscapeDataString(channel)}", true);
+  }
+
+  private void OnChannelNameKeyDown(KeyboardEventArgs e) {
+    if (e.Key == "Enter" && !ChannelNameInactive) Relations(ChannelName!);
   }
 
   private void AddChannel() {

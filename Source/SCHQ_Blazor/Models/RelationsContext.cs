@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SCHQ_Blazor.Classes;
+using SCHQ_Blazor.Services;
 using SCHQ_Protos;
 using System.ComponentModel.DataAnnotations.Schema;
 

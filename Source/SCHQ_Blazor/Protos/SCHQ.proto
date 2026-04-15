@@ -9,27 +9,16 @@ import "google/protobuf/wrappers.proto";
 package schq;
 
 service SCHQ_Relations {
-  rpc AddChannel (ChannelRequest) returns (SuccessReply);
   rpc GetChannels (google.protobuf.Empty) returns (ChannelsReply);
-  rpc GetChannel (ChannelNameRequest) returns (ChannelReply);
-  rpc UpdateChannel (UpdateChannelRequest) returns (SuccessReply);
-  rpc RemoveChannel (ChannelRequest) returns (SuccessReply);
-  rpc SetRelations (SetRelationsRequest) returns (SuccessReply);
   rpc SetRelation (SetRelationRequest) returns (SuccessReply);
   rpc GetRelations (ChannelRequest) returns (RelationsReply);
-  rpc GetRelation (RelationRequest) returns (RelationReply);
   rpc SyncRelations (ChannelRequest) returns (stream SyncRelationsReply);
-  rpc RemoveRelations (ChannelRequest) returns (SuccessReply);
   rpc PushWebhook(WebhookRequest) returns (SuccessReply);
 }
 
 message SuccessReply {
   bool success = 1;
   string info = 2;
-}
-
-message ChannelNameRequest {
-  string channel = 1;
 }
 
 message ChannelsReply {
@@ -46,18 +35,6 @@ message ChannelRequest {
   string discordWebhookUrl = 7;
 }
 
-message ChannelReply {
-  bool found = 1;
-  ChannelInfo channel = 2;
-}
-
-message SetRelationsRequest {
-  string channel = 1;
-  string password = 2;
-  repeated RelationInfo relations = 3;
-  string username = 4;
-}
-
 message SetRelationRequest {
   string channel = 1;
   string password = 2;
@@ -68,20 +45,6 @@ message SetRelationRequest {
 message RelationsReply {
   repeated RelationInfo relations = 1;
   string info = 2;
-}
-
-message RelationRequest {
-  string channel = 1;
-  string password = 2;
-  RelationType type = 3;
-  string name = 4;
-  string username = 5;
-}
-
-message RelationReply {
-  bool found = 1;
-  RelationValue relation = 2;
-  google.protobuf.Timestamp timestamp = 3;
 }
 
 message SyncRelationsReply {
@@ -103,30 +66,13 @@ message RelationInfo {
   RelationValue relation = 3;
   google.protobuf.StringValue comment = 4;
   google.protobuf.Timestamp timestamp = 5;
-  optional int32 tagId = 6;
+  optional string tag = 6;
   bool tagAdded = 7;
-}
-
-message UpdateChannelRequest {
-  string channel = 1;
-  string newChannelName = 2;
-  string adminPassword = 3;
-  string newAdminPassword = 4;
-  string newAdminPasswordConfirm = 5;
-  google.protobuf.StringValue description = 6;
-  bool private = 7;
-  string discordWebhookUrl = 8;
 }
 
 message WebhookRequest {
   string url = 1;
   string body = 2;
-}
-
-enum ChannelPermissions {
-  None = 0;
-  Read = 1;
-  Write = 2;
 }
 
 enum RelationType {

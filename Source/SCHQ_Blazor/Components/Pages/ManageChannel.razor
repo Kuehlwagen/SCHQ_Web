@@ -52,21 +52,26 @@
       <p class="pb-2">
         <h5 class="mb-2 fw-bold">@Localizer["Authentication"]</h5>
         <div class="form-floating">
-          <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput" @onblur="ValidateAdminPassword">
+          <input type="password" class="form-control @(AdminPasswordValidated && !AdminPasswordCorrect ? "is-invalid" : string.Empty)" id="floatingInputGroupChannelPassword" placeholder="@Localizer["Admin Password"]*" @bind=AdminPassword @bind:event="oninput" @onblur="ValidateAdminPassword" @onkeydown="HandleAdminPasswordKeyDown">
             <label for="floatingInputGroupChannelPassword">@Localizer["Admin Password"]*</label>
+            @if (AdminPasswordValidated && !AdminPasswordCorrect) {
+              <div class="invalid-feedback">@Localizer["Access denied"]</div>
+            }
           </div>
         </p>
-        <h5 class="mb-2 fw-bold">@Localizer["Channel Information"]</h5>
-        <p>
-          <div class="input-group">
-            <div class="form-floating">
-              <input type="text" class="form-control @(string.IsNullOrWhiteSpace(NewChannelName) ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelName" placeholder="@Localizer["Channel Name"]*" @bind=NewChannelName @bind:event="oninput">
-                <label for="floatingInputGroupNewChannelName">@Localizer["Channel Name"]*</label>
+        @if (AdminPasswordCorrect) {
+          <h5 class="mb-2 fw-bold">@Localizer["Channel Information"]</h5>
+          <p>
+            <div class="input-group">
+              <div class="form-floating">
+                <input type="text" class="form-control @(string.IsNullOrWhiteSpace(NewChannelName) ? "border-danger" : string.Empty)" id="floatingInputGroupNewChannelName" placeholder="@Localizer["Channel Name"]*" @bind=NewChannelName @bind:event="oninput">
+                  <label for="floatingInputGroupNewChannelName">@Localizer["Channel Name"]*</label>
+                </div>
               </div>
-            </div>
-          </p>
+            </p>
         }
-        <div hidden="@(IsAddMode && IsLocalStorage)">
+        }
+        <div hidden="@(IsAddMode ? IsLocalStorage : !AdminPasswordCorrect)">
           <p>
             <div class="input-group">
               <div class="form-floating">
@@ -277,7 +282,7 @@
                     </p>
                     @if (IsAddMode) {
                       <p><button type="button" class="btn btn-primary" @onclick="Add" disabled="@ButtonIsDisabled">@Localizer["Add Channel"]</button></p>
-                    } else {
+                    } else if (AdminPasswordCorrect) {
                       <div class="btn-group mb-2">
                         <button type="button" class="btn btn-primary" @onclick="UpdateChannel" disabled="@ButtonIsDisabled" title="@Localizer["Save"]">
                           <svg class="bi" width="16" height="16" fill="currentColor">
@@ -335,7 +340,16 @@
     }
   }
   public ChannelInfo? ChannelInformation { get; set; }
-  private string? AdminPassword = string.Empty;
+  private string? _adminPassword = string.Empty;
+  private string? AdminPassword {
+    get { return _adminPassword; }
+    set {
+      _adminPassword = value;
+      AdminPasswordValidated = false;
+      AdminPasswordCorrect = false;
+    }
+  }
+  private bool AdminPasswordValidated { get; set; }
   private bool AdminPasswordCorrect { get; set; }
   private string? _newAdminPassword = string.Empty;
   private string? NewAdminPassword {
@@ -382,7 +396,8 @@
   protected override async Task OnInitializedAsync() {
     if (!IsAddMode) {
       ChannelReply reply = await SCHQ.GetChannel(new() { Channel = ChannelName });
-      if (reply != null && reply.Found && reply.Channel?.Name == ChannelName) {
+      if (reply != null && reply.Found && string.Equals(reply.Channel?.Name, ChannelName, StringComparison.OrdinalIgnoreCase)) {
+        ChannelName = reply.Channel!.Name;
         ChannelInformation = reply?.Channel;
         Description = reply?.Channel?.Description ?? string.Empty;
         NewChannelName = ChannelName;
@@ -390,15 +405,18 @@
         HasDiscordWebhookUrl = !string.IsNullOrWhiteSpace(reply?.Channel?.DiscordWebhookUrl);
         DiscordWebhookUrl = string.Empty;
       }
-      // await LoadTags();
-      // await LoadUsers();
     }
     ButtonIsDisabled = CheckButtonIsDisabled;
     StateHasChanged();
   }
 
+  private async Task HandleAdminPasswordKeyDown(KeyboardEventArgs e) {
+    if (e.Key == "Enter") await ValidateAdminPassword();
+  }
+
   private async Task ValidateAdminPassword() {
     AdminPasswordCorrect = await SCHQ.ValidateAdminPassword(ChannelName, AdminPassword);
+    AdminPasswordValidated = !string.IsNullOrWhiteSpace(AdminPassword);
     if (AdminPasswordCorrect) {
       if (Users?.Count == 0) await LoadUsers();
       if (Tags?.Count == 0) await LoadTags();

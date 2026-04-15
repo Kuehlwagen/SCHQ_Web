@@ -61,7 +61,7 @@
             <label for="floatingInputGroupChannelUsername">@Localizer["Username"]</label>
           </div>
           <div class="form-floating">
-            <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["User Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)">
+            <input type="password" class="form-control" id="floatingInputGroupChannelPassword" placeholder="@Localizer["User Password"]" @bind=ChannelPassword @bind:event="oninput" disabled="@(SyncActive)" @onblur="GetRelations" @onkeydown='async (e) => { if (e.Key == "Enter") await GetRelations(); }'>
               <label for="floatingInputGroupChannelPassword">@Localizer["User Password"]</label>
             </div>
             <button class="btn btn-primary text-white" type="button" @onclick="GetRelations" disabled="@SyncActive" title="@Localizer["Refresh Relations"]">
@@ -132,8 +132,8 @@
                     @if (QueryNameError == null && ChannelTags.Count > 0) {
                       <div class="d-flex flex-wrap gap-1 mb-1">
                         @foreach (var tag in ChannelTags) {
-                          bool isFilterActive = FilterTags.Contains(tag.Id);
-                          <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isFilterActive ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleFilterTag(tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                          bool isFilterActive = FilterTags.Contains(tag.Value!);
+                          <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isFilterActive ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleFilterTag(tag.Value!)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                         }
                       </div>
                     }
@@ -166,9 +166,9 @@
                           <div>@string.Join(", ", QueryHandleInfo?.Profile?.Fluency ?? [])@(QueryHandleInfo?.Profile?.Country?.Length > 0 ? $" ({QueryHandleInfo.Profile.Country})" : string.Empty)</div>
                           @if (ChannelTags.Count > 0) {
                             <div class="d-flex flex-wrap gap-1 mb-1">
-                              @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(t.Id))) {
-                                bool isSelected = GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(tag.Id);
-                                <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relHandle!.Type, relHandle!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                              @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(t.Value!))) {
+                                bool isSelected = GetRelationTags(relHandle!.Type, relHandle!.Name).Contains(tag.Value!);
+                                <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relHandle!.Type, relHandle!.Name, tag.Value!)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                               }
                             </div>
                           }
@@ -224,9 +224,9 @@
                             <div>@($"{GetLocalizer(QueryHandleInfo?.Organizations?.MainOrganization?.Commitment)} / {QueryHandleInfo?.Organizations?.MainOrganization?.Members:n0} {(QueryHandleInfo?.Organizations?.MainOrganization?.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
                             @if (ChannelTags.Count > 0) {
                               <div class="d-flex flex-wrap gap-1 mb-1">
-                                @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(t.Id))) {
-                                  bool isSelected = GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(tag.Id);
-                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relOrg!.Type, relOrg!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                                @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(t.Value!))) {
+                                  bool isSelected = GetRelationTags(relOrg!.Type, relOrg!.Name).Contains(tag.Value!);
+                                  <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relOrg!.Type, relOrg!.Name, tag.Value!)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                                 }
                               </div>
                             }
@@ -273,9 +273,9 @@
                               <div>@($"{Localizer["Affiliation"]} / {aff.Members:n0} {(aff.Members > 1 ? @Localizer["Members"] : @Localizer["Member"])}")</div>
                               @if (ChannelTags.Count > 0) {
                                 <div class="d-flex flex-wrap gap-1 mb-1">
-                                  @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relAff!.Type, relAff!.Name).Contains(t.Id))) {
-                                    bool isSelected = GetRelationTags(relAff!.Type, relAff!.Name).Contains(tag.Id);
-                                    <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relAff!.Type, relAff!.Name, tag.Id)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
+                                  @foreach (var tag in ChannelTags.OrderByDescending(t => GetRelationTags(relAff!.Type, relAff!.Name).Contains(t.Value!))) {
+                                    bool isSelected = GetRelationTags(relAff!.Type, relAff!.Name).Contains(tag.Value!);
+                                    <span class="badge text-bg-@(tag.Color.ToString().ToLower()) @(isSelected ? string.Empty : "opacity-50")" role="button" @onclick="() => ToggleRelationTag(relAff!.Type, relAff!.Name, tag.Value!)" style="cursor: pointer;" title="@tag.Description">@tag.Value</span>
                                   }
                                 </div>
                               }
@@ -341,7 +341,7 @@
                             <div class="w-100" style="transform: rotate(0);"><a href="javascript:void(0);" class="link-underline link-underline-opacity-0 link-underline-opacity-50-hover stretched-link" @onclick="() => { QueryNameType = relation.Type; QueryName = relation.Name; Query(); }">@relation.Name</a></div>
                             <div class="d-flex flex-wrap align-items-center gap-1">
                               @if (ChannelTags.Count > 0) {
-                                @foreach (var tag in ChannelTags.Where(t => GetRelationTags(relation.Type, relation.Name).Contains(t.Id))) {
+                                @foreach (var tag in ChannelTags.Where(t => GetRelationTags(relation.Type, relation.Name).Contains(t.Value!))) {
                                   <span class="badge text-bg-@(tag.Color.ToString().ToLower())" title="@tag.Description">@tag.Value</span>
                                 }
                               }
@@ -545,6 +545,12 @@
       if (!string.IsNullOrWhiteSpace(ChannelName)) {
         CurrentChannel = (await SCHQ.GetChannel(new() { Channel = ChannelName })).Channel;
         if (CurrentChannel != null) {
+          string? originalChannelName = ChannelName;
+          ChannelName = CurrentChannel.Name;
+          if (ChannelName != originalChannelName) {
+            ChannelUsername = await LocalStorageService.GetValue(JS, $"user{ChannelName}");
+            ChannelPassword = await LocalStorageService.GetValue(JS, $"pwd{ChannelName}", true);
+          }
           RelationsReply reply = await SCHQ.GetRelations(new() { Channel = ChannelName, Username = ChannelUsername ?? string.Empty, Password = ChannelPassword ?? string.Empty });
           relations = [.. reply?.Relations.OrderBy(r => r.Type).ThenBy(r => r.Name)!];
           if (!string.IsNullOrWhiteSpace(reply?.Info)) {
@@ -553,8 +559,8 @@
           await LocalStorageService.SetValue(JS, $"user{ChannelName}", ChannelUsername);
           await LocalStorageService.SetValue(JS, $"pwd{ChannelName}", ChannelPassword, true);
           ChannelTags = await SCHQ.GetTags(ChannelName);
-          var tagMap = await SCHQ.GetRelationTagIds(ChannelName);
-          RelationTags = tagMap.ToDictionary(kv => kv.Key, kv => new HashSet<int>(kv.Value));
+          var tagMap = await SCHQ.GetRelationTagValues(ChannelName);
+          RelationTags = tagMap.ToDictionary(kv => kv.Key, kv => new HashSet<string>(kv.Value));
         } else {
           ErrorText = Localizer["Channel not found"];
         }
@@ -639,11 +645,11 @@
                       r.Relation = rel.Relation;
                       r.Comment = rel.Comment;
                       r.Timestamp = rel.Timestamp;
-                      if (rel.HasTagId) {
+                      if (rel.HasTag) {
                         string key = RelationKey(rel.Type, rel.Name);
                         if (!RelationTags.ContainsKey(key)) RelationTags[key] = [];
-                        if (rel.TagAdded) RelationTags[key].Add(rel.TagId);
-                        else RelationTags[key].Remove(rel.TagId);
+                        if (rel.TagAdded) RelationTags[key].Add(rel.Tag);
+                        else RelationTags[key].Remove(rel.Tag);
                       }
                       relations = relations?.Where(r => r.Type != rel.Type || r.Name != rel.Name).Prepend(r).ToArray();
                     } else {
@@ -676,7 +682,7 @@
       RelationValue.NotAssigned => FilterNotAssigned,
       _ => false
     } ?? false) &&
-    (FilterTags.Count == 0 || FilterTags.Any(tagId => GetRelationTags(relation.Type, relation.Name).Contains(tagId)));
+    (FilterTags.Count == 0 || FilterTags.Any(tag => GetRelationTags(relation.Type, relation.Name).Contains(tag)));
   }
 
   public string GetRelationClassColors(RelationInfo relation, bool withSync = false) {
@@ -878,30 +884,30 @@
   }
 
   private List<Tag> ChannelTags { get; set; } = [];
-  private Dictionary<string, HashSet<int>> RelationTags { get; set; } = [];
-  private HashSet<int> FilterTags { get; set; } = [];
+  private Dictionary<string, HashSet<string>> RelationTags { get; set; } = [];
+  private HashSet<string> FilterTags { get; set; } = [];
 
   private static string RelationKey(RelationType type, string? name) => $"{(int)type}|{name ?? string.Empty}";
 
-  private HashSet<int> GetRelationTags(RelationType type, string? name) =>
-    string.IsNullOrWhiteSpace(name) ? [] : (RelationTags.TryGetValue(RelationKey(type, name), out var ids) ? ids : []);
+  private HashSet<string> GetRelationTags(RelationType type, string? name) =>
+    string.IsNullOrWhiteSpace(name) ? [] : (RelationTags.TryGetValue(RelationKey(type, name), out var tags) ? tags : []);
 
-  private void ToggleFilterTag(int tagId) {
-    if (!FilterTags.Remove(tagId)) FilterTags.Add(tagId);
+  private void ToggleFilterTag(string tag) {
+    if (!FilterTags.Remove(tag)) FilterTags.Add(tag);
     CurrentPage = 1;
   }
 
-  private async void ToggleRelationTag(RelationType type, string? name, int tagId) {
+  private async void ToggleRelationTag(RelationType type, string? name, string tag) {
     if (string.IsNullOrWhiteSpace(name)) return;
     string key = RelationKey(type, name);
-    bool isSelected = RelationTags.TryGetValue(key, out var ids) && ids.Contains(tagId);
+    bool isSelected = RelationTags.TryGetValue(key, out var tags) && tags.Contains(tag);
     SuccessReply reply = isSelected
-      ? await SCHQ.RemoveRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId, QueryHandleInfo)
-      : await SCHQ.AddRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tagId, QueryHandleInfo);
+      ? await SCHQ.RemoveRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tag, QueryHandleInfo)
+      : await SCHQ.AddRelationTag(ChannelName ?? string.Empty, ChannelUsername ?? string.Empty, ChannelPassword ?? string.Empty, type, name, tag, QueryHandleInfo);
     if (reply.Success) {
       if (!RelationTags.ContainsKey(key)) RelationTags[key] = [];
-      if (isSelected) RelationTags[key].Remove(tagId);
-      else RelationTags[key].Add(tagId);
+      if (isSelected) RelationTags[key].Remove(tag);
+      else RelationTags[key].Add(tag);
       StateHasChanged();
     } else {
       QueryNameError = reply.Info;
